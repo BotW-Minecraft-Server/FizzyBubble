@@ -25,7 +25,7 @@ public class TitleScreenMixin {
     private void fizzy$swapToCustomScreen(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         // 将原版主菜单替换为你自己的屏幕
-        mc.setScreen(new FizzyTitleScreen(true, logoRenderer));
+        mc.setScreen(new FizzyTitleScreen(false, logoRenderer));
         // 取消原版 TitleScreen 的 init
         ci.cancel();
     }

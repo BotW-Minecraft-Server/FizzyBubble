@@ -1,6 +1,7 @@
 package link.botwmcs.samchai.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import link.botwmcs.samchai.Fizzy;
 import link.botwmcs.samchai.client.elements.FizzyButton;
 import link.botwmcs.samchai.client.elements.StartButton;
 import net.minecraft.SharedConstants;
@@ -92,7 +93,7 @@ public class FizzyTitleScreen extends Screen {
 
         // ---- Play（打开自定义 PlayScreen）----
         this.addRenderableWidget(
-                StartButton.builder(Component.translatable("menu.multiplayer"), btn ->
+                StartButton.builder(Component.translatable(Fizzy.MODID, "fizzy.gui.titlescreen.play_button"),btn ->
                         // mc.setScreen(new PlayScreen(this))               // 你的 PlayScreen
                         mc.setScreen(new JoinMultiplayerScreen(this))
                 ).bounds(rightX, playY, buttonWidth, 40).build()

@@ -1,13 +1,3 @@
 {
-  "itemGroup.fizzy": "Example Mod Tab",
-  "block.fizzy.example_block": "Example Block",
-  "item.fizzy.example_item": "Example Item",
-
-  "fizzy.configuration.title": "Fizzy Configs",
-  "fizzy.configuration.section.fizzy.common.toml": "Fizzy Configs",
-  "fizzy.configuration.section.fizzy.common.toml.title": "Fizzy Configs",
-  "fizzy.configuration.items": "Item List",
-  "fizzy.configuration.logDirtBlock": "Log Dirt Block",
-  "fizzy.configuration.magicNumberIntroduction": "Magic Number Text",
-  "fizzy.configuration.magicNumber": "Magic Number"
+  "fizzy.gui.titlescreen.play_button": "Play"
 }
