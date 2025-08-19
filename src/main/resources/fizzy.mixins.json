@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "link.botwmcs.samchai.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "client": [
+    "client.LogoRendererMixin",
+    "client.PanoramaRendererMixin",
+    "client.TitleScreenMixin"
+  ]
+}
