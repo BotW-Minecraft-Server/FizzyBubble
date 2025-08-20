@@ -1,6 +1,6 @@
-package link.botwmcs.samchai.mixin.client;
+package link.botwmcs.fizzy.mixin.client;
 
-import link.botwmcs.samchai.Fizzy;
+import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LogoRenderer;

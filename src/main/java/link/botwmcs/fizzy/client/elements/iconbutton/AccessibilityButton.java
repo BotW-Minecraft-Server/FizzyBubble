@@ -1,4 +1,4 @@
-package link.botwmcs.samchai.client.elements;
+package link.botwmcs.fizzy.client.elements.iconbutton;
 
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -11,14 +11,15 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @OnlyIn(Dist.CLIENT)
-public class FizzyButton extends FizzyAbstractButton {
-    public static final int SMALL_WIDTH = 120;
-    public static final int DEFAULT_WIDTH = 150;
-    public static final int BIG_WIDTH = 200;
-    public static final int DEFAULT_HEIGHT = 20;
+public class AccessibilityButton extends AccessibilityAbstractButton {
+    public static final int SMALL_WIDTH     = 120;
+    public static final int DEFAULT_WIDTH   = 150;
+    public static final int BIG_WIDTH       = 200;
+    public static final int DEFAULT_HEIGHT  = 20;
     public static final int DEFAULT_SPACING = 8;
 
-    protected static final CreateNarration DEFAULT_NARRATION = (supplier) -> supplier.get().copy();
+    /** 默认旁白：直接使用父类的旁白文本 */
+    protected static final CreateNarration DEFAULT_NARRATION = supplier -> supplier.get().copy();
 
     protected final OnPress onPress;
     protected final CreateNarration createNarration;
@@ -27,38 +28,45 @@ public class FizzyButton extends FizzyAbstractButton {
         return new Builder(component, onPress);
     }
 
-    public FizzyButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
+    public AccessibilityButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
         super(x, y, width, height, message);
         this.onPress = onPress;
         this.createNarration = createNarration;
     }
 
+    /** 点击回调：转发给外部提供的 OnPress */
     @Override
     public void onPress() {
         this.onPress.onPress(this);
     }
 
+    /** 旁白文本：允许通过 CreateNarration 包装/替换父类默认旁白 */
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
-
+    protected MutableComponent createNarrationMessage() {
+        return this.createNarration.createNarrationMessage(() -> AccessibilityButton.super.createNarrationMessage());
     }
 
-    // ===========================
-    // Builder
-    // ===========================
+    /** Narration 更新：保持原版按钮的默认描述格式 */
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput output) {
+        this.defaultButtonNarrationText(output);
+    }
+
+    // ====================== Builder ======================
+
     @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
         public final OnPress onPress;
+
         private @Nullable Tooltip tooltip;
         private int x;
         private int y;
-        private int width = DEFAULT_WIDTH;
+        private int width  = DEFAULT_WIDTH;
         private int height = DEFAULT_HEIGHT;
-        private CreateNarration createNarration;
+        private CreateNarration createNarration = AccessibilityButton.DEFAULT_NARRATION;
 
         public Builder(Component component, OnPress onPress) {
-            this.createNarration = FizzyButton.DEFAULT_NARRATION;
             this.message = component;
             this.onPress = onPress;
         }
@@ -94,27 +102,26 @@ public class FizzyButton extends FizzyAbstractButton {
             return this;
         }
 
-        public FizzyButton build() {
-            FizzyButton button = new FizzyButton(
-                    this.x, this.y, this.width, this.height,
-                    this.message, this.onPress, this.createNarration
+        public AccessibilityButton build() {
+            AccessibilityButton button = new AccessibilityButton(
+                    this.x, this.y, this.width, this.height, this.message, this.onPress, this.createNarration
             );
-            button.setTooltip(this.tooltip);
+            if (this.tooltip != null) {
+                button.setTooltip(this.tooltip);
+            }
             return button;
         }
     }
 
+    // ====================== 接口 ======================
+
     @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
-        /**
-         * @param defaultMessage 供应父类默认旁白文本（通常是按钮文本 + 提示）
-         * @return 要用于旁白系统的最终文本
-         */
-        MutableComponent createNarrationMessage(Supplier<MutableComponent> defaultMessage);
+        MutableComponent createNarrationMessage(Supplier<Component> parentSupplier);
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface OnPress {
-        void onPress(FizzyButton button);
+        void onPress(AccessibilityButton button);
     }
 }

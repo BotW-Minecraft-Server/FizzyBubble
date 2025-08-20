@@ -1,6 +1,6 @@
-package link.botwmcs.samchai.client.elements.iconbutton;
+package link.botwmcs.fizzy.client.elements.iconbutton;
 
-import link.botwmcs.samchai.Fizzy;
+import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,8 +10,6 @@ import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-
-import javax.swing.*;
 
 public abstract class SingleplayerAbstractButton extends AbstractButton {
     protected static final int TEXT_MARGIN = 2;

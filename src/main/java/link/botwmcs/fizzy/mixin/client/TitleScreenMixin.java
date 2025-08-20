@@ -1,10 +1,9 @@
-package link.botwmcs.samchai.mixin.client;
+package link.botwmcs.fizzy.mixin.client;
 
-import link.botwmcs.samchai.client.gui.FizzyTitleScreen;
+import link.botwmcs.fizzy.client.gui.FizzyTitleScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.LogoRenderer;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.spongepowered.asm.mixin.Final;

@@ -1,4 +1,4 @@
-package link.botwmcs.samchai.client.elements.iconbutton;
+package link.botwmcs.fizzy.client.elements.iconbutton;
 
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -10,15 +10,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-@OnlyIn(Dist.CLIENT)
-public class AccessibilityButton extends AccessibilityAbstractButton {
-    public static final int SMALL_WIDTH     = 120;
-    public static final int DEFAULT_WIDTH   = 150;
-    public static final int BIG_WIDTH       = 200;
-    public static final int DEFAULT_HEIGHT  = 20;
+public class MultiplayerButton extends MultiplayerAbstractButton {
+    public static final int SMALL_WIDTH = 120;
+    public static final int DEFAULT_WIDTH = 150;
+    public static final int BIG_WIDTH = 200;
+    public static final int DEFAULT_HEIGHT = 20;
     public static final int DEFAULT_SPACING = 8;
 
-    /** 默认旁白：直接使用父类的旁白文本 */
     protected static final CreateNarration DEFAULT_NARRATION = supplier -> supplier.get().copy();
 
     protected final OnPress onPress;
@@ -28,43 +26,42 @@ public class AccessibilityButton extends AccessibilityAbstractButton {
         return new Builder(component, onPress);
     }
 
-    public AccessibilityButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
+
+    public MultiplayerButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
         super(x, y, width, height, message);
         this.onPress = onPress;
         this.createNarration = createNarration;
     }
 
-    /** 点击回调：转发给外部提供的 OnPress */
     @Override
     public void onPress() {
         this.onPress.onPress(this);
     }
 
-    /** 旁白文本：允许通过 CreateNarration 包装/替换父类默认旁白 */
+    /** 等价于 Fabric 的 method_25360：自定义旁白文本生成 */
     @Override
     protected MutableComponent createNarrationMessage() {
-        return this.createNarration.createNarrationMessage(() -> AccessibilityButton.super.createNarrationMessage());
+        return this.createNarration.createNarrationMessage(() -> super.createNarrationMessage());
     }
 
-    /** Narration 更新：保持原版按钮的默认描述格式 */
+    /** 等价于 Fabric 的 method_47399 -> method_37021：按钮默认旁白输出 */
     @Override
     protected void updateWidgetNarration(NarrationElementOutput output) {
         this.defaultButtonNarrationText(output);
     }
 
-    // ====================== Builder ======================
 
-    @OnlyIn(Dist.CLIENT)
+    // -------------------- Builder --------------------
+
     public static class Builder {
         private final Component message;
-        public final OnPress onPress;
-
+        private final OnPress onPress;
         private @Nullable Tooltip tooltip;
         private int x;
         private int y;
-        private int width  = DEFAULT_WIDTH;
+        private int width = DEFAULT_WIDTH;
         private int height = DEFAULT_HEIGHT;
-        private CreateNarration createNarration = AccessibilityButton.DEFAULT_NARRATION;
+        private CreateNarration createNarration = DEFAULT_NARRATION;
 
         public Builder(Component component, OnPress onPress) {
             this.message = component;
@@ -77,19 +74,19 @@ public class AccessibilityButton extends AccessibilityAbstractButton {
             return this;
         }
 
-        public Builder width(int width) {
-            this.width = width;
+        public Builder width(int w) {
+            this.width = w;
             return this;
         }
 
-        public Builder size(int width, int height) {
-            this.width = width;
-            this.height = height;
+        public Builder size(int w, int h) {
+            this.width = w;
+            this.height = h;
             return this;
         }
 
-        public Builder bounds(int x, int y, int width, int height) {
-            return this.pos(x, y).size(width, height);
+        public Builder bounds(int x, int y, int w, int h) {
+            return this.pos(x, y).size(w, h);
         }
 
         public Builder tooltip(@Nullable Tooltip tooltip) {
@@ -102,26 +99,25 @@ public class AccessibilityButton extends AccessibilityAbstractButton {
             return this;
         }
 
-        public AccessibilityButton build() {
-            AccessibilityButton button = new AccessibilityButton(
-                    this.x, this.y, this.width, this.height, this.message, this.onPress, this.createNarration
+        public MultiplayerButton build() {
+            MultiplayerButton button = new MultiplayerButton(
+                    this.x, this.y, this.width, this.height,
+                    this.message, this.onPress, this.createNarration
             );
-            if (this.tooltip != null) {
-                button.setTooltip(this.tooltip);
-            }
+            button.setTooltip(this.tooltip);
             return button;
         }
     }
 
-    // ====================== 接口 ======================
+    // -------------------- Functional interfaces --------------------
 
     @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
-        MutableComponent createNarrationMessage(Supplier<Component> parentSupplier);
+        MutableComponent createNarrationMessage(Supplier<Component> supplier);
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface OnPress {
-        void onPress(AccessibilityButton button);
+        void onPress(MultiplayerButton self);
     }
 }

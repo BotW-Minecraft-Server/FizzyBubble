@@ -1,10 +1,9 @@
-package link.botwmcs.samchai.client.gui;
+package link.botwmcs.fizzy.client.gui;
 
-import link.botwmcs.samchai.Fizzy;
-import link.botwmcs.samchai.client.elements.FizzyButton;
-import link.botwmcs.samchai.client.elements.StartButton;
-import link.botwmcs.samchai.client.elements.iconbutton.AccessibilityButton;
-import link.botwmcs.samchai.client.elements.iconbutton.LangSelectButton;
+import link.botwmcs.fizzy.client.elements.FizzyButton;
+import link.botwmcs.fizzy.client.elements.StartButton;
+import link.botwmcs.fizzy.client.elements.iconbutton.AccessibilityButton;
+import link.botwmcs.fizzy.client.elements.iconbutton.LangSelectButton;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -16,7 +15,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen;
 import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;

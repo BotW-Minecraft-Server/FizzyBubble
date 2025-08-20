@@ -1,6 +1,6 @@
-package link.botwmcs.samchai.client.elements.iconbutton;
+package link.botwmcs.fizzy.client.elements.iconbutton;
 
-import link.botwmcs.samchai.Fizzy;
+import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,50 +15,48 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class AccessibilityAbstractButton extends AbstractButton {
+public abstract class LangSelectAbstractButton extends AbstractButton {
     protected static final int TEXT_MARGIN = 2;
 
-    /** 三态贴图（sprite 体系） */
+    /** 三态 sprite（放置于 assets/auui/textures/gui/sprites/title/...） */
     private static final WidgetSprites SPRITES = new WidgetSprites(
-            Fizzy.resourceLocation("accessibility"),
-            Fizzy.resourceLocation("accessibility_highlighted")
+            Fizzy.resourceLocation("language"),
+            Fizzy.resourceLocation("language_highlighted")
     );
 
-    public AccessibilityAbstractButton(int x, int y, int width, int height, Component message) {
+    public LangSelectAbstractButton(int x, int y, int width, int height, Component message) {
         super(x, y, width, height, message);
     }
 
-    /** 子类实现点击逻辑 */
+    /** 子类实现：点击逻辑 */
     @Override
     public abstract void onPress();
 
+    /** 渲染：底板 sprite + 文本 */
     @Override
     protected void renderWidget(GuiGraphics gg, int mouseX, int mouseY, float partialTick) {
-        // 背板：按状态绘制 sprite
-        int x = this.getX();
-        int y = this.getY();
-        int w = this.getWidth();
-        int h = this.getHeight();
+        final int x = getX();
+        final int y = getY();
+        final int w = getWidth();
+        final int h = getHeight();
 
-        // 应用 alpha 以配合父级淡入淡出
-        gg.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+        // 背板（按 active/hovered 选 sprite），带 alpha
+        gg.setColor(1f, 1f, 1f, this.alpha);
         gg.blitSprite(SPRITES.get(this.active, this.isHoveredOrFocused()), x, y, w, h);
-        gg.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        gg.setColor(1f, 1f, 1f, 1f);
 
-        // 文本：居中绘制（悬停时 +1 像素下沉）
+        // 文本：居中 + 悬停下沉 1px
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
+        int textW = font.width(getMessage());
+        int tx = x + (w - textW) / 2;
+        int ty = y + (h - 8) / 2 + (this.isHoveredOrFocused() ? 1 : 0);
 
-        Component msg = this.getMessage();
-        int textWidth = font.width(msg);
-        int textX = x + (w - textWidth) / 2;
-        int textY = y + (h - 8) / 2 + (this.isHoveredOrFocused() ? 1 : 0);
-
-        int baseRgb = this.active ? 0xFFFFFF : 0x9A9A9A;
-        int argb = (Math.round(this.alpha * 255.0f) << 24) | baseRgb;
-
-        gg.drawString(font, msg, textX, textY, argb, true);
+        int rgb = this.active ? 0xFFFFFF : 0x9A9A9A;
+        int argb = ((int)(this.alpha * 255) << 24) | rgb;
+        gg.drawString(font, getMessage(), tx, ty, argb, true);
     }
+
     /** Narration 更新：保持原版格式 */
     @Override
     protected void updateWidgetNarration(NarrationElementOutput output) {

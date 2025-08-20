@@ -1,4 +1,4 @@
-package link.botwmcs.samchai;
+package link.botwmcs.fizzy;
 
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;

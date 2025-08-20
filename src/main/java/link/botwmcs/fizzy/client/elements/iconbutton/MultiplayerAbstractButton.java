@@ -1,6 +1,6 @@
-package link.botwmcs.samchai.client.elements.iconbutton;
+package link.botwmcs.fizzy.client.elements.iconbutton;
 
-import link.botwmcs.samchai.Fizzy;
+import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

@@ -1,4 +1,4 @@
-package link.botwmcs.samchai.client.elements.iconbutton;
+package link.botwmcs.fizzy.client.elements.iconbutton;
 
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -10,13 +10,15 @@ import net.neoforged.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-public class MultiplayerButton extends MultiplayerAbstractButton {
-    public static final int SMALL_WIDTH = 120;
-    public static final int DEFAULT_WIDTH = 150;
-    public static final int BIG_WIDTH = 200;
-    public static final int DEFAULT_HEIGHT = 20;
+@OnlyIn(Dist.CLIENT)
+public class LangSelectButton extends LangSelectAbstractButton {
+    public static final int SMALL_WIDTH     = 120;
+    public static final int DEFAULT_WIDTH   = 150;
+    public static final int BIG_WIDTH       = 200;
+    public static final int DEFAULT_HEIGHT  = 20;
     public static final int DEFAULT_SPACING = 8;
 
+    /** 默认旁白：直接使用父类的旁白文本 */
     protected static final CreateNarration DEFAULT_NARRATION = supplier -> supplier.get().copy();
 
     protected final OnPress onPress;
@@ -26,42 +28,43 @@ public class MultiplayerButton extends MultiplayerAbstractButton {
         return new Builder(component, onPress);
     }
 
-
-    public MultiplayerButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
+    public LangSelectButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
         super(x, y, width, height, message);
         this.onPress = onPress;
         this.createNarration = createNarration;
     }
 
+    /** 点击回调：转发给外部提供的 OnPress */
     @Override
     public void onPress() {
         this.onPress.onPress(this);
     }
 
-    /** 等价于 Fabric 的 method_25360：自定义旁白文本生成 */
+    /** 旁白文本：允许通过 CreateNarration 包装/替换父类默认旁白 */
     @Override
     protected MutableComponent createNarrationMessage() {
-        return this.createNarration.createNarrationMessage(() -> super.createNarrationMessage());
+        return this.createNarration.createNarrationMessage(() -> LangSelectButton.super.createNarrationMessage());
     }
 
-    /** 等价于 Fabric 的 method_47399 -> method_37021：按钮默认旁白输出 */
+    /** Narration 更新：保持原版按钮的默认描述格式 */
     @Override
     protected void updateWidgetNarration(NarrationElementOutput output) {
         this.defaultButtonNarrationText(output);
     }
 
+    // ====================== Builder ======================
 
-    // -------------------- Builder --------------------
-
+    @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
-        private final OnPress onPress;
+        public final OnPress onPress;
+
         private @Nullable Tooltip tooltip;
         private int x;
         private int y;
-        private int width = DEFAULT_WIDTH;
+        private int width  = DEFAULT_WIDTH;
         private int height = DEFAULT_HEIGHT;
-        private CreateNarration createNarration = DEFAULT_NARRATION;
+        private CreateNarration createNarration = LangSelectButton.DEFAULT_NARRATION;
 
         public Builder(Component component, OnPress onPress) {
             this.message = component;
@@ -74,19 +77,19 @@ public class MultiplayerButton extends MultiplayerAbstractButton {
             return this;
         }
 
-        public Builder width(int w) {
-            this.width = w;
+        public Builder width(int width) {
+            this.width = width;
             return this;
         }
 
-        public Builder size(int w, int h) {
-            this.width = w;
-            this.height = h;
+        public Builder size(int width, int height) {
+            this.width = width;
+            this.height = height;
             return this;
         }
 
-        public Builder bounds(int x, int y, int w, int h) {
-            return this.pos(x, y).size(w, h);
+        public Builder bounds(int x, int y, int width, int height) {
+            return this.pos(x, y).size(width, height);
         }
 
         public Builder tooltip(@Nullable Tooltip tooltip) {
@@ -99,25 +102,27 @@ public class MultiplayerButton extends MultiplayerAbstractButton {
             return this;
         }
 
-        public MultiplayerButton build() {
-            MultiplayerButton button = new MultiplayerButton(
+        public LangSelectButton build() {
+            LangSelectButton button = new LangSelectButton(
                     this.x, this.y, this.width, this.height,
                     this.message, this.onPress, this.createNarration
             );
-            button.setTooltip(this.tooltip);
+            if (this.tooltip != null) {
+                button.setTooltip(this.tooltip);
+            }
             return button;
         }
     }
 
-    // -------------------- Functional interfaces --------------------
+    // ====================== 接口 ======================
 
     @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
-        MutableComponent createNarrationMessage(Supplier<Component> supplier);
+        MutableComponent createNarrationMessage(Supplier<Component> parentSupplier);
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface OnPress {
-        void onPress(MultiplayerButton self);
+        void onPress(LangSelectButton button);
     }
 }

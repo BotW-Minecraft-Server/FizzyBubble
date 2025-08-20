@@ -1,23 +1,19 @@
-package link.botwmcs.samchai.mixin.client;
+package link.botwmcs.fizzy.mixin.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import link.botwmcs.samchai.Fizzy;
-import net.minecraft.FieldsAreNonnullByDefault;
+import com.mojang.blaze3d.systems.RenderSystem;
+import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.CubeMap;
 import net.minecraft.client.renderer.PanoramaRenderer;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import org.checkerframework.checker.units.qual.A;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -59,9 +55,19 @@ public class PanoramaRendererMixin {
     @Unique
     private int screenshotW, screenshotH;
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(CubeMap cubeMap, CallbackInfo ci) {
-        loadScreenshotOnce(true);
+    @Unique private boolean screenshotPrepared = false;
+
+
+    //    @Inject(method = "<init>", at = @At("TAIL"))
+//    private void onInit(CubeMap cubeMap, CallbackInfo ci) {
+//        loadScreenshotOnce(true);
+//    }
+    @Inject(method = "render", at = @At("HEAD"))
+    private void onRenderHead(GuiGraphics guiGraphics, int width, int height, float fade, float partialTick, CallbackInfo ci) {
+        if (!screenshotPrepared) {
+            screenshotPrepared = true;
+            prepareScreenshotTextureAsync(/*randomize=*/true);
+        }
     }
 
     @Redirect(
@@ -77,6 +83,9 @@ public class PanoramaRendererMixin {
         }
 
         ResourceLocation finalTex = this.screenshotTextureRL != null ? this.screenshotTextureRL : CUSTOM_OVERLAY;
+//        ResourceLocation finalTex = (this.screenshotTextureRL != null) ? this.screenshotTextureRL : CUSTOM_OVERLAY;
+        // 若是 fallback 的 CUSTOM_OVERLAY，还没加载成功也没关系（静态资源会存在）
+
         // 如果还是原版 overlay，就走原调用参数（sprite 条按原版拉伸）
         if (finalTex.equals(VANILLA_OVERLAY)) {
             guiGraphics.blit(atlasLocation, x, y, width, height, uOffset, vOffset, uWidth, vHeight, textureWidth, textureHeight);
@@ -118,62 +127,113 @@ public class PanoramaRendererMixin {
 
     // =================== 工具方法 ===================
 
-    /** 按配置一次性加载（随机或最新）一张截图为动态纹理 */
     @Unique
-    private void loadScreenshotOnce(boolean randomize) {
+    private void prepareScreenshotTextureAsync(boolean randomize) {
+        // 先在当前线程挑选文件并打开字节流到 byte[]，避免 IO 阻塞渲染线程
         Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve(SCREENSHOT_DIR_NAME);
-        if (!Files.isDirectory(dir)) {
-            releaseScreenshotTexture();
-            return;
-        }
+        List<Path> images = Files.isDirectory(dir) ? listImages(dir) : List.of();
+        Path chosen = pickOne(images, randomize);
+        if (chosen == null) { releaseScreenshotTexture(); return; }
 
-
-        // 收集可用图片文件
-        List<Path> images = listImages(dir);
-        if (images.isEmpty()) {
-            releaseScreenshotTexture();
-            return;
-        }
-
-        // 选择文件：随机 or 最新
-        Path chosen;
-        if (randomize) {
-            RandomSource rng = RandomSource.create();        // 每次回到主菜单随机一次
-            chosen = images.get(rng.nextInt(images.size()));
-        } else {
-            // 最新：按最后修改时间降序
-            chosen = images.stream()
-                    .max(Comparator.comparingLong(this::safeMtime))
-                    .orElse(null);
-        }
-        if (chosen == null) {
-            releaseScreenshotTexture();
-            return;
-        }
-
+        byte[] data;
         try (InputStream in = Files.newInputStream(chosen)) {
-            NativeImage img = NativeImage.read(in);
-
-            // 释放旧纹理
-            releaseScreenshotTexture();
-
-            // 创建并注册新纹理
-            this.screenshotTexture = new DynamicTexture(img);
-            this.screenshotW = img.getWidth();
-            this.screenshotH = img.getHeight();
-
-            // 用文件名做 RL，保证每次相同文件名得到相同句柄，避免无限增长
-            String fileBase = chosen.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
-            this.screenshotTextureRL = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + fileBase);
-
-            TextureManager tm = Minecraft.getInstance().getTextureManager();
-            tm.register(this.screenshotTextureRL, this.screenshotTexture);
-
+            data = in.readAllBytes();
         } catch (Exception e) {
-            e.printStackTrace();
             releaseScreenshotTexture();
+            return;
+        }
+
+        // 在渲染线程中：解码为 NativeImage + 创建 DynamicTexture + 注册
+        RenderSystem.recordRenderCall(() -> {
+            try (InputStream bin = new java.io.ByteArrayInputStream(data)) {
+                NativeImage img = NativeImage.read(bin); // 此处不要 try-with-resources 关闭 img，由 DynamicTexture 管
+                if (img == null || img.getWidth() <= 0 || img.getHeight() <= 0) {
+                    releaseScreenshotTexture();
+                    return;
+                }
+
+                // 释放旧纹理（同样在渲染线程中释放，避免与上传并发）
+                releaseScreenshotTexture();
+
+                this.screenshotTexture = new DynamicTexture(img);
+                this.screenshotW = img.getWidth();
+                this.screenshotH = img.getHeight();
+
+                String fileBase = chosen.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
+                this.screenshotTextureRL = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + fileBase);
+
+                Minecraft.getInstance().getTextureManager().register(this.screenshotTextureRL, this.screenshotTexture);
+            } catch (Exception e) {
+                releaseScreenshotTexture();
+            }
+        });
+    }
+
+    @Unique
+    private Path pickOne(List<Path> images, boolean randomize) {
+        if (images.isEmpty()) return null;
+        if (randomize) {
+            return images.get(RandomSource.create().nextInt(images.size()));
+        } else {
+            return images.stream().max(Comparator.comparingLong(this::safeMtime)).orElse(null);
         }
     }
+//    /** 按配置一次性加载（随机或最新）一张截图为动态纹理 */
+//    @Unique
+//    private void loadScreenshotOnce(boolean randomize) {
+//        Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve(SCREENSHOT_DIR_NAME);
+//        if (!Files.isDirectory(dir)) {
+//            releaseScreenshotTexture();
+//            return;
+//        }
+//
+//
+//        // 收集可用图片文件
+//        List<Path> images = listImages(dir);
+//        if (images.isEmpty()) {
+//            releaseScreenshotTexture();
+//            return;
+//        }
+//
+//        // 选择文件：随机 or 最新
+//        Path chosen;
+//        if (randomize) {
+//            RandomSource rng = RandomSource.create();        // 每次回到主菜单随机一次
+//            chosen = images.get(rng.nextInt(images.size()));
+//        } else {
+//            // 最新：按最后修改时间降序
+//            chosen = images.stream()
+//                    .max(Comparator.comparingLong(this::safeMtime))
+//                    .orElse(null);
+//        }
+//        if (chosen == null) {
+//            releaseScreenshotTexture();
+//            return;
+//        }
+//
+//        try (InputStream in = Files.newInputStream(chosen)) {
+//            NativeImage img = NativeImage.read(in);
+//
+//            // 释放旧纹理
+//            releaseScreenshotTexture();
+//
+//            // 创建并注册新纹理
+//            this.screenshotTexture = new DynamicTexture(img);
+//            this.screenshotW = img.getWidth();
+//            this.screenshotH = img.getHeight();
+//
+//            // 用文件名做 RL，保证每次相同文件名得到相同句柄，避免无限增长
+//            String fileBase = chosen.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
+//            this.screenshotTextureRL = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + fileBase);
+//
+//            TextureManager tm = Minecraft.getInstance().getTextureManager();
+//            tm.register(this.screenshotTextureRL, this.screenshotTexture);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            releaseScreenshotTexture();
+//        }
+//    }
 
     /** 列出目录下所有支持的图片（不递归） */
     @Unique

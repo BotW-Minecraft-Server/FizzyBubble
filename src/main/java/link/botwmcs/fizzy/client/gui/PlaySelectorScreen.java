@@ -1,11 +1,10 @@
-package link.botwmcs.samchai.client.gui;
+package link.botwmcs.fizzy.client.gui;
 
-import link.botwmcs.samchai.client.elements.FizzyButton;
-import link.botwmcs.samchai.client.elements.iconbutton.MultiplayerButton;
-import link.botwmcs.samchai.client.elements.iconbutton.SingleplayerButton;
+import link.botwmcs.fizzy.client.elements.FizzyButton;
+import link.botwmcs.fizzy.client.elements.iconbutton.MultiplayerButton;
+import link.botwmcs.fizzy.client.elements.iconbutton.SingleplayerButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
