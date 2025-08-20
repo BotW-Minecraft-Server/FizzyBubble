@@ -16,6 +16,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 // Demonstrates how to use Neo's config APIs
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static final ModConfigSpec.ConfigValue<String> SERVER_ADDR = BUILDER
+            .comment("Join multiplayer server address (ipv4)")
+            .define("serverAddr", "server.botwmcs.link");
 
 //    public static final ModConfigSpec.BooleanValue LOG_DIRT_BLOCK = BUILDER
 //            .comment("Whether to log the dirt block on common setup")

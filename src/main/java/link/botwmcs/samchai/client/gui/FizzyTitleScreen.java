@@ -91,7 +91,7 @@ public class FizzyTitleScreen extends Screen {
         this.addRenderableWidget(
                 StartButton.builder(Component.translatable("fizzy.gui.titlescreen.play_button"),btn ->
                         // mc.setScreen(new PlayScreen(this))               // 你的 PlayScreen
-                        mc.setScreen(new JoinMultiplayerScreen(this))
+                        mc.setScreen(new PlaySelectorScreen(this))
                 ).bounds(rightX, playY, buttonWidth, 40).build()
         );
 

@@ -1,3 +1,6 @@
 {
-  "fizzy.gui.titlescreen.play_button": "Play"
+  "fizzy.gui.titlescreen.play_button": "Play",
+  "fizzy.gui.playselector.title": "Play",
+  "fizzy.gui.playselector.singleplayer": "Singleplayer",
+  "fizzy.gui.playselector.multiplayer": "LTSX Server"
 }
