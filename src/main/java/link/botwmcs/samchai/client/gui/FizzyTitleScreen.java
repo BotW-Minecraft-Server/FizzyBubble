@@ -1,10 +1,10 @@
 package link.botwmcs.samchai.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.samchai.Fizzy;
 import link.botwmcs.samchai.client.elements.FizzyButton;
 import link.botwmcs.samchai.client.elements.StartButton;
-import net.minecraft.SharedConstants;
+import link.botwmcs.samchai.client.elements.iconbutton.AccessibilityButton;
+import link.botwmcs.samchai.client.elements.iconbutton.LangSelectButton;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -17,22 +17,18 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen;
+import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
-import net.minecraft.client.renderer.PanoramaRenderer;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.internal.BrandingControl;
-import org.spongepowered.asm.mixin.Overwrite;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 @OnlyIn(Dist.CLIENT)
 public class FizzyTitleScreen extends Screen {
@@ -93,7 +89,7 @@ public class FizzyTitleScreen extends Screen {
 
         // ---- Play（打开自定义 PlayScreen）----
         this.addRenderableWidget(
-                StartButton.builder(Component.translatable(Fizzy.MODID, "fizzy.gui.titlescreen.play_button"),btn ->
+                StartButton.builder(Component.translatable("fizzy.gui.titlescreen.play_button"),btn ->
                         // mc.setScreen(new PlayScreen(this))               // 你的 PlayScreen
                         mc.setScreen(new JoinMultiplayerScreen(this))
                 ).bounds(rightX, playY, buttonWidth, 40).build()
@@ -123,19 +119,19 @@ public class FizzyTitleScreen extends Screen {
         int paddingLeft   = 20;
         int buttonSpacing2 = 5;
 
-//        // Language
-//        var languageBtn = (LanguageButton) this.addRenderableWidget(
-//                LanguageButton.builder(Component.literal(" "), btn ->
-//                        mc.setScreen(new LanguageSelectScreen(this, mc.options, mc.getLanguageManager()))
-//                ).bounds(paddingLeft, this.height - 20 - paddingLeft, 20, 20).build()
-//        );
-//
-//        // Accessibility（在 Language 上方 5px）
-//        var accessibilityBtn = (AccessibilityButton) this.addRenderableWidget(
-//                AccessibilityButton.builder(Component.literal(" "), btn ->
-//                        mc.setScreen(new AccessibilityOptionsScreen(this, mc.options))
-//                ).bounds(paddingLeft, languageBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
-//        );
+        // Language
+        var languageBtn = (LangSelectButton) this.addRenderableWidget(
+                LangSelectButton.builder(Component.literal(" "), btn ->
+                        mc.setScreen(new LanguageSelectScreen(this, mc.options, mc.getLanguageManager()))
+                ).bounds(paddingLeft, this.height - 20 - paddingLeft, 20, 20).build()
+        );
+
+        // Accessibility（在 Language 上方 5px）
+        var accessibilityBtn = (AccessibilityButton) this.addRenderableWidget(
+                AccessibilityButton.builder(Component.literal(" "), btn ->
+                        mc.setScreen(new AccessibilityOptionsScreen(this, mc.options))
+                ).bounds(paddingLeft, languageBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+        );
 //
 //        // 自定义 Auui Settings（在 Accessibility 上方 5px）
 //        this.addRenderableWidget(
