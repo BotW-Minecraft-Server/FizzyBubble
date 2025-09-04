@@ -2,5 +2,11 @@
   "fizzy.gui.titlescreen.play_button": "Play",
   "fizzy.gui.playselector.title": "Play",
   "fizzy.gui.playselector.singleplayer": "Singleplayer",
-  "fizzy.gui.playselector.multiplayer": "LTSX Server"
+  "fizzy.gui.playselector.multiplayer": "LTSX Server",
+  "fizzy.gui.serverselector.addr1": "Address 1",
+  "fizzy.gui.serverselector.addr1.region": "Region：Beijing (direct)",
+  "fizzy.gui.serverselector.addr2": "Address 2",
+  "fizzy.gui.serverselector/addr2/region": "Region: South",
+  "fizzy.gui.serverselector.addr3": "Address 3",
+  "fizzy.gui.serverselector/addr3/region": "Region: North"
 }

@@ -2,5 +2,11 @@
   "fizzy.gui.titlescreen.play_button": "开始游戏",
   "fizzy.gui.playselector.title": "游戏选择",
   "fizzy.gui.playselector.singleplayer": "单人游戏",
-  "fizzy.gui.playselector.multiplayer": "进入服务器"
+  "fizzy.gui.playselector.multiplayer": "进入服务器",
+  "fizzy.gui.serverselector.addr1": "地址一",
+  "fizzy.gui.serverselector.addr1.region": "区域：北京（直连）",
+  "fizzy.gui.serverselector.addr2": "地址二",
+  "fizzy.gui.serverselector/addr2/region": "区域：南部",
+  "fizzy.gui.serverselector.addr3": "地址三",
+  "fizzy.gui.serverselector/addr3/region": "区域：北部"
 }
