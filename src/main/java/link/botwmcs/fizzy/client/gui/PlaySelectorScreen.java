@@ -89,8 +89,8 @@ public class PlaySelectorScreen extends Screen {
         // 右边小按钮
         var multiSmall = this.addRenderableWidget(
                 FizzyButton.builder(Component.translatable("fizzy.gui.playselector.multiplayer"), (button ->
-//                        this.minecraft.setScreen(new JoinMultiplayerScreen(this))
-                        this.minecraft.setScreen(new ServerSelectorScreen(this))
+                        this.minecraft.setScreen(new JoinMultiplayerScreen(this))
+//                        this.minecraft.setScreen(new ServerSelectorScreen(this))
                 )).bounds(rightX, smallY, SMALL_W, SMALL_H).tooltip(emptyTip).build()
         );
         multiSmall.active = mpEnabled;

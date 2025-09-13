@@ -56,7 +56,7 @@ public abstract class MultiplayerAbstractButton extends AbstractButton {
     /** 点击音效 */
     @Override
     public void playDownSound(net.minecraft.client.sounds.SoundManager soundManager) {
-        soundManager.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        soundManager.play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
     }
 
 }

@@ -139,7 +139,10 @@ dependencies {
 
 
     // alans ui
-    // implementation files("libs/alanui.jar")
+//     implementation files("libs/alanui.jar")
+    compileOnly files("libs/better_modlist-1.1.19.jar")
+    // Mod Menu
+
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

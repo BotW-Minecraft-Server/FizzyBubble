@@ -1,9 +1,12 @@
 package link.botwmcs.fizzy.client.gui;
 
+import com.terraformersmc.mod_menu.gui.ModsScreen;
+import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.elements.FizzyButton;
 import link.botwmcs.fizzy.client.elements.StartButton;
 import link.botwmcs.fizzy.client.elements.iconbutton.AccessibilityButton;
 import link.botwmcs.fizzy.client.elements.iconbutton.LangSelectButton;
+import link.botwmcs.fizzy.client.util.ScreenshotCycler;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -22,6 +25,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.internal.BrandingControl;
 
@@ -130,6 +134,35 @@ public class FizzyTitleScreen extends Screen {
                         mc.setScreen(new AccessibilityOptionsScreen(this, mc.options))
                 ).bounds(paddingLeft, languageBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
         );
+
+        int flexableY = accessibilityBtn.getY();
+        if (ModList.get().isLoaded("mod_menu")) {
+            var modBtn = (FizzyButton) this.addRenderableWidget(
+                    FizzyButton.builder(Component.literal("M"), btn ->
+                        mc.setScreen(new ModsScreen(this))
+                    ).bounds(paddingLeft, accessibilityBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+            );
+            flexableY = modBtn.getY();
+        }
+
+        var nextScreenshotBtn = (FizzyButton) this.addRenderableWidget(
+                FizzyButton.builder(Component.literal("→"), btn -> {
+                    ScreenshotCycler.INSTANCE.next();
+                }).bounds(paddingLeft, flexableY - buttonSpacing2 - 20, 20, 20).build()
+        );
+
+        var previousScreenshotBtn = (FizzyButton) this.addRenderableWidget(
+                FizzyButton.builder(Component.literal("←"), btn -> {
+                    ScreenshotCycler.INSTANCE.prev();
+                }).bounds(paddingLeft, nextScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+        );
+
+        var likeBtn = (FizzyButton) this.addRenderableWidget(
+                FizzyButton.builder(Component.literal("♥"), btn -> {
+
+                }).bounds(paddingLeft, previousScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+        );
+
 //
 //        // 自定义 Auui Settings（在 Accessibility 上方 5px）
 //        this.addRenderableWidget(
