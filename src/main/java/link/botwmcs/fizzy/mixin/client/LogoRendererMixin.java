@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.mixin.client;
 
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LogoRenderer;
@@ -9,6 +10,9 @@ import net.minecraft.util.RandomSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 这个 Mixin 的作用（高层说明）：
@@ -49,6 +53,31 @@ public class LogoRendererMixin {
 
     @Unique private static final int EDITION_LOGO_OVERLAP = 7; // 与主 Logo 的重叠高度
 
+    @Inject(method = "renderLogo", at = @At("HEAD"), cancellable = true)
+    private void fizzy$renderLogoLtsx(GuiGraphics gg, int screenWidth, float alpha, int yOffset, CallbackInfo ci) {
+        // 仅当：LTSX 环境 && 配置允许，才启用自定义 Logo 绘制
+        if (!(EnvDetector.isLTSX())) {
+            return; // 不拦截 → 走原版
+        }
+
+        // ===== 下面就是你原来的 Overwrite 内容 =====
+        final float opacity = this.keepLogoThroughFade ? 1.0F : alpha;
+
+        final boolean isChinese = this.fizzy_template_1_21_1$isChinese();
+        final ResourceLocation titleLogo = this.fizzy_template_1_21_1$selectTitleLogo(isChinese);
+
+        gg.setColor(1.0F, 1.0F, 1.0F, opacity);
+        this.fizzy_template_1_21_1$renderMainLogo(gg, screenWidth, yOffset, isChinese, titleLogo);
+
+        final ResourceLocation editionLogo = this.fizzy_template_1_21_1$selectEditionLogo();
+        this.fizzy_template_1_21_1$renderEditionLogo(gg, screenWidth, yOffset, editionLogo, isChinese);
+
+        gg.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+        // 拦截原版
+        ci.cancel();
+    }
+
 
     /**
      * @author Sam_Chai
@@ -58,28 +87,28 @@ public class LogoRendererMixin {
      *      - 判断是否中文与用户配置，决定使用哪套 Logo 资源
      *      - 绘制主 Logo 与 Edition 子标
      */
-    @Overwrite
-    public void renderLogo(GuiGraphics gg, int screenWidth, float alpha, int yOffset) {
-        // 1) 最终不透明度：如果 keepLogoThroughFade 为真，就在过场阶段也保持 1.0F
-        final float opacity = this.keepLogoThroughFade ? 1.0F : alpha;
-
-        // 2) 判断是否选择中文 Logo（需要语言为 zh）
-        final boolean isChinese = this.fizzy_template_1_21_1$isChinese();
-
-        // 3) 选取主 Logo 纹理资源
-        final ResourceLocation titleLogo = this.fizzy_template_1_21_1$selectTitleLogo(isChinese);
-
-        // 4) 用 GuiGraphics 的全局颜色控制透明度（相当于你原来的颜色 ABGR）
-        gg.setColor(1.0F, 1.0F, 1.0F, opacity);
-        this.fizzy_template_1_21_1$renderMainLogo(gg, screenWidth, yOffset, isChinese, titleLogo);
-
-        // 5) 渲染 Edition 子标识（如果开启）
-        final ResourceLocation editionLogo = this.fizzy_template_1_21_1$selectEditionLogo();
-        this.fizzy_template_1_21_1$renderEditionLogo(gg, screenWidth, yOffset, editionLogo, isChinese);
-
-        // 6) 恢复颜色状态（以防影响后续 GUI 绘制）
-        gg.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-    }
+//    @Overwrite
+//    public void renderLogo(GuiGraphics gg, int screenWidth, float alpha, int yOffset) {
+//        // 1) 最终不透明度：如果 keepLogoThroughFade 为真，就在过场阶段也保持 1.0F
+//        final float opacity = this.keepLogoThroughFade ? 1.0F : alpha;
+//
+//        // 2) 判断是否选择中文 Logo（需要语言为 zh）
+//        final boolean isChinese = this.fizzy_template_1_21_1$isChinese();
+//
+//        // 3) 选取主 Logo 纹理资源
+//        final ResourceLocation titleLogo = this.fizzy_template_1_21_1$selectTitleLogo(isChinese);
+//
+//        // 4) 用 GuiGraphics 的全局颜色控制透明度（相当于你原来的颜色 ABGR）
+//        gg.setColor(1.0F, 1.0F, 1.0F, opacity);
+//        this.fizzy_template_1_21_1$renderMainLogo(gg, screenWidth, yOffset, isChinese, titleLogo);
+//
+//        // 5) 渲染 Edition 子标识（如果开启）
+//        final ResourceLocation editionLogo = this.fizzy_template_1_21_1$selectEditionLogo();
+//        this.fizzy_template_1_21_1$renderEditionLogo(gg, screenWidth, yOffset, editionLogo, isChinese);
+//
+//        // 6) 恢复颜色状态（以防影响后续 GUI 绘制）
+//        gg.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+//    }
 
     // =========================
     // 工具方法（Unique）

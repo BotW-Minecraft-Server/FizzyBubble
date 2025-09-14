@@ -1,17 +1,10 @@
 package link.botwmcs.fizzy.mixin.client;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
-import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.util.EnvDetector;
 import link.botwmcs.fizzy.client.util.ScreenshotCycler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.CubeMap;
 import net.minecraft.client.renderer.PanoramaRenderer;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,14 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 @Mixin(PanoramaRenderer.class)
@@ -62,7 +47,12 @@ public class PanoramaRendererMixin {
         }
 
         // 替换为我们的背景绘制（包含渐变/等比居中）
-        ScreenshotCycler.INSTANCE.renderBackground(gg, x, y, width, height);
+        if (EnvDetector.isLTSX()) {
+            ScreenshotCycler.INSTANCE.renderBackground(gg, x, y, width, height);
+        } else {
+            gg.blit(atlasLocation, x, y, width, height, uOffset, vOffset, uWidth, vHeight, textureWidth, textureHeight);
+        }
+
     }
 
     /* Old Code **/

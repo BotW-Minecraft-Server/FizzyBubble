@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.mixin.client;
 
 import link.botwmcs.fizzy.client.gui.FizzyTitleScreen;
+import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.LogoRenderer;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -23,9 +24,11 @@ public class TitleScreenMixin {
     @Inject(method = "init", at = @At("HEAD"), cancellable = true)
     private void fizzy$swapToCustomScreen(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        // 将原版主菜单替换为你自己的屏幕
-        mc.setScreen(new FizzyTitleScreen(false, logoRenderer));
-        // 取消原版 TitleScreen 的 init
-        ci.cancel();
+        if (EnvDetector.isLTSX()) {
+            // 将原版主菜单替换为你自己的屏幕
+            mc.setScreen(new FizzyTitleScreen(false, logoRenderer));
+            // 取消原版 TitleScreen 的 init
+            ci.cancel();
+        }
     }
 }

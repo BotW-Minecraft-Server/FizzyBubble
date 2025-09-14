@@ -1,5 +1,6 @@
 package link.botwmcs.fizzy;
 
+import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -27,5 +28,8 @@ public class FizzyClient {
         // Some client setup code
         Fizzy.LOGGER.info("HELLO FROM CLIENT SETUP");
         Fizzy.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+        if (EnvDetector.isLTSX()) {
+            Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
+        }
     }
 }

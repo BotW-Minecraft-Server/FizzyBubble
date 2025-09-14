@@ -141,7 +141,8 @@ dependencies {
     // alans ui
 //     implementation files("libs/alanui.jar")
     compileOnly files("libs/better_modlist-1.1.19.jar")
-    // Mod Menu
+    // Okhttp
+    jarJar implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
 }
 

@@ -9,6 +9,21 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> SERVER_ADDR = BUILDER
             .comment("Join multiplayer server address (ipv4)")
             .define("serverAddr", "server.botwmcs.link");
+    public static final ModConfigSpec.BooleanValue ENABLE_ONLINE_GALLERY = BUILDER
+            .comment("Enable online gallery")
+            .define("enableOnlineGallery", true);
+    public static final ModConfigSpec.ConfigValue<String> GALLERY_URL = BUILDER
+            .comment("Online gallery url")
+            .comment("Do not change unless you know what you are doing")
+            .define("galleryUrl", "https://mirror.botwmcs.link/eazyimages/api/index.php");
+    public static final ModConfigSpec.ConfigValue<String> TOKEN = BUILDER
+            .comment("Token for online gallery")
+            .define("token", "1c17b11693cb5ec63859b091c5b9c1b2");
+    public static final ModConfigSpec.ConfigValue<String> IMAGE_LOC = BUILDER
+            .comment("Location to save images")
+            .define("imageLoc", "./images/");
+
+
 
 //    public static final ModConfigSpec.BooleanValue LOG_DIRT_BLOCK = BUILDER
 //            .comment("Whether to log the dirt block on common setup")
