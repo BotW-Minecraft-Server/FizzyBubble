@@ -83,7 +83,7 @@ public class PanoramaRendererMixin {
 //    @Unique private boolean screenshotPrepared = false;
 //
 //
-//    //    @Inject(method = "<init>", at = @At("TAIL"))
+//    //    @Inject(method = "<initImageClient>", at = @At("TAIL"))
 ////    private void onInit(CubeMap cubeMap, CallbackInfo ci) {
 ////        loadScreenshotOnce(true);
 ////    }

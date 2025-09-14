@@ -27,7 +27,7 @@ public class TitleScreenMixin {
         if (EnvDetector.isLTSX()) {
             // 将原版主菜单替换为你自己的屏幕
             mc.setScreen(new FizzyTitleScreen(false, logoRenderer));
-            // 取消原版 TitleScreen 的 init
+            // 取消原版 TitleScreen 的 initImageClient
             ci.cancel();
         }
     }

@@ -248,4 +248,9 @@ public final class EasyImagesClient implements AutoCloseable {
             return "";
         };
     }
+
+    public static Supplier<String> tokenFromString(String token) {
+        String t = token == null ? "" : token.trim();
+        return () -> t;
+    }
 }

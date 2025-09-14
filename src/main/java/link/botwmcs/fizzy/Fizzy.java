@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy;
 
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -47,6 +48,13 @@ public class Fizzy {
     public void onServerStarting(ServerStartingEvent event) {
         // Do something when the server starts
         LOGGER.info("HELLO from server starting");
+        FizzyServices.initImageClient();
+    }
+
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        // Do something when the server stops
+        FizzyServices.shutdown();
     }
 
     public static ResourceLocation resourceLocation(String path) {

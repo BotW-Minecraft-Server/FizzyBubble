@@ -15,7 +15,7 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> GALLERY_URL = BUILDER
             .comment("Online gallery url")
             .comment("Do not change unless you know what you are doing")
-            .define("galleryUrl", "https://mirror.botwmcs.link/eazyimages/api/index.php");
+            .define("galleryUrl", "https://mirror.botwmcs.link/eazyimages");
     public static final ModConfigSpec.ConfigValue<String> TOKEN = BUILDER
             .comment("Token for online gallery")
             .define("token", "1c17b11693cb5ec63859b091c5b9c1b2");
