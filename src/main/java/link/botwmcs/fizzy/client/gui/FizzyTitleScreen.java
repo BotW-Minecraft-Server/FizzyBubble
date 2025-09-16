@@ -1,12 +1,11 @@
 package link.botwmcs.fizzy.client.gui;
 
-import com.terraformersmc.mod_menu.gui.ModsScreen;
-import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.ImageServices;
 import link.botwmcs.fizzy.client.elements.FizzyButton;
 import link.botwmcs.fizzy.client.elements.StartButton;
 import link.botwmcs.fizzy.client.elements.iconbutton.AccessibilityButton;
 import link.botwmcs.fizzy.client.elements.iconbutton.LangSelectButton;
-import link.botwmcs.fizzy.client.util.ScreenshotCycler;
+import link.botwmcs.fizzy.client.util.ScreenshotManager;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -16,12 +15,16 @@ import net.minecraft.client.gui.components.LogoRenderer;
 import net.minecraft.client.gui.components.SplashRenderer;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen;
 import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -30,6 +33,10 @@ import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.internal.BrandingControl;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Constructor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 
 @OnlyIn(Dist.CLIENT)
@@ -39,11 +46,17 @@ public class FizzyTitleScreen extends Screen {
     @Nullable
     private SplashRenderer splash;
 
-
     private float panoramaFade;
     private boolean fading;
     private long fadeInStart;
     private final LogoRenderer logoRenderer;
+
+    private FizzyButton likeBtn;
+
+    // 用 Unicode 心形符号做“空心/实心”
+    private static final Component HEART_EMPTY = Component.literal("♡"); // 未点赞
+    private static final Component HEART_FILLED = Component.literal("♥"); // 已点赞
+
 
     public FizzyTitleScreen() {
         this(false);
@@ -71,11 +84,14 @@ public class FizzyTitleScreen extends Screen {
 
     @Override
     protected void init() {
+        super.init();
         final Minecraft mc = this.minecraft;
 
         if (this.splash == null) {
             this.splash = this.minecraft.getSplashManager().getSplash();
         }
+
+        ScreenshotManager.INSTANCE.ensureLikedLoaded();
 
         // 右下角布局参数
         int paddingRight   = 20;
@@ -137,39 +153,49 @@ public class FizzyTitleScreen extends Screen {
 
         int flexableY = accessibilityBtn.getY();
         if (ModList.get().isLoaded("mod_menu")) {
-            var modBtn = (FizzyButton) this.addRenderableWidget(
-                    FizzyButton.builder(Component.literal("M"), btn ->
-                        mc.setScreen(new ModsScreen(this))
-                    ).bounds(paddingLeft, accessibilityBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
-            );
-            flexableY = modBtn.getY();
+            try {
+                Class<?> modsScreenCls = Class.forName("com.terraformersmc.mod_menu.gui.ModsScreen");
+                Constructor<?> ctor = modsScreenCls.getConstructor(Screen.class);
+                Screen modsScreen = (Screen) ctor.newInstance(this);
+
+                var modBtn = (FizzyButton) this.addRenderableWidget(
+                        FizzyButton.builder(Component.literal("M"), btn ->
+                                mc.setScreen(modsScreen)
+                        ).bounds(paddingLeft, accessibilityBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+                );
+                flexableY = modBtn.getY();
+            } catch (Throwable t) {
+                flexableY = accessibilityBtn.getY();
+            }
+
         }
 
         var nextScreenshotBtn = (FizzyButton) this.addRenderableWidget(
                 FizzyButton.builder(Component.literal("→"), btn -> {
-                    ScreenshotCycler.INSTANCE.next();
+                    ScreenshotManager.INSTANCE.next();
                 }).bounds(paddingLeft, flexableY - buttonSpacing2 - 20, 20, 20).build()
         );
 
         var previousScreenshotBtn = (FizzyButton) this.addRenderableWidget(
                 FizzyButton.builder(Component.literal("←"), btn -> {
-                    ScreenshotCycler.INSTANCE.prev();
+                    ScreenshotManager.INSTANCE.prev();
                 }).bounds(paddingLeft, nextScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
         );
 
-        var likeBtn = (FizzyButton) this.addRenderableWidget(
-                FizzyButton.builder(Component.literal("♥"), btn -> {
-
+        this.likeBtn = (FizzyButton) this.addRenderableWidget(
+                FizzyButton.builder(HEART_EMPTY, btn -> {
+                    onClickLike();
                 }).bounds(paddingLeft, previousScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
         );
 
-//
-//        // 自定义 Auui Settings（在 Accessibility 上方 5px）
-//        this.addRenderableWidget(
-//                AuuiSettingsButton.builder(Component.literal(" "), btn ->
-//                        mc.setScreen(new AuuiSettingsScreen(this, mc.options))
-//                ).bounds(paddingLeft, accessibilityBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+        updateLikeButtonState();
+
+//        var likeBtn = (FizzyButton) this.addRenderableWidget(
+//                FizzyButton.builder(Component.literal("♥"), btn -> {
+//                    onClickLike();
+//                }).bounds(paddingLeft, previousScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
 //        );
+
     }
 
     @Override
@@ -197,6 +223,7 @@ public class FizzyTitleScreen extends Screen {
         int i = Mth.ceil(f * 255.0F) << 24;
         if ((i & -67108864) != 0) {
             super.render(guiGraphics, mouseX, mouseY, partialTick);
+            updateLikeButtonState();
             this.logoRenderer.renderLogo(guiGraphics, this.width, f);
             ClientHooks.renderMainMenu((TitleScreen) new TitleScreen(), guiGraphics, this.font, this.width, this.height, i);
             if (this.splash != null && !(Boolean)this.minecraft.options.hideSplashTexts().get()) {
@@ -239,7 +266,6 @@ public class FizzyTitleScreen extends Screen {
                 abstractwidget.setAlpha(alpha);
             }
         }
-
     }
 
     public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
@@ -248,4 +274,119 @@ public class FizzyTitleScreen extends Screen {
     protected void renderPanorama(GuiGraphics guiGraphics, float partialTick) {
         PANORAMA.render(guiGraphics, this.width, this.height, this.panoramaFade, partialTick);
     }
+
+    // private methods
+    private void onClickLike() {
+        ScreenshotManager.ImageInfo info = ScreenshotManager.INSTANCE.getDisplayedImage();
+        Path file = info.file;
+        if (file == null || !Files.exists(file)) {
+            Minecraft.getInstance().getToasts().addToast(SystemToast.multiline(
+                    Minecraft.getInstance(),
+                    SystemToast.SystemToastId.NARRATOR_TOGGLE,
+                    Component.translatable("fizzy.gui.titlescreen.like_button.upload.failure"),
+                    Component.translatable("fizzy.gui.titlescreen.like_button.upload.failure.not_local")
+            ));
+            return;
+        }
+
+        try {
+            byte[] data = Files.readAllBytes(file);
+            String filename = file.getFileName().toString();
+            String mime = guessMimeType(filename);
+
+            ImageServices.IMAGES.uploadAsync(data, filename, mime)
+                    .thenAccept(result -> {
+                        if (result.success) {
+                            ScreenshotManager.INSTANCE.markLiked(file);
+                            updateLikeButtonState();
+
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> {
+                                playUISound(SoundEvents.EXPERIENCE_ORB_PICKUP);
+                                mc.getToasts().addToast(SystemToast.multiline(
+                                        mc,
+                                        SystemToast.SystemToastId.NARRATOR_TOGGLE,
+                                        Component.translatable("fizzy.gui.titlescreen.like_button.upload.success"),
+                                        Component.translatable("fizzy.gui.titlescreen.like_button.upload.success.notice")
+//                                        Component.literal(result.rawResponse)
+//                                        Component.literal(result.url != null ? result.url : "(no url)")
+                                ));
+                            });
+                        } else {
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> {
+                                playUISound(SoundEvents.NOTE_BLOCK_BASS.value());
+                                mc.getToasts().addToast(SystemToast.multiline(
+                                        mc,
+                                        SystemToast.SystemToastId.NARRATOR_TOGGLE,
+                                        Component.translatable("fizzy.gui.titlescreen.like_button.upload.failure"),
+                                        Component.literal("HTTP " + result.httpCode)
+                                ));
+                            });
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        ex.printStackTrace();
+                        Minecraft.getInstance().execute(() -> {
+                            playUISound(SoundEvents.NOTE_BLOCK_BASS.value());
+                            Minecraft.getInstance().getToasts().addToast(SystemToast.multiline(
+                                    Minecraft.getInstance(),
+                                    SystemToast.SystemToastId.NARRATOR_TOGGLE,
+                                    Component.translatable("fizzy.gui.titlescreen.like_button.upload.failure"),
+                                    Component.literal(ex.getMessage())
+                            ));
+                        });
+                        return null;
+                    });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Minecraft.getInstance().getToasts().addToast(SystemToast.multiline(
+                    Minecraft.getInstance(),
+                    SystemToast.SystemToastId.NARRATOR_TOGGLE,
+                    Component.translatable("fizzy.gui.titlescreen.like_button.upload.failure.error_loading_file"),
+                    Component.literal(e.getMessage())
+            ));
+        }
+
+    }
+
+    private static String guessMimeType(String filename) {
+        String lower = filename.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        return "application/octet-stream";
+    }
+
+    private static void playUISound(SoundEvent sound) {
+        Minecraft mc = Minecraft.getInstance();
+        mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, 1.0F));
+    }
+
+
+    private void updateLikeButtonState() {
+        if (likeBtn == null) return;
+
+        ScreenshotManager.ImageInfo info = ScreenshotManager.INSTANCE.getDisplayedImage();
+        boolean hasFile = info != null && !info.isFallback && info.file != null;
+        boolean liked = hasFile && ScreenshotManager.INSTANCE.isLiked(info.file);
+
+        // 1) 文本：♡ / ♥
+        likeBtn.setMessage(liked ? HEART_FILLED : HEART_EMPTY);
+
+        // 2) 颜色（可选）：已点赞显示红色
+        if (liked) {
+            likeBtn.setMessage(Component.literal("♥"));
+        }
+
+        // 3) 可点状态：已点赞 or 无有效文件 → 禁用
+        likeBtn.active = hasFile && !liked;
+
+        // 4) Tooltip：已点赞时提示“已收藏”，否则“收藏/上传…”
+        likeBtn.setTooltip(Tooltip.create(
+                Component.translatable(liked ? "fizzy.gui.titlescreen.like_button.tooltip.already_uploaded" : "fizzy.gui.titlescreen.like_button.tooltip.upload")
+        ));
+    }
+
+
 }

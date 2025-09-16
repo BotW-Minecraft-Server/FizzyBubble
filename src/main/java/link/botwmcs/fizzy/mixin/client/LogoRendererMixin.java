@@ -53,7 +53,7 @@ public class LogoRendererMixin {
 
     @Unique private static final int EDITION_LOGO_OVERLAP = 7; // 与主 Logo 的重叠高度
 
-    @Inject(method = "renderLogo", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderLogo*", at = @At("HEAD"), cancellable = true)
     private void fizzy$renderLogoLtsx(GuiGraphics gg, int screenWidth, float alpha, int yOffset, CallbackInfo ci) {
         // 仅当：LTSX 环境 && 配置允许，才启用自定义 Logo 绘制
         if (!(EnvDetector.isLTSX())) {

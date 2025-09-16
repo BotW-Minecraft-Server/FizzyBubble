@@ -10,19 +10,25 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
+import javax.annotation.Nullable;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public final class ScreenshotCycler {
-    public static final ScreenshotCycler INSTANCE = new ScreenshotCycler();
+public final class ScreenshotManager {
+    public static final ScreenshotManager INSTANCE = new ScreenshotManager();
 
-    private ScreenshotCycler() {}
+    private ScreenshotManager() {}
     private static final ResourceLocation FALLBACK_OVERLAY =
             ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/title/background/default.png");
 
@@ -33,6 +39,9 @@ public final class ScreenshotCycler {
 
     private static final String SCREENSHOT_DIR_NAME = "screenshots";
     private static final String[] IMAGE_GLOBS = new String[]{"*.png","*.PNG","*.jpg","*.JPG","*.jpeg","*.JPEG"};
+
+    private final Set<String> liked = ConcurrentHashMap.newKeySet();
+    private volatile boolean likedLoaded = false;
 
     // 渐变时长（tick）
     private static final int FADE_TICKS = 20;
@@ -55,6 +64,9 @@ public final class ScreenshotCycler {
     private boolean fading = false;
 
     private boolean prepared = false;
+
+    private volatile Path curFile;   // 当前显示图对应的文件（可能为 null：fallback 或尚未准备）
+    private volatile Path nextFile;  // 渐变目标图对应的文件
 
     // ============ 外部控制 API ============
     public void ensurePrepared(boolean randomizeFirst) {
@@ -93,6 +105,77 @@ public final class ScreenshotCycler {
         }
     }
 
+    public void ensureLikedLoaded() {
+        if (likedLoaded) return;
+        synchronized (this) {
+            if (likedLoaded) return;
+            try {
+                Path p = likedJsonPath();
+                if (Files.isRegularFile(p)) {
+                    String txt = Files.readString(p, StandardCharsets.UTF_8).trim();
+                    List<String> raw = new java.util.ArrayList<>();
+
+                    if (txt.startsWith("[")) {
+                        // 简单 JSON 数组解析
+                        txt = txt.substring(1, txt.endsWith("]") ? txt.length() - 1 : txt.length());
+                        for (String part : txt.split(",")) {
+                            String s = part.trim();
+                            if (s.startsWith("\"") && s.endsWith("\"")) s = s.substring(1, s.length() - 1);
+                            if (!s.isEmpty()) raw.add(s);
+                        }
+                    } else {
+                        // 逐行
+                        for (String line : txt.split("\\R")) {
+                            String s = line.trim();
+                            if (!s.isEmpty()) raw.add(s);
+                        }
+                    }
+
+                    for (String s0 : raw) {
+                        String s = s0.replace('\\', '/').trim();
+
+                        // 兼容旧数据：把绝对路径或含有 ".../screenshots/..." 的裁剪成相对
+                        int k = s.toLowerCase(java.util.Locale.ROOT).lastIndexOf("/screenshots/");
+                        if (k >= 0) s = s.substring(k + "/screenshots/".length());
+                        if (s.startsWith("./")) s = s.substring(2);
+                        if (s.startsWith("/")) s = s.substring(1);
+
+                        // 过滤明显不是图片文件的项（目录名、空字符串等）
+                        String lower = s.toLowerCase(java.util.Locale.ROOT);
+                        boolean looksImage = lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg");
+                        if (!looksImage) continue;
+
+                        liked.add(s);
+                    }
+                }
+            } catch (Exception ignore) {}
+            likedLoaded = true;
+        }
+
+    }
+
+    public boolean isLiked(@org.jetbrains.annotations.Nullable Path file) {
+        ensureLikedLoaded();
+        if (file == null) return false;
+        String key = keyFor(file);
+        return key != null && liked.contains(key);
+
+    }
+
+    public boolean markLiked(@org.jetbrains.annotations.Nullable Path file) {
+        ensureLikedLoaded();
+        if (file == null) return false;
+        String key = keyFor(file);
+        if (key == null) return false;
+        boolean added = liked.add(key);
+        if (added) {
+            java.util.concurrent.CompletableFuture.runAsync(this::saveLikedQuiet);
+        }
+        return added;
+    }
+
+
+
     // 渲染（由 Mixin 调用）
     public void renderBackground(GuiGraphics gg, int x, int y, int width, int height) {
         // 保障至少有一张
@@ -110,6 +193,9 @@ public final class ScreenshotCycler {
                 curTex = nextTex; nextTex = null;
                 curW   = nextW;   nextW   = 0;
                 curH   = nextH;   nextH   = 0;
+
+                curFile = nextFile; nextFile = null;
+
                 index  = nextIndexWhenFading; // 记录我们要切到哪个索引
                 nextIndexWhenFading = -1;
 
@@ -140,6 +226,80 @@ public final class ScreenshotCycler {
                 blitWithAlpha(gg, FALLBACK_OVERLAY, ox, oy, rw, rh, TEXTURE_WIDTH, TEXTURE_HEIGHT, 1.0f);
             }
         }
+    }
+
+    // ===== 快照查询 API =====
+    /** 不可变的图片快照 */
+    public static final class ImageInfo {
+        public final ResourceLocation rl;
+        public final int width, height;
+        public final boolean isFallback;
+        public final @Nullable Path file; // 可能为 null（fallback 或未就绪）
+        public final float visibleAlpha;   // 在当前帧里这张图的可见 alpha（0..1）
+        public final boolean isFading;     // 是否处于渐变过程
+
+        private ImageInfo(ResourceLocation rl, int w, int h, boolean fallback, @Nullable Path file, float alpha, boolean fading) {
+            this.rl = rl; this.width = w; this.height = h;
+            this.isFallback = fallback; this.file = file;
+            this.visibleAlpha = alpha; this.isFading = fading;
+        }
+    }
+
+    /**
+     * 获取“此刻屏幕上最显眼”的那张背景图快照（不阻塞，不保证在渲染线程调用）。
+     * - 若处于渐变：返回 alpha 较大的那张（t>=0.5 返回 next，否则返回 current）。
+     * - 若无图：返回 fallback。
+     * 本方法不触发 IO/GL 操作。
+     */
+    public ImageInfo getDisplayedImage() {
+        final boolean fadingLocal = this.fading;
+        final int fadeTicksLocal = this.fadeTicks;
+        final ResourceLocation cur = this.curRL, nxt = this.nextRL;
+        final int cW = this.curW, cH = this.curH, nW = this.nextW, nH = this.nextH;
+        final Path cF = this.curFile, nF = this.nextFile;
+
+        if (cur == null && nxt == null) {
+            return new ImageInfo(FALLBACK_OVERLAY, TEXTURE_WIDTH, TEXTURE_HEIGHT, true, null, 1f, false);
+        }
+
+        if (fadingLocal && cur != null && nxt != null) {
+            float t = clamp01((float) fadeTicksLocal / (float) FADE_TICKS);
+            if (t >= 0.5f) {
+                return new ImageInfo(nxt, (nW > 0 ? nW : TEXTURE_WIDTH), (nH > 0 ? nH : TEXTURE_HEIGHT), false, nF, t, true);
+            } else {
+                boolean curIsFallback = (this.index < 0);
+                return new ImageInfo(cur, (cW > 0 ? cW : TEXTURE_WIDTH), (cH > 0 ? cH : TEXTURE_HEIGHT), curIsFallback, cF, 1f - t, true);
+            }
+        }
+
+        if (cur != null) {
+            boolean curIsFallback = (this.index < 0);
+            return new ImageInfo(cur, (cW > 0 ? cW : TEXTURE_WIDTH), (cH > 0 ? cH : TEXTURE_HEIGHT), curIsFallback, cF, 1f, false);
+        }
+        // 罕见兜底
+        return new ImageInfo(nxt, (nW > 0 ? nW : TEXTURE_WIDTH), (nH > 0 ? nH : TEXTURE_HEIGHT), false, nF, 1f, fadingLocal);
+    }
+
+    /** 不论是否在渐变，返回当前层（旧图层）的信息；不存在时返回 fallback。 */
+    public ImageInfo getCurrentLayerImage() {
+        final ResourceLocation cur = this.curRL;
+        if (cur != null) {
+            float alpha = this.fading ? clamp01(1f - ((float)this.fadeTicks / (float)FADE_TICKS)) : 1f;
+            return new ImageInfo(cur, (this.curW > 0 ? this.curW : TEXTURE_WIDTH), (this.curH > 0 ? this.curH : TEXTURE_HEIGHT),
+                    this.index < 0, this.curFile, alpha, this.fading);
+        }
+        return new ImageInfo(FALLBACK_OVERLAY, TEXTURE_WIDTH, TEXTURE_HEIGHT, true, null, 1f, false);
+    }
+
+    /** 不论是否在渐变，返回目标层（新图层）的信息；不存在时返回 fallback。 */
+    public ImageInfo getNextLayerImage() {
+        final ResourceLocation nxt = this.nextRL;
+        if (nxt != null) {
+            float alpha = this.fading ? clamp01((float)this.fadeTicks / (float)FADE_TICKS) : 1f;
+            return new ImageInfo(nxt, (this.nextW > 0 ? this.nextW : TEXTURE_WIDTH), (this.nextH > 0 ? this.nextH : TEXTURE_HEIGHT),
+                    false, this.nextFile, alpha, this.fading);
+        }
+        return new ImageInfo(FALLBACK_OVERLAY, TEXTURE_WIDTH, TEXTURE_HEIGHT, true, null, 1f, false);
     }
 
 
@@ -177,6 +337,64 @@ public final class ScreenshotCycler {
         try { return Files.getLastModifiedTime(p).toMillis(); } catch (Exception e) { return -1L; }
     }
 
+    private void saveLikedQuiet() {
+        try {
+            Path p = likedJsonPath();
+            if (!Files.isDirectory(p.getParent())) Files.createDirectories(p.getParent());
+            // 写成简单 JSON 数组
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            boolean first = true;
+            for (String s : liked) {
+                if (!first) sb.append(',');
+                first = false;
+                sb.append('"').append(s.replace("\\","\\\\").replace("\"","\\\"")).append('"');
+            }
+            sb.append(']');
+            Files.writeString(p, sb.toString(), StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+        } catch (Exception ignore) {}
+    }
+
+    private static Path likedJsonPath() {
+        Path cfgDir = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("fizzy");
+        if (!Files.isDirectory(cfgDir)) {
+            try { Files.createDirectories(cfgDir); } catch (Exception ignore) {}
+        }
+        return cfgDir.resolve("liked.json");
+    }
+
+    // 获取 <gameDir>/screenshots 目录
+    private static Path screenshotsDir() {
+        return Minecraft.getInstance().gameDirectory.toPath().resolve(SCREENSHOT_DIR_NAME);
+    }
+
+    /**
+     * 将文件转成存储用 key：相对于 screenshots/ 的相对路径（统一 / 分隔）
+     * 若不在 screenshots 目录下，则退化为只用文件名。
+     * 返回 null 表示无法生成有效 key（例如 "." 之类）
+     */
+    private static @org.jetbrains.annotations.Nullable String keyFor(Path file) {
+        try {
+            Path abs = file.toAbsolutePath().normalize();
+            Path dir = screenshotsDir().toAbsolutePath().normalize();
+            String key;
+            if (abs.startsWith(dir)) {
+                key = dir.relativize(abs).toString();
+            } else {
+                // 理论上你的图片都来自 screenshots，这里兜底一下
+                key = abs.getFileName().toString();
+            }
+            key = key.replace('\\', '/');
+            if (key.isEmpty() || ".".equals(key)) return null;
+            return key;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+
     // ============ 内部：加载/释放 ============
     private void uploadFallbackAsCurrent() {
         dropCurrent();
@@ -185,6 +403,7 @@ public final class ScreenshotCycler {
         curW = TEXTURE_WIDTH;
         curH = TEXTURE_HEIGHT;
         index = -1;
+        curFile = null;
     }
 
     private void loadAsCurrent(Path file) {
@@ -215,6 +434,7 @@ public final class ScreenshotCycler {
 
                 curRL = rl; curTex = tex;
                 curW = img.getWidth(); curH = img.getHeight();
+                curFile = file;
             } catch (Exception ex) {
                 uploadFallbackAsCurrent();
             }
@@ -253,6 +473,7 @@ public final class ScreenshotCycler {
 
                 nextRL = rl; nextTex = tex;
                 nextW = img.getWidth(); nextH = img.getHeight();
+                nextFile = file;
 
                 // 启动渐变
                 fading = true;
@@ -269,6 +490,7 @@ public final class ScreenshotCycler {
             try { curTex.close(); } catch (Exception ignore) {}
         }
         curRL = null; curTex = null; curW = 0; curH = 0;
+        curFile = null;
     }
 
     private void dropNext() {
@@ -277,6 +499,7 @@ public final class ScreenshotCycler {
             try { nextTex.close(); } catch (Exception ignore) {}
         }
         nextRL = null; nextTex = null; nextW = 0; nextH = 0;
+        nextFile = null;
     }
 
     // ============ 内部：绘制工具 ============
@@ -311,5 +534,8 @@ public final class ScreenshotCycler {
         int oy = (height - rh) / 2;
         return new int[]{ox, oy, rw, rh};
     }
+
+    private static float clamp01(float v) { return v < 0f ? 0f : (v > 1f ? 1f : v); }
+
 
 }

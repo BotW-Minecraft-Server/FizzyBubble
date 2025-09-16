@@ -2,10 +2,12 @@ package link.botwmcs.fizzy.util;
 
 public final class EnvDetector {
     private static Boolean cached;
+    private static Boolean test = true;
 
     private static final String MARKER_MODID = "ezfix";
 
     public static boolean isLTSX() {
+        if (test) return true;
         if (cached != null) return cached;
         boolean detected;
         try {

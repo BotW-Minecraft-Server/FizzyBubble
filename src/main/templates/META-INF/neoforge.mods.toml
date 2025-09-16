@@ -93,7 +93,7 @@ config="${mod_id}.mixins.json"
 #openGLVersion="[3.2,)"
 [[dependencies.${mod_id}]]
     modId="ezfix"
-    mandatory = false
+    type="optional"
     versionRange = "[1.0.0,)"
     ordering = "AFTER"
     side = "BOTH"

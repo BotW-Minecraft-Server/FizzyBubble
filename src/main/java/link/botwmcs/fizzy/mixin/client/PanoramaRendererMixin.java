@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.mixin.client;
 
 import link.botwmcs.fizzy.util.EnvDetector;
-import link.botwmcs.fizzy.client.util.ScreenshotCycler;
+import link.botwmcs.fizzy.client.util.ScreenshotManager;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.PanoramaRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -24,7 +24,7 @@ public class PanoramaRendererMixin {
     @Inject(method = "render", at = @At("HEAD"))
     private void fizzy$onRenderHead(GuiGraphics gg, int width, int height, float fade, float partialTick, CallbackInfo ci) {
         // 延迟初始化（一次性）
-        ScreenshotCycler.INSTANCE.ensurePrepared(true);
+        ScreenshotManager.INSTANCE.ensurePrepared(true);
     }
 
     @Redirect(
@@ -48,7 +48,7 @@ public class PanoramaRendererMixin {
 
         // 替换为我们的背景绘制（包含渐变/等比居中）
         if (EnvDetector.isLTSX()) {
-            ScreenshotCycler.INSTANCE.renderBackground(gg, x, y, width, height);
+            ScreenshotManager.INSTANCE.renderBackground(gg, x, y, width, height);
         } else {
             gg.blit(atlasLocation, x, y, width, height, uOffset, vOffset, uWidth, vHeight, textureWidth, textureHeight);
         }

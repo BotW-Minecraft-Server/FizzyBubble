@@ -2,10 +2,9 @@ package link.botwmcs.fizzy;
 
 import link.botwmcs.fizzy.util.EasyImagesClient;
 
-import java.nio.file.Path;
 import java.time.Duration;
 
-public final class FizzyServices {
+public final class ImageServices {
     public static EasyImagesClient IMAGES;
 
     public static void initImageClient() {

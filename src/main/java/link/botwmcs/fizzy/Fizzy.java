@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy;
 
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import org.slf4j.Logger;
 
@@ -36,26 +37,33 @@ public class Fizzy {
         NeoForge.EVENT_BUS.register(this);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "fizzy/fizzy-common.toml");
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");}
-
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
-        FizzyServices.initImageClient();
+        LOGGER.info("HELLO FROM COMMON SETUP");
+        ImageServices.initImageClient();
     }
 
     @SubscribeEvent
-    public void onServerStopping(ServerStoppingEvent event) {
-        // Do something when the server stops
-        FizzyServices.shutdown();
+    private void shutdown(GameShuttingDownEvent event) {
+        ImageServices.shutdown();
     }
+
+//    // You can use SubscribeEvent and let the Event Bus discover methods to call
+//    @SubscribeEvent
+//    public void onServerStarting(ServerStartingEvent event) {
+//        // Do something when the server starts
+//        LOGGER.info("HELLO from server starting");
+//
+//    }
+//
+//    @SubscribeEvent
+//    public void onServerStopping(ServerStoppingEvent event) {
+//        // Do something when the server stops
+//        ImageServices.shutdown();
+//    }
 
     public static ResourceLocation resourceLocation(String path) {
         return ResourceLocation.fromNamespaceAndPath(MODID, path);

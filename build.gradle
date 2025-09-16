@@ -14,6 +14,7 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+
 version = mod_version
 group = mod_group_id
 
@@ -142,7 +143,11 @@ dependencies {
 //     implementation files("libs/alanui.jar")
     compileOnly files("libs/better_modlist-1.1.19.jar")
     // Okhttp
+//    jarJar(group: "com.squareup.okhttp3", name: "okhttp", version: "4.12.0")
     jarJar implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    jarJar implementation("com.squareup.okio:okio:3.9.0")
+    additionalRuntimeClasspath("com.squareup.okhttp3:okhttp:4.12.0")
+    additionalRuntimeClasspath("com.squareup.okio:okio:3.9.0")
 
 }
 
