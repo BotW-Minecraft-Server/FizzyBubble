@@ -1,5 +1,6 @@
 package link.botwmcs.fizzy.util;
 
+import com.google.gson.JsonParser;
 import okhttp3.*;
 
 import java.io.IOException;
@@ -194,18 +195,57 @@ public final class EasyImagesClient implements AutoCloseable {
     }
 
 
-    private static final Pattern URL_PATTERN = Pattern.compile("(https?://[^\\s\"'<>]+)");
-    private static final Pattern JSON_URL_FIELD = Pattern.compile("\"url\"\\s*:\\s*\"(https?://[^\\\"]+)\"");
+//    private static final Pattern URL_PATTERN = Pattern.compile("(https?://[^\\s\"'<>]+)");
+//    private static final Pattern JSON_URL_FIELD = Pattern.compile("\"url\"\\s*:\\s*\"(https?://[^\\\"]+)\"");
 
 
     private static String extractUrl(String raw) {
         if (raw == null) return null;
-        Matcher mJson = JSON_URL_FIELD.matcher(raw);
-        if (mJson.find()) return mJson.group(1);
-        Matcher m = URL_PATTERN.matcher(raw);
-        if (m.find()) return m.group(1);
+
+        // 1) 优先尝试 JSON 解析（最稳）
+        try {
+            var el = JsonParser.parseString(raw);
+            if (el.isJsonObject()) {
+                var obj = el.getAsJsonObject();
+                if (obj.has("url")) {
+                    String u = obj.get("url").getAsString(); // Gson 会自动反转义 \/ -> /
+                    return normalizeEasyUrl(u);
+                }
+            }
+        } catch (Throwable ignore) {}
+
+        // 2) 兼容 JSON 转义形式的链接（https:\/\/...）
+        Matcher mj = Pattern.compile("(https?:\\\\/\\\\/[^\\s\"'<>]+)").matcher(raw);
+        if (mj.find()) {
+            String u = mj.group(1).replace("\\/", "/");
+            return normalizeEasyUrl(u);
+        }
+
+        // 3) 普通裸链接
+        Matcher m = Pattern.compile("(https?://[^\\s\"'<>]+)").matcher(raw);
+        if (m.find()) {
+            return normalizeEasyUrl(m.group(1));
+        }
+
         return null;
+
+//        if (raw == null) return null;
+//        Matcher mJson = JSON_URL_FIELD.matcher(raw);
+//        if (mJson.find()) return mJson.group(1);
+//        Matcher m = URL_PATTERN.matcher(raw);
+//        if (m.find()) return m.group(1);
+//        return null;
     }
+
+    private static String normalizeEasyUrl(String u) {
+        if (u == null) return null;
+        // 防止出现 /i//... 的双斜杠
+        u = u.replace("\\/", "/");
+        u = u.replaceFirst("^(https?:)//+", "$1//"); // 规范化协议后的 //
+        u = u.replace("/i//", "/i/");                // 部分后端会多一个 /
+        return u;
+    }
+
 
 
     @Override
