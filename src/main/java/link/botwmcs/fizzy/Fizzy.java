@@ -1,8 +1,16 @@
 package link.botwmcs.fizzy;
 
+import link.botwmcs.fizzy.client.overlay.OverlayManager;
+import link.botwmcs.fizzy.client.overlay.content.SimpleTextPage;
+import link.botwmcs.fizzy.command.OverlayCommand;
+import link.botwmcs.fizzy.network.s2c.HudOverlayPayload;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.event.GameShuttingDownEvent;
-import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -14,7 +22,6 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(Fizzy.MODID)
@@ -30,6 +37,7 @@ public class Fizzy {
     public Fizzy(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::registerPayloads);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (Fizzy) to respond directly to events.
@@ -46,24 +54,34 @@ public class Fizzy {
         ImageServices.initImageClient();
     }
 
+    private void registerPayloads(RegisterPayloadHandlersEvent event) {
+        var r = event.registrar(MODID);
+
+        // Client payloads (s2c)
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            r.playToClient(HudOverlayPayload.TYPE, HudOverlayPayload.CODEC, (payload, ctx) -> {
+                        switch (payload.action()) {
+                                case SHOW -> OverlayManager.create()
+                                        .setTitle(Component.literal(payload.title()))
+                                        .setSlidingText(Component.literal(payload.scrollingText()))
+                                        .setContent(new SimpleTextPage(Component.literal(payload.text())))
+                                        .setScale(1.0F)
+                                        .show();
+                                case HIDE -> OverlayManager.hideAll();
+                        }
+            });
+        }
+    }
+
     @SubscribeEvent
     private void shutdown(GameShuttingDownEvent event) {
         ImageServices.shutdown();
     }
 
-//    // You can use SubscribeEvent and let the Event Bus discover methods to call
-//    @SubscribeEvent
-//    public void onServerStarting(ServerStartingEvent event) {
-//        // Do something when the server starts
-//        LOGGER.info("HELLO from server starting");
-//
-//    }
-//
-//    @SubscribeEvent
-//    public void onServerStopping(ServerStoppingEvent event) {
-//        // Do something when the server stops
-//        ImageServices.shutdown();
-//    }
+    @SubscribeEvent
+    private void onRegisterCommands(RegisterCommandsEvent event) {
+        OverlayCommand.register(event.getDispatcher());
+    }
 
     public static ResourceLocation resourceLocation(String path) {
         return ResourceLocation.fromNamespaceAndPath(MODID, path);

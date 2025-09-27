@@ -1,5 +1,7 @@
 package link.botwmcs.fizzy;
 
+import link.botwmcs.fizzy.client.overlay.Anchor;
+import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -8,6 +10,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -32,4 +35,36 @@ public class FizzyClient {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
     }
+
+    @SubscribeEvent
+    static void onRenderGuiPost(RenderGuiEvent.Post event) {
+//        FizzyHudOverlay.render(event.getGuiGraphics());
+        Minecraft mc = Minecraft.getInstance();
+        float pt = mc.getTimer().getGameTimeDeltaTicks();
+        int sw = mc.getWindow().getGuiScaledWidth();
+        int sh = mc.getWindow().getGuiScaledHeight();
+
+        OverlayManager.renderAll(
+                event.getGuiGraphics(),
+                sw,
+                sh,
+                pt,
+                Anchor.TOP_LEFT
+        );
+    }
+
+//    // TEST CODE
+//    @SubscribeEvent
+//    static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
+//        // 玩家一进入世界（客户端侧）就显示一个测试用 HUD
+//        int sw = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+//        int sh = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+//
+//        FizzyHudOverlay.INSTANCE.show(
+//                "Fizzy HUD 测试",
+//                "玩家已进入世界！",
+//                sw / 2f - 50, // 落点位置（X）
+//                sh / 4f       // 落点位置（Y）
+//        );
+//    }
 }
