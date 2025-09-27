@@ -97,3 +97,10 @@ config="${mod_id}.mixins.json"
     versionRange = "[1.0.0,)"
     ordering = "AFTER"
     side = "BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="kotlinforforge"
+    type="required"
+    versionRange = "[5.10,)"
+    ordering = "BEFORE"
+    side = "BOTH"
