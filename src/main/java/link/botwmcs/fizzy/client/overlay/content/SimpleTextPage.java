@@ -13,7 +13,7 @@ public class SimpleTextPage implements IOverlayContent {
     }
 
     @Override
-    public void render(GuiGraphics g, int x, int y, int width, int height, float partialTick) {
+    public void renderMainLayer(GuiGraphics g, int x, int y, float partialTick) {
         g.drawString(Minecraft.getInstance().font, text, x + 4, y + 4, 0xFFFFFFFF, false);
     }
 }

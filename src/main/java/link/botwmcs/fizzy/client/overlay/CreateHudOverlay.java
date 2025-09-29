@@ -30,6 +30,9 @@ public class CreateHudOverlay {
 
     // API
     private IOverlayContent content;
+    private IOverlayContent currentContent;
+    private IOverlayContent incomingContent;
+    private Transition transition = Transition.CROSS_FADE;
 
     // ==== 状态 ====
     private final Font font = Minecraft.getInstance().font;
@@ -38,6 +41,9 @@ public class CreateHudOverlay {
     private final LerpedFloat yPos = LerpedFloat.linear().startWithValue(0);
     private final LerpedFloat alpha = LerpedFloat.linear().startWithValue(0);     // 整体不透明度
     private final LerpedFloat textAlpha = LerpedFloat.linear().startWithValue(0); // 文字淡入
+    private final LerpedFloat curAlpha  = LerpedFloat.linear().startWithValue(1f); // 当前页 alpha
+    private final LerpedFloat nextAlpha = LerpedFloat.linear().startWithValue(0f); // 新页 alpha
+    private boolean contentTransitioning = false;
 
     private Anchor anchor = Anchor.TOP_LEFT;
 
@@ -67,7 +73,28 @@ public class CreateHudOverlay {
     }
 
     public CreateHudOverlay setContent(IOverlayContent c) {
-        this.content = c;
+        // 立即切换（不带动画）
+        if (this.currentContent != null) this.currentContent.onClose();
+        this.currentContent = c;
+        this.incomingContent = null;
+        this.contentTransitioning = false;
+        this.curAlpha.startWithValue(1f);
+        this.nextAlpha.startWithValue(0f);
+        return this;
+    }
+
+    /** 带动画的切换（默认 CROSS_FADE） */
+    public CreateHudOverlay setContentAnimated(IOverlayContent c, Transition t, double speed) {
+        if (c == null || c == currentContent) return this;
+        this.transition = t == null ? Transition.CROSS_FADE : t;
+        this.incomingContent = c;
+        this.contentTransitioning = true;
+
+        // 复位两个通道：旧的从1→0，新从0→1
+        this.curAlpha.startWithValue(1f);
+        this.nextAlpha.startWithValue(0f);
+        this.curAlpha.chase(0f, speed, LerpedFloat.Chaser.EXP);
+        this.nextAlpha.chase(1f, speed, LerpedFloat.Chaser.EXP);
         return this;
     }
 
@@ -137,6 +164,7 @@ public class CreateHudOverlay {
     // ========== 更新 & 渲染 ==========
     public void render(GuiGraphics g, float pt) {
         if (!active) return;
+        boolean important = content != null && content.isImportant();
 
         // 更新追踪
         xPos.chase(targetX, 0.20, LerpedFloat.Chaser.EXP);
@@ -159,7 +187,8 @@ public class CreateHudOverlay {
         g.pose().scale(uiScale, uiScale, uiScale);
 
         RenderSystem.setShaderTexture(0, BG);
-        g.blit(BG, 0, 0, 0, 0, GUI_W, GUI_H, 256, 256);
+//        g.blit(BG, 0, 0, 0, 0, GUI_W, GUI_H, 256, 256);
+        g.blit(BG, 0, 0, 0, important ? 138 : 0, GUI_W, GUI_H, 256, 256);
 
         // 标题 & 时间
         String timeStr = formatTickTime(Minecraft.getInstance().level.getDayTime());
@@ -188,37 +217,71 @@ public class CreateHudOverlay {
         g.pose().popPose();
         g.disableScissor();
 
-//        g.enableScissor((int) (xPos.getValue(pt) + 3 * uiScale),
-//                (int) (yPos.getValue(pt) + 40 * uiScale),
-//                (int) (xPos.getValue(pt) + (3 + 220) * uiScale),
-//                (int) (yPos.getValue(pt) + (40 + 62) * uiScale));
-//        g.drawString(font, Component.literal("Main layer content..."),
-//                6, 44, withAlpha(0xFFCCCCCC, a), false);
-        renderContent(g, a);
-//        g.disableScissor();
+        // ===== 内容区 =====
+        final int cx = 3, cy = 40, cw = 220, ch = 62;
 
-        g.pose().popPose();
-    }
-
-    private void renderContent(GuiGraphics g, float a) {
-        if (content == null) return;
-
-        // 内容区裁剪区域
+        // 背/主层在裁剪内绘制
         g.enableScissor(
-                (int) (xPos.getValue() + 3 * uiScale),
-                (int) (yPos.getValue() + 40 * uiScale),
-                (int) (xPos.getValue() + (3 + 220) * uiScale),
-                (int) (yPos.getValue() + (40 + 62) * uiScale)
+                (int) (xPos.getValue(pt) + cx * uiScale),
+                (int) (yPos.getValue(pt) + cy * uiScale),
+                (int) (xPos.getValue(pt) + (cx + cw) * uiScale),
+                (int) (yPos.getValue(pt) + (cy + ch) * uiScale)
         );
-
         g.pose().pushPose();
-        g.pose().translate(3, 40, 0);
-        content.render(g, 0, 0, 220, 62, Minecraft.getInstance().getTimer().getGameTimeDeltaTicks());
+        g.pose().translate(cx, cy, 0);
+
+        curAlpha.tickChaser();
+        nextAlpha.tickChaser();
+        float ca = Mth.clamp(curAlpha.getValue(pt), 0f, 1f);
+        float na = Mth.clamp(nextAlpha.getValue(pt), 0f, 1f);
+
+
+        // 渲染当前页（带 ca）
+        if (currentContent != null && ca > 0.01f) {
+            g.pose().pushPose();
+            // 你可选：用着色/混色叠加；这里直接乘面板 a 与内容 a 作为文字/图形的颜色 alpha
+            currentContent.tick();
+            // 背层
+            currentContent.renderBackLayer(g, 0, 0, pt);
+            // 主层（若你需要对文字颜色做 withAlpha，请在 page 内部乘上 ca*a）
+            currentContent.renderMainLayer(g, 0, 0, pt);
+            g.pose().popPose();
+        }
+
+        // 渲染新页（带 na）
+        if (incomingContent != null && na > 0.01f) {
+            incomingContent.tick();
+            incomingContent.renderBackLayer(g, 0, 0, pt);
+            incomingContent.renderMainLayer(g, 0, 0, pt);
+        }
+
+        g.pose().popPose();
+        g.disableScissor();
+
+        // 前层（裁剪外，通常做高亮/tooltip），同理双通道
+        g.pose().pushPose();
+        g.pose().translate(cx, cy, 0);
+        if (currentContent != null && ca > 0.01f) currentContent.renderFrontLayer(g, 0, 0, pt);
+        if (incomingContent != null && na > 0.01f) incomingContent.renderFrontLayer(g, 0, 0, pt);
         g.pose().popPose();
 
-        g.disableScissor();
+        // 切换完成判定：旧的 alpha 到 0、新的到 1
+        if (contentTransitioning && ca <= 0.01f && na >= 0.99f) {
+            if (currentContent != null) currentContent.onClose();
+            currentContent = incomingContent;
+            incomingContent = null;
+            contentTransitioning = false;
+            // 归位通道
+            curAlpha.startWithValue(1f);
+            nextAlpha.startWithValue(0f);
+        }
+
+        g.pose().popPose();
     }
 
+    void dispose() {
+        if (content != null) content.onClose();
+    }
 
     // ========== 内部 ==========
     private void resetFromScreenCenter() {

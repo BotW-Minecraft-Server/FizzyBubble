@@ -41,7 +41,12 @@ public final class OverlayManager {
     }
 
     private static void sweepInactive() {
-        INSTANCES.removeIf(o -> !o.isActive());
+        INSTANCES.removeIf(o -> {
+            boolean dead = !o.isActive();
+            if (dead) o.dispose();
+            return dead;
+        });
+
     }
 
     public static void clear() {
