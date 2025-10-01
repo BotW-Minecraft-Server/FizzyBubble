@@ -1,8 +1,11 @@
 package link.botwmcs.fizzy;
 
+import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.client.overlay.content.SimpleTextPage;
+import link.botwmcs.fizzy.command.AnnounceCommand;
 import link.botwmcs.fizzy.command.OverlayCommand;
+import link.botwmcs.fizzy.network.s2c.AnnouncePayload;
 import link.botwmcs.fizzy.network.s2c.HudOverlayPayload;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -70,6 +73,10 @@ public class Fizzy {
                                 case HIDE -> OverlayManager.hideAll();
                         }
             });
+
+            r.playToClient(AnnouncePayload.TYPE, AnnouncePayload.CODEC, (payload, ctx) -> {
+                AnnounceMessageManager.show(Component.literal(payload.context()), payload.ticks());
+            });
         }
     }
 
@@ -81,6 +88,7 @@ public class Fizzy {
     @SubscribeEvent
     private void onRegisterCommands(RegisterCommandsEvent event) {
         OverlayCommand.register(event.getDispatcher());
+        AnnounceCommand.register(event.getDispatcher());
     }
 
     public static ResourceLocation resourceLocation(String path) {

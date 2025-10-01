@@ -154,53 +154,6 @@ public final class OverlayManager {
         }
     }
 
-//    /** 统一渲染入口（主类的 RenderGuiEvent.Last 调用这里） */
-//    public static void renderAll(GuiGraphics g, float pt) {
-//        if (INSTANCES.isEmpty()) return;
-//        Minecraft mc = Minecraft.getInstance();
-//        int sw = mc.getWindow().getGuiScaledWidth();
-//        int sh = mc.getWindow().getGuiScaledHeight();
-//        // —— 自动布局：从右上角开始，竖向堆叠，放不下换列 ——
-//        int colX = sw - margin;
-//        int colY = margin;
-//        int col = 0;
-//        int colWidth = 0;
-//
-//        for (CreateHudOverlay o : INSTANCES) {
-//            if (!o.isActive()) continue; // 未激活的不用布局
-//            int w = o.getWidthPx();
-//            int h = o.getHeightPx();
-//
-//            // 下一行是否超出屏幕？超出则换列
-//            if (colY + h > sh - margin) {
-//                col++;
-//                if (col >= maxColumns) {
-//                    // 没列了：挤到最后一列（或你选择直接不显示）
-//                    col = maxColumns - 1;
-//                }
-//                // 列起点：从右往左
-//                colX -= (colWidth + hGap);
-//                colY = margin;
-//                colWidth = 0;
-//            }
-//
-//            // 列宽跟随本列中最宽面板
-//            colWidth = Math.max(colWidth, w);
-//
-//            // 右上角起点：目标左上角 X = 列右边缘 - 自身宽度
-//            int x = colX - w;
-//            int y = colY;
-//
-//            o.setTargetPos(x, y);
-//            colY += h + vGap;
-//        }
-//
-//        // 渲染
-//        for (CreateHudOverlay o : INSTANCES) {
-//            o.render(g, pt);
-//        }
-//    }
-
     // 可选：外部调整布局参数
     public static void setLayout(int marginPx, int vGapPx, int hGapPx, int maxCols) {
         margin = Math.max(0, marginPx);

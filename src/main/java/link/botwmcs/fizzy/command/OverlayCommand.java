@@ -1,12 +1,8 @@
 package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
-import link.botwmcs.fizzy.client.overlay.OverlayManager;
-import link.botwmcs.fizzy.network.FizzyNet;
+import link.botwmcs.fizzy.api.OverlayAPI;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -26,7 +22,7 @@ public class OverlayCommand {
                                                         ctx.getSource().sendFailure(Component.literal("This subcommand can only be used by a player."));
                                                         return 0;
                                                     }
-                                                    FizzyNet.sendShowOverlay(serverPlayer, StringArgumentType.getString(ctx, "title"), StringArgumentType.getString(ctx, "scrolling"), StringArgumentType.getString(ctx, "components"), 0, 0);
+                                                    OverlayAPI.sendTo(serverPlayer, StringArgumentType.getString(ctx, "title"), StringArgumentType.getString(ctx, "scrolling"), StringArgumentType.getString(ctx, "components"));
                                                     return 1;
                                                 })
                                         )
@@ -40,7 +36,7 @@ public class OverlayCommand {
                                 ctx.getSource().sendFailure(Component.literal("This subcommand can only be used by a player."));
                                 return 0;
                             }
-                            FizzyNet.sendHideOverlay(serverPlayer);
+                            OverlayAPI.hide(serverPlayer);
                             return 1;
                         })
                 )

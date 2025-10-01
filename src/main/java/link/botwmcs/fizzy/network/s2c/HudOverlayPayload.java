@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-public record HudOverlayPayload(Action action, float targetX, float targetY, String title, String scrollingText, String text) implements CustomPacketPayload {
+public record HudOverlayPayload(Action action, String title, String scrollingText, String text) implements CustomPacketPayload {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "hud_overlay");
     public static final Type<HudOverlayPayload> TYPE = new Type<>(ID);
     public enum Action { SHOW, HIDE }
@@ -20,8 +20,6 @@ public record HudOverlayPayload(Action action, float targetX, float targetY, Str
 
     public static final StreamCodec<FriendlyByteBuf, HudOverlayPayload> CODEC = StreamCodec.composite(
             ACTION_CODEC, HudOverlayPayload::action,
-            ByteBufCodecs.FLOAT, HudOverlayPayload::targetX,
-            ByteBufCodecs.FLOAT, HudOverlayPayload::targetY,
             ByteBufCodecs.STRING_UTF8, HudOverlayPayload::title,
             ByteBufCodecs.STRING_UTF8, HudOverlayPayload::scrollingText,
             ByteBufCodecs.STRING_UTF8, HudOverlayPayload::text,
