@@ -39,7 +39,7 @@ public class FizzyScreenHost extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float dt) {
-        gui.background().paint(g, left, top, gui.widthPx(), gui.heightPx(), true);
+        gui.frame().paint(g, left, top, gui.widthPx(), gui.heightPx(), true);
         // super.render(g, mx, my, dt);
     }
 

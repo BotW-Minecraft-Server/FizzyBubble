@@ -30,6 +30,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     @Override
     protected void renderBg(GuiGraphics g, float v, int i, int i1) {
-        gui.background().paint(g, leftPos, topPos, imageWidth, imageHeight, false);
+        gui.frame().paint(g, leftPos, topPos, imageWidth, imageHeight, false);
     }
 }

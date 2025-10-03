@@ -11,4 +11,22 @@ public interface FramePainter {
      * @param drawBottomEdge 是否绘制底边（Screen 渲染 true；Menu 渲染 false）
      */
     void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge);
+    FrameMetrics metrics();
+    void setLayout(int left, int top, int w, int h, boolean drawBottomEdge);
+    Layout layout();
+
+    record Layout(int left, int top, int w, int h, boolean drawBottomEdge) {}
+
+    // 可选：便捷方法，直接算本次 slot 区域
+    default SlotArea currentSlotArea() {
+        var m = metrics();
+        var L = layout();
+        int contentH = L.h - m.slotStartTopPx() - m.bottomPadHeight()
+                - (L.drawBottomEdge ? m.bottomEdgeHeight() : 0);
+        if (contentH < 0) contentH = 0;
+        contentH -= contentH % m.slotSizePx();
+        return new SlotArea(L.left, L.top + m.slotStartTopPx(), L.w, Math.max(0, contentH));
+    }
+    record SlotArea(int x, int y, int w, int h) {}
+
 }

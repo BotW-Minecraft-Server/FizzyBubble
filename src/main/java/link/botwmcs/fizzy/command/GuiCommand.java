@@ -2,7 +2,7 @@ package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import link.botwmcs.fizzy.ui.frame.fizzystyle.FizzyPainter;
+import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
 import link.botwmcs.fizzy.ui.core.HostType;
@@ -30,15 +30,15 @@ public class GuiCommand {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return 0;
 
-        var painter = new FizzyPainter(Component.literal("Test Panel"));
+        var painter = new FizzyFrame(Component.literal("Test Panel"));
 
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
         FizzyGui gui = FizzyGuiBuilder.start()
-                .sizeSlots(9, rows)          // 记录网格尺寸（后续 split/region/elements 会用）
+                .sizeSlots(rows)          // 记录网格尺寸（后续 split/region/elements 会用）
                 .host(HostType.SCREEN)
-                .background(painter)
+                .frame(painter)
                 .overrideSizePx(wPx, hPx)    // 用真实像素覆盖 BG 尺寸
                 .build();
         mc.tell(() -> {

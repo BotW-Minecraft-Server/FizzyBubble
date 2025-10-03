@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.ui.frame;
 
-public record PanelMetrics(
+public record FizzyFrameMetrics(
         int texW,                // 纹理宽（例如 256）
         int texH,                // 纹理高（例如 256）
         int panelW,              // 176：默认的宽度
@@ -17,15 +17,15 @@ public record PanelMetrics(
         int bottomEdgeStartY,    // 51：底边起始 Y
         int bottomEdgeHeight     // 4 ：底边高
 
-) {
+) implements FrameMetrics {
     public int totalHeightForRows(int rows, boolean includeBottomEdge) {
         // = 顶部装饰 28 + rows * 18 + 留白 5 + （可选底边 4）
         return slotStartTopPx + rows * slotSizePx + bottomPadHeight + (includeBottomEdge ? bottomEdgeHeight : 0);
     }
     public int gridOriginX(int panelLeftPx) { return panelLeftPx + slotStartLeftPx; }
     public int gridOriginY(int panelTopPx)  { return panelTopPx  + slotStartTopPx; }
-    public static PanelMetrics ofDefault256x256() {
-        return new PanelMetrics(
+    public static FizzyFrameMetrics ofDefault256x256() {
+        return new FizzyFrameMetrics(
                 256, 256, 176, 7,
                 28, 7,
                 18,

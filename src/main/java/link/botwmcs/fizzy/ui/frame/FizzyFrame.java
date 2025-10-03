@@ -1,33 +1,33 @@
-package link.botwmcs.fizzy.ui.frame.fizzystyle;
+package link.botwmcs.fizzy.ui.frame;
 
 import link.botwmcs.fizzy.Fizzy;
-import link.botwmcs.fizzy.ui.frame.FramePainter;
-import link.botwmcs.fizzy.ui.frame.PanelMetrics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-public class FizzyPainter implements FramePainter {
+public class FizzyFrame implements FramePainter {
     private final ResourceLocation tex;
-    private final PanelMetrics m;
+    private final FrameMetrics m;
     private final int panelWidthPx;  // 面板显示宽度（通常等于纹理宽）
     private final Component title;
+    private Layout layout;
     private final boolean dark;
 
-    public FizzyPainter() {
+
+    public FizzyFrame() {
         this(Component.empty());
     }
 
-    public FizzyPainter(Component title) {
-        this(ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png"), PanelMetrics.ofDefault256x256(), title);
+    public FizzyFrame(Component title) {
+        this(ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png"), FizzyFrameMetrics.ofDefault256x256(), title);
     }
 
-    public FizzyPainter(ResourceLocation tex, PanelMetrics metrics, Component title) {
+    public FizzyFrame(ResourceLocation tex, FrameMetrics metrics, Component title) {
         this(tex, metrics, metrics.panelW(), title, false);
     }
 
-    public FizzyPainter(ResourceLocation tex, PanelMetrics metrics, int panelWidthPx, Component title, boolean dark) {
+    public FizzyFrame(ResourceLocation tex, FrameMetrics metrics, int panelWidthPx, Component title, boolean dark) {
         this.dark = dark;
         this.tex = tex;
         this.m = metrics;
@@ -88,19 +88,6 @@ public class FizzyPainter implements FramePainter {
             y += 1;
         }
 
-
-//        for (int i = 0; i < rows; i++) {
-//            // 顶线
-//            blit(g, left, y, 0, m.topBorderY(), drawW, 1, texW, texH);
-//            y += 1;
-//            // 内容（可重复）
-//            blit(g, left, y, 0, m.slotInnerStartY(), drawW, m.slotInnerHeight(), texW, texH);
-//            y += m.slotInnerHeight();
-//            // 底线
-//            blit(g, left, y, 0, m.bottomBorderY(), drawW, 1, texW, texH);
-//            y += 1;
-//        }
-
         // 3) slot 区域后的固定留白
         blit(g, left, y, 0, m.bottomPadStartY(), drawW, m.bottomPadHeight(), texW, texH);
         y += m.bottomPadHeight();
@@ -129,5 +116,20 @@ public class FizzyPainter implements FramePainter {
     public int gridOriginY(int panelTopPx)  { return m.gridOriginY(panelTopPx); }
 
     public int panelWidthPx() { return panelWidthPx; }
+
+    @Override
+    public FrameMetrics metrics() {
+        return m;
+    }
+
+    @Override
+    public void setLayout(int left, int top, int w, int h, boolean drawBottomEdge) {
+        this.layout = new Layout(left, top, w, h, drawBottomEdge);
+    }
+
+    @Override
+    public Layout layout() {
+        return layout;
+    }
 
 }
