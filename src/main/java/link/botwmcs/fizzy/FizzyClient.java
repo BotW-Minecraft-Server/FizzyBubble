@@ -3,6 +3,11 @@ package link.botwmcs.fizzy;
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.overlay.Anchor;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
+import link.botwmcs.fizzy.ui.bg.FizzyPainter;
+import link.botwmcs.fizzy.ui.core.FizzyGui;
+import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
+import link.botwmcs.fizzy.ui.core.HostType;
+import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
 import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -40,11 +45,6 @@ public class FizzyClient {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
     }
-
-//    @SubscribeEvent
-//    static void onClientTick(ClientTickEvent.Post event) {
-//        AnnounceMessageManager.tick();
-//    }
 
     @SubscribeEvent
     static void onRenderGuiPost(RenderGuiEvent.Post event) {

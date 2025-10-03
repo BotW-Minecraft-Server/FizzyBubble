@@ -4,6 +4,7 @@ import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.client.overlay.content.SimpleTextPage;
 import link.botwmcs.fizzy.command.AnnounceCommand;
+import link.botwmcs.fizzy.command.GuiCommand;
 import link.botwmcs.fizzy.command.OverlayCommand;
 import link.botwmcs.fizzy.network.s2c.AnnouncePayload;
 import link.botwmcs.fizzy.network.s2c.HudOverlayPayload;
@@ -89,6 +90,7 @@ public class Fizzy {
     private void onRegisterCommands(RegisterCommandsEvent event) {
         OverlayCommand.register(event.getDispatcher());
         AnnounceCommand.register(event.getDispatcher());
+        GuiCommand.register(event.getDispatcher());
     }
 
     public static ResourceLocation resourceLocation(String path) {
