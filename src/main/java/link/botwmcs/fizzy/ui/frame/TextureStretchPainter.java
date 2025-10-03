@@ -1,9 +1,9 @@
-package link.botwmcs.fizzy.ui.bg;
+package link.botwmcs.fizzy.ui.frame;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
-public class TextureStretchPainter implements BackgroundPainter {
+public class TextureStretchPainter implements FramePainter {
     private final ResourceLocation tex;
 
     public TextureStretchPainter(ResourceLocation tex) { this.tex = tex; }

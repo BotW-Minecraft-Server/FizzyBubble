@@ -1,8 +1,8 @@
-package link.botwmcs.fizzy.ui.bg;
+package link.botwmcs.fizzy.ui.frame;
 
 import net.minecraft.client.gui.GuiGraphics;
 
-public class SolidColorPainter implements BackgroundPainter {
+public class SolidColorPainter implements FramePainter {
     private final int argb;         // 例如 0xCC101010
     private final int edgeColor;    // 底边色，例 0x66000000
     private final int edgeH;        // 底边高度

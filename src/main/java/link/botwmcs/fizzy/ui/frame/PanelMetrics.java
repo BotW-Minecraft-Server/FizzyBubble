@@ -1,4 +1,4 @@
-package link.botwmcs.fizzy.ui.bg;
+package link.botwmcs.fizzy.ui.frame;
 
 public record PanelMetrics(
         int texW,                // 纹理宽（例如 256）

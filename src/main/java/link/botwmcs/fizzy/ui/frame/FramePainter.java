@@ -1,8 +1,8 @@
-package link.botwmcs.fizzy.ui.bg;
+package link.botwmcs.fizzy.ui.frame;
 
 import net.minecraft.client.gui.GuiGraphics;
 
-public interface BackgroundPainter {
+public interface FramePainter {
     /**
      * @param left GUI 左上角 X（像素）
      * @param top  GUI 左上角 Y（像素）

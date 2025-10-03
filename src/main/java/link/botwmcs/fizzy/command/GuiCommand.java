@@ -2,8 +2,7 @@ package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import link.botwmcs.fizzy.ui.bg.FizzyPainter;
-import link.botwmcs.fizzy.ui.bg.PanelMetrics;
+import link.botwmcs.fizzy.ui.frame.fizzystyle.FizzyPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
 import link.botwmcs.fizzy.ui.core.HostType;

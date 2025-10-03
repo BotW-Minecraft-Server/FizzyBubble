@@ -1,14 +1,14 @@
-package link.botwmcs.fizzy.ui.bg;
+package link.botwmcs.fizzy.ui.frame.fizzystyle;
 
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.frame.PanelMetrics;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import java.nio.charset.MalformedInputException;
-
-public class FizzyPainter implements BackgroundPainter {
+public class FizzyPainter implements FramePainter {
     private final ResourceLocation tex;
     private final PanelMetrics m;
     private final int panelWidthPx;  // 面板显示宽度（通常等于纹理宽）
@@ -66,17 +66,40 @@ public class FizzyPainter implements BackgroundPainter {
         y += m.slotStartTopPx();
 
         // 2) rows 行 slot：顶线(1) + 内容(16) + 底线(1)
-        for (int i = 0; i < rows; i++) {
-            // 顶线
+        if (rows > 0) {
+            // 顶线（1px）
             blit(g, left, y, 0, m.topBorderY(), drawW, 1, texW, texH);
             y += 1;
-            // 内容（可重复）
-            blit(g, left, y, 0, m.slotInnerStartY(), drawW, m.slotInnerHeight(), texW, texH);
-            y += m.slotInnerHeight();
-            // 底线
+
+            // 中间内容：总高度 = rows * slotSize - 2（扣掉首尾两条边线）
+            int middleH = rows * m.slotSizePx() - 2;
+            if (middleH > 0) {
+                int rest = middleH;
+                while (rest > 0) {
+                    int hStep = Math.min(rest, m.slotInnerHeight()); // 例如 16
+                    blit(g, left, y, 0, m.slotInnerStartY(), drawW, hStep, texW, texH);
+                    y += hStep;
+                    rest -= hStep;
+                }
+            }
+
+            // 底线（1px）
             blit(g, left, y, 0, m.bottomBorderY(), drawW, 1, texW, texH);
             y += 1;
         }
+
+
+//        for (int i = 0; i < rows; i++) {
+//            // 顶线
+//            blit(g, left, y, 0, m.topBorderY(), drawW, 1, texW, texH);
+//            y += 1;
+//            // 内容（可重复）
+//            blit(g, left, y, 0, m.slotInnerStartY(), drawW, m.slotInnerHeight(), texW, texH);
+//            y += m.slotInnerHeight();
+//            // 底线
+//            blit(g, left, y, 0, m.bottomBorderY(), drawW, 1, texW, texH);
+//            y += 1;
+//        }
 
         // 3) slot 区域后的固定留白
         blit(g, left, y, 0, m.bottomPadStartY(), drawW, m.bottomPadHeight(), texW, texH);
