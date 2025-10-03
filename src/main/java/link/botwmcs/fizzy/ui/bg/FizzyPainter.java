@@ -1,29 +1,38 @@
 package link.botwmcs.fizzy.ui.bg;
 
 import link.botwmcs.fizzy.Fizzy;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+
+import java.nio.charset.MalformedInputException;
 
 public class FizzyPainter implements BackgroundPainter {
     private final ResourceLocation tex;
     private final PanelMetrics m;
     private final int panelWidthPx;  // 面板显示宽度（通常等于纹理宽）
+    private final Component title;
     private final boolean dark;
 
     public FizzyPainter() {
-        this(ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png"), PanelMetrics.ofDefault256x256());
+        this(Component.empty());
     }
 
-    public FizzyPainter(ResourceLocation tex, PanelMetrics metrics) {
-        this(tex, metrics, metrics.texW(), false);
+    public FizzyPainter(Component title) {
+        this(ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png"), PanelMetrics.ofDefault256x256(), title);
     }
 
-    public FizzyPainter(ResourceLocation tex, PanelMetrics metrics, int panelWidthPx, boolean dark) {
+    public FizzyPainter(ResourceLocation tex, PanelMetrics metrics, Component title) {
+        this(tex, metrics, metrics.panelW(), title, false);
+    }
+
+    public FizzyPainter(ResourceLocation tex, PanelMetrics metrics, int panelWidthPx, Component title, boolean dark) {
         this.dark = dark;
         this.tex = tex;
         this.m = metrics;
         this.panelWidthPx = panelWidthPx;
-
+        this.title = title;
     }
 
     /**
@@ -38,6 +47,11 @@ public class FizzyPainter implements BackgroundPainter {
         final int texW = m.texW(), texH = m.texH();
         final int drawW = panelWidthPx; // 固定使用面板宽，避免横向拉伸失真
         int y = top;
+
+        // 标题渲染
+        Minecraft mc = Minecraft.getInstance();
+        int stringW = mc.font.width(this.title);
+        g.drawString(mc.font, this.title, left + m.panelW() / 2 - stringW / 2, y + m.titleStartH(), 0xFFFFFF, true);
 
         // 计算行数（严格基于目标高度反推，防止调用方传错）
         int expectedRowsPart = h - m.slotStartTopPx() - m.bottomPadHeight() - (drawBottomEdge ? m.bottomEdgeHeight() : 0);

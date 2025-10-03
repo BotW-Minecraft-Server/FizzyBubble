@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.ui.host;
 
 import link.botwmcs.fizzy.ui.core.FizzyGui;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -16,9 +17,24 @@ public class FizzyScreenHost extends Screen {
 
     @Override
     protected void init() {
-        int w = gui.widthPx(), h = gui.heightPx();
-        this.left = (this.width - w) / 2;
-        this.top  = (this.height - h) / 2;
+        super.init(); // 虽然不是必需，但更稳
+        recalcCenter();
+//        int w = gui.widthPx(), h = gui.heightPx();
+//        this.left = (this.width - w) / 2;
+//        this.top  = (this.height - h) / 2;
+    }
+
+    @Override
+    public void resize(Minecraft mc, int w, int h) {
+        super.resize(mc, w, h);
+        recalcCenter();
+    }
+
+    private void recalcCenter() {
+        int gw = gui.widthPx();
+        int gh = gui.heightPx();
+        this.left = (this.width  - gw) / 2;
+        this.top  = (this.height - gh) / 2;
     }
 
     @Override

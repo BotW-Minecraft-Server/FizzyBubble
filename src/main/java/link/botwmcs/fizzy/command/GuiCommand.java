@@ -31,7 +31,7 @@ public class GuiCommand {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return 0;
 
-        var painter = new FizzyPainter();
+        var painter = new FizzyPainter(Component.literal("Test Panel"));
 
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);

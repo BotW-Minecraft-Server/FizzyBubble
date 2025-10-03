@@ -3,6 +3,8 @@ package link.botwmcs.fizzy.ui.bg;
 public record PanelMetrics(
         int texW,                // 纹理宽（例如 256）
         int texH,                // 纹理高（例如 256）
+        int panelW,              // 176：默认的宽度
+        int titleStartH,         // 7：标题到顶部的距离
         int slotStartTopPx,      // 28：顶部装饰到首个 slot 顶线的距离
         int slotStartLeftPx,     // 7 ：左侧装饰到首个 slot 左边界的距离
         int slotSizePx,          // 18：slot 总高（含上下 1px 黑边）
@@ -24,7 +26,7 @@ public record PanelMetrics(
     public int gridOriginY(int panelTopPx)  { return panelTopPx  + slotStartTopPx; }
     public static PanelMetrics ofDefault256x256() {
         return new PanelMetrics(
-                256, 256,
+                256, 256, 176, 7,
                 28, 7,
                 18,
                 29, 16,
