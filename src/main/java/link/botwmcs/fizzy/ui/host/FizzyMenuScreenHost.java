@@ -1,7 +1,9 @@
 package link.botwmcs.fizzy.ui.host;
 
+import link.botwmcs.fizzy.ui.background.BgPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -30,6 +32,11 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     @Override
     protected void renderBg(GuiGraphics g, float v, int i, int i1) {
-        gui.frame().paint(g, leftPos, topPos, imageWidth, imageHeight, false);
-    }
+        FramePainter frame = gui.frame();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false);
+        BgPainter bg = gui.background();
+        if (bg != null) {
+            bg.paint(g, frame);
+        }
+        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false);    }
 }

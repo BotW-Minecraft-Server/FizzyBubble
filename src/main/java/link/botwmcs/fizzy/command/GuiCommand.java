@@ -2,6 +2,8 @@ package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import link.botwmcs.fizzy.ui.background.BgType;
+import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
@@ -31,13 +33,14 @@ public class GuiCommand {
         if (mc.player == null) return 0;
 
         var painter = new FizzyFrame(Component.literal("Test Panel"));
-
+        var background = new FizzyBg(BgType.STONE);
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
         FizzyGui gui = FizzyGuiBuilder.start()
                 .sizeSlots(rows)          // 记录网格尺寸（后续 split/region/elements 会用）
                 .host(HostType.SCREEN)
+                .background(background)
                 .frame(painter)
                 .overrideSizePx(wPx, hPx)    // 用真实像素覆盖 BG 尺寸
                 .build();

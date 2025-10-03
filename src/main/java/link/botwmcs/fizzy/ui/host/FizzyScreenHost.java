@@ -1,6 +1,8 @@
 package link.botwmcs.fizzy.ui.host;
 
+import link.botwmcs.fizzy.ui.background.BgPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
+import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -39,8 +41,16 @@ public class FizzyScreenHost extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float dt) {
-        gui.frame().paint(g, left, top, gui.widthPx(), gui.heightPx(), true);
-        // super.render(g, mx, my, dt);
+        FramePainter frame = gui.frame();
+        int widthPx = gui.widthPx();
+        int heightPx = gui.heightPx();
+        frame.setLayout(left, top, widthPx, heightPx, true);
+        BgPainter bg = gui.background();
+        if (bg != null) {
+            bg.paint(g, frame);
+        }
+        frame.paint(g, left, top, widthPx, heightPx, true);
+//         super.render(g, mx, my, dt);
     }
 
 }
