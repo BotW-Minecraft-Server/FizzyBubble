@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
+import link.botwmcs.fizzy.ui.background.SoildColorBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.behind.ImageBehind;
 import link.botwmcs.fizzy.ui.behind.SoildColorBehind;
@@ -39,8 +40,10 @@ public class GuiCommand {
 
         var painter = new FizzyFrame(Component.literal("Test Panel"));
         var background = new FizzyBg(BgType.STONE);
-        var behind = new SoildColorBehind(0xFF202020);
-//        var behind = new ImageBehind(ResourceLocation.withDefaultNamespace("textures/block/bricks.png"));
+//        var background = new SoildColorBg(0xFF202020);
+//        var behind = new SoildColorBehind(0xFF202020);
+//        var behind = new ImageBehind(ResourceLocation.withDefaultNamespace("textures/block/gold_block.png"));
+        var behind = new BlurBehind();
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 

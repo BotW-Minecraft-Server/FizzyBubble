@@ -17,7 +17,7 @@ public interface FramePainter {
 
     record Layout(int left, int top, int w, int h, boolean drawBottomEdge) {}
 
-    // 可选：便捷方法，直接算本次 slot 区域
+    // 便捷方法，直接算本次 slot 区域
     default SlotArea currentSlotArea() {
         var m = metrics();
         var L = layout();
