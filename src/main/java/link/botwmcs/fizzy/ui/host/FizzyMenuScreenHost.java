@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.ui.host;
 
 import link.botwmcs.fizzy.ui.background.BgPainter;
+import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
@@ -33,7 +34,16 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     @Override
     protected void renderBg(GuiGraphics g, float v, int i, int i1) {
         FramePainter frame = gui.frame();
+        BehindPainter behind = gui.behind();
+
+        if (behind != null) {
+            behind.paint(g, frame, v);
+            // I think we don't need post this event...
+//            NeoForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered(this, g));
+        }
+
         frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false);
+
         BgPainter bg = gui.background();
         if (bg != null) {
             bg.paint(g, frame);

@@ -1,12 +1,15 @@
 package link.botwmcs.fizzy.ui.host;
 
 import link.botwmcs.fizzy.ui.background.BgPainter;
+import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 public class FizzyScreenHost extends Screen {
     private final FizzyGui gui;
@@ -41,9 +44,17 @@ public class FizzyScreenHost extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float dt) {
+//        super.render(g, mx, my, dt);
         FramePainter frame = gui.frame();
         int widthPx = gui.widthPx();
         int heightPx = gui.heightPx();
+        BehindPainter behind = gui.behind();
+
+        if (behind != null) {
+            behind.paint(g, frame, dt);
+            // I think we don't need post this event...
+//            NeoForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered(this, g));
+        }
         frame.setLayout(left, top, widthPx, heightPx, true);
         BgPainter bg = gui.background();
         if (bg != null) {
