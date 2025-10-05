@@ -4,9 +4,11 @@ import link.botwmcs.fizzy.ui.background.BgPainter;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -29,6 +31,26 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         int totalH = this.imageHeight + UiUnit.VANILLA_PLAYER_INV_HEIGHT;
         this.leftPos = (this.width  - this.imageWidth) / 2;
         this.topPos  = (this.height - totalH) / 2;
+        this.clearWidgets();
+        initElements();
+    }
+
+    private void initElements() {
+        FramePainter frame = gui.frame();
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
+        if (slotArea != null) {
+            return;
+        }
+        ElementPainter.InitContext context = new MenuInitContext();
+        for (SlotPadSpec pad : gui.pads()) {
+            int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
+            int padTop = slotArea.y() + (pad.rowStart() - 1) * UiUnit.SLOT_PX;
+            int padWidth = pad.widthSlots() * UiUnit.SLOT_PX;
+            int padHeight = pad.heightSlots() * UiUnit.SLOT_PX;
+            for (var element : pad.elements()) {
+                element.init(context, padLeft, padTop, padWidth, padHeight);
+            }
+        }
     }
 
 
@@ -61,6 +83,13 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
                     element.render(g, padLeft, padTop, padWidth, padHeight, v);
                 }
             }
+        }
+    }
+
+    private class MenuInitContext implements ElementPainter.InitContext {
+        @Override
+        public <W extends AbstractWidget> W addRenderableWidget(W widget) {
+            return FizzyMenuScreenHost.this.addRenderableWidget(widget);
         }
     }
 }

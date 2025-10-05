@@ -2,13 +2,12 @@ package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
-import link.botwmcs.fizzy.ui.background.SoildColorBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
-import link.botwmcs.fizzy.ui.behind.ImageBehind;
-import link.botwmcs.fizzy.ui.behind.SoildColorBehind;
+import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.element.button.FizzyButtonElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
@@ -18,7 +17,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 public class GuiCommand {
     public static void register(CommandDispatcher<CommandSourceStack> d) {
@@ -44,6 +42,11 @@ public class GuiCommand {
 //        var behind = new SoildColorBehind(0xFF202020);
 //        var behind = new ImageBehind(ResourceLocation.withDefaultNamespace("textures/block/gold_block.png"));
         var behind = new BlurBehind();
+
+        var button = ColoredButtonElement.builder(Component.literal("Test Button"), btn -> {
+            mc.player.sendSystemMessage(Component.literal("Button clicked!"));
+        }).color(ColoredAbstractButton.Color.RED).build();
+
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
@@ -53,6 +56,8 @@ public class GuiCommand {
                 .element((g, leftPx, topPx, widthPx, heightPx, pT) -> {
                     g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x6640C4FF);
                 }).done()
+                .pad(2, 1, 2, 5)
+                .element(button).done()
                 .host(HostType.SCREEN)
                 .behind(behind)
                 .background(background)

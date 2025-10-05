@@ -15,7 +15,9 @@ public record FizzyFrameMetrics(
         int bottomPadStartY,     // 46：slot 区域后的留白起始 Y
         int bottomPadHeight,     // 5 ：留白高
         int bottomEdgeStartY,    // 51：底边起始 Y
-        int bottomEdgeHeight     // 4 ：底边高
+        int bottomEdgeHeight,    // 4 ：底边高
+        int buttomInvExtraStartY,// 56：如果有Inventory那么启用Extra底边
+        int buttomInvExtraHeight // 19: InvExtra底边高
 
 ) implements FrameMetrics {
     public int totalHeightForRows(int rows, boolean includeBottomEdge) {
@@ -32,7 +34,8 @@ public record FizzyFrameMetrics(
                 29, 16,
                 28, 45,
                 46, 5,
-                51, 4
+                51, 4,
+                56, 19
         );
     }
 
