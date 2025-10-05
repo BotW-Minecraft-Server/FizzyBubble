@@ -2,6 +2,7 @@ package link.botwmcs.fizzy.ui.background;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.ui.frame.FizzyFrameMetrics;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,7 +29,7 @@ public class FizzyBg implements BgPainter {
 
     @Override
     public void paint(GuiGraphics g, FramePainter painter) {
-        var area = painter.currentSlotArea();
+        var area = painter.currentBackgroundArea();
         if (area.h() <= 0 || area.w() <= 0) return;
         final int x = area.x();
         final int y = area.y();

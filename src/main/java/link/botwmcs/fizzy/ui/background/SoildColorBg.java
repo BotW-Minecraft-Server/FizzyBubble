@@ -13,7 +13,7 @@ public class SoildColorBg implements BgPainter {
 
     @Override
     public void paint(GuiGraphics g, FramePainter painter) {
-        var area = painter.currentSlotArea();
+        var area = painter.currentBackgroundArea();
         if (area.h() <= 0 || area.w() <= 0) return;
         final int x = area.x();
         final int y = area.y();

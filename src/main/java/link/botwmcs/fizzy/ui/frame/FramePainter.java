@@ -28,8 +28,24 @@ public interface FramePainter {
                 - (L.drawBottomEdge() ? m.bottomEdgeHeight() : 0);
         if (contentH < 0) contentH = 0;
         contentH -= contentH % m.slotSizePx();
-        return new SlotArea(L.left(), L.top() + m.slotStartTopPx(), L.w(), Math.max(0, contentH));
+        return new SlotArea(L.left() + m.slotStartLeftPx(), L.top() + m.slotStartTopPx(), L.w(), Math.max(0, contentH));
     }
+
+    // 便捷方法，直接算本次背景区域
+    default SlotArea currentBackgroundArea() {
+        var L = layout();
+        if (L == null) {
+            throw new IllegalStateException("Layout has not been set. Did you forget to call setLayout()?");
+        }
+        var slotArea = currentSlotArea();
+        return new SlotArea(
+                L.left(),
+                slotArea.y(),
+                L.w(),
+                slotArea.h()
+        );
+    }
+
     record SlotArea(int x, int y, int w, int h) {}
 
 }
