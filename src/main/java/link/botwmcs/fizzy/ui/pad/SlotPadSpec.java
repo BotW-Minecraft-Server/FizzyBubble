@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.pad;
 
 import link.botwmcs.fizzy.ui.core.UiUnit;
-import link.botwmcs.fizzy.ui.element.SlotElement;
+import link.botwmcs.fizzy.ui.element.ElementPainter;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ public record SlotPadSpec(
         int colStart,
         int rowEnd,
         int colEnd,
-        List<SlotElement> elements
+        List<ElementPainter> elements
 ) {
     public SlotPadSpec {
         if (rowStart < 1) {

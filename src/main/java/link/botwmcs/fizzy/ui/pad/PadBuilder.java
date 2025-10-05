@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.pad;
 
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
-import link.botwmcs.fizzy.ui.element.SlotElement;
+import link.botwmcs.fizzy.ui.element.ElementPainter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ public final class PadBuilder {
     public final int colStart;
     public final int rowEnd;
     public final int colEnd;
-    public final List<SlotElement> elements = new ArrayList<>();
+    public final List<ElementPainter> elements = new ArrayList<>();
 
     public PadBuilder(FizzyGuiBuilder parent, int rowStart, int colStart, int rowEnd, int colEnd) {
         this.parent = parent;
@@ -23,7 +23,7 @@ public final class PadBuilder {
         this.colEnd = colEnd;
     }
 
-    public PadBuilder element(SlotElement element) {
+    public PadBuilder element(ElementPainter element) {
         elements.add(Objects.requireNonNull(element, "element"));
         return this;
     }

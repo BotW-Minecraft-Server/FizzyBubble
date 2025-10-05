@@ -5,6 +5,7 @@ import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -43,10 +44,23 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         }
 
         frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false);
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
         BgPainter bg = gui.background();
         if (bg != null) {
             bg.paint(g, frame);
         }
-        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false);    }
+        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false);
+        if (slotArea != null) {
+            for (SlotPadSpec pad : gui.pads()) {
+                int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
+                int padTop = slotArea.y() + (pad.rowStart() - 1) * UiUnit.SLOT_PX;
+                int padWidth = pad.widthSlots() * UiUnit.SLOT_PX;
+                int padHeight = pad.heightSlots() * UiUnit.SLOT_PX;
+                for (var element : pad.elements()) {
+                    element.render(g, padLeft, padTop, padWidth, padHeight, v);
+                }
+            }
+        }
+    }
 }
