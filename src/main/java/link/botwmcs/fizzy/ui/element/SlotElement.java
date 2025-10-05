@@ -1,4 +1,4 @@
-package link.botwmcs.fizzy.ui.pad;
+package link.botwmcs.fizzy.ui.element;
 
 import net.minecraft.client.gui.GuiGraphics;
 

@@ -20,7 +20,11 @@ public class FizzyGui {
     private final List<SlotPadSpec> pads;
 
     public FizzyGui(FizzyGuiSpec spec, FramePainter frame) {
-        this(spec, frame, new FizzyBg(BgType.STONE), new BlurBehind(), null, null, List.of());
+        this(spec, frame, new FizzyBg(BgType.STONE), new BlurBehind(), null, null);
+    }
+
+    public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH) {
+        this(spec, frame, bg, behind, overrideW, overrideH, null);
     }
 
     public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH, List<SlotPadSpec> pads) {
@@ -30,7 +34,7 @@ public class FizzyGui {
         this.behind = behind;
         this.overrideW = overrideW;
         this.overrideH = overrideH;
-        this.pads = List.copyOf(pads);
+        this.pads = List.copyOf(pads != null ? pads : List.of());
     }
 
     public FizzyGuiSpec spec() { return spec; }

@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.ui.pad;
 
 import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.element.SlotElement;
 
 import java.util.List;
 
