@@ -49,6 +49,10 @@ public class GuiCommand {
 
         FizzyGui gui = FizzyGuiBuilder.start()
                 .sizeSlots(rows)          // 记录网格尺寸（后续 split/region/elements 会用）
+                .pad(1,1,1,9)
+                .element((g, leftPx, topPx, widthPx, heightPx, pT) -> {
+                    g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x6640C4FF);
+                }).done()
                 .host(HostType.SCREEN)
                 .behind(behind)
                 .background(background)
