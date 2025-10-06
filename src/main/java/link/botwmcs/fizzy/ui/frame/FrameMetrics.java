@@ -16,6 +16,8 @@ public interface FrameMetrics {
     int bottomPadHeight();
     int bottomEdgeStartY();
     int bottomEdgeHeight();
+    int buttomInvExtraStartY();
+    int buttomInvExtraHeight();
 
     // 可选：一些通用辅助
     default int totalHeightForRows(int rows, boolean includeBottomEdge) {
