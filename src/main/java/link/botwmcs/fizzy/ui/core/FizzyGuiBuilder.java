@@ -6,8 +6,7 @@ import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
-import link.botwmcs.fizzy.ui.pad.PadBuilder;
-import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
+import link.botwmcs.fizzy.ui.pad.*;
 import link.botwmcs.fizzy.ui.split.*;
 
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ public final class FizzyGuiBuilder {
     private BgPainter bg;
     private BehindPainter behind;
     private Integer overrideW, overrideH;
-    private final List<PadBuilder> pads;
+    private final List<BasePadBuilder<?>> pads;
     private SplitPainter splitPainter;
     private final List<SplitSpec> splits;
 
@@ -41,7 +40,7 @@ public final class FizzyGuiBuilder {
     public FizzyGuiBuilder overrideSizePx(int w, int h) { this.overrideW = w; this.overrideH = h; return this; } // 增加 overrideSizePx() 链式方法
     private FizzyGuiBuilder splitPainter(SplitPainter painter) { this.splitPainter = Objects.requireNonNull(splitPainter, "splitPainter"); return this; }
 
-    public PadBuilder pad(int rowStart, int colStart, int rowEnd, int colEnd) {
+    public SlotPadBuilder pad(int rowStart, int colStart, int rowEnd, int colEnd) {
         if (rowStart < 1) {
             throw new IllegalArgumentException("rowStart must be >= 1");
         }
@@ -55,7 +54,19 @@ public final class FizzyGuiBuilder {
             throw new IllegalArgumentException("colEnd must be >= colStart");
         }
 
-        PadBuilder builder = new PadBuilder(this, rowStart, colStart, rowEnd, colEnd);
+        SlotPadBuilder builder = new SlotPadBuilder(this, rowStart, colStart, rowEnd, colEnd);
+        pads.add(builder);
+        return builder;
+    }
+
+    public PixelPadBuilder padByPx(int leftPx, int topPx, int widthPx, int heightPx) {
+        PixelPadBuilder builder = new PixelPadBuilder(this, leftPx, topPx, widthPx, heightPx);
+        pads.add(builder);
+        return builder;
+    }
+
+    public FramePadBuilder padByFrame() {
+        FramePadBuilder builder = new FramePadBuilder(this);
         pads.add(builder);
         return builder;
     }
@@ -81,15 +92,17 @@ public final class FizzyGuiBuilder {
         BehindPainter effectiveBehind = (behind != null) ? behind : new BlurBehind();
 
         // Pads
-        List<SlotPadSpec> padSpecs = new ArrayList<>(pads.size());
-        for (PadBuilder pad : pads) {
-            if (pad.rowEnd > rows) {
-                throw new IllegalStateException("Pad rowEnd exceeds configured rows");
+        List<PadSpec> padSpecs = new ArrayList<>(pads.size());
+        for (BasePadBuilder<?> pad : pads) {
+            if (pad instanceof SlotPadBuilder slotPad) {
+                if (slotPad.rowEnd > rows) {
+                    throw new IllegalStateException("Pad rowEnd exceeds configured rows");
+                }
+                if (slotPad.colEnd > cols) {
+                    throw new IllegalStateException("Pad colEnd exceeds configured cols");
+                }
             }
-            if (pad.colEnd > cols) {
-                throw new IllegalStateException("Pad colEnd exceeds configured cols");
-            }
-            padSpecs.add(new SlotPadSpec(pad.rowStart, pad.colStart, pad.rowEnd, pad.colEnd, pad.elements));
+            padSpecs.add(pad.toSpec());
         }
 
         // Splits

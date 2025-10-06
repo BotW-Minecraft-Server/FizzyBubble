@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
@@ -19,7 +20,7 @@ public class FizzyGui {
     private final BehindPainter behind;
     private final Integer overrideW;  // 可空
     private final Integer overrideH;  // 可空
-    private final List<SlotPadSpec> pads;
+    private final List<PadSpec> pads;
     private final SplitPainter splitPainter;
     private final List<SplitSpec> splits;
 
@@ -31,7 +32,7 @@ public class FizzyGui {
         this(spec, frame, bg, behind, overrideW, overrideH, null, null, null);
     }
 
-    public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH, List<SlotPadSpec> pads, SplitPainter splitPainter, List<SplitSpec> splits) {
+    public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH, List<PadSpec> pads, SplitPainter splitPainter, List<SplitSpec> splits) {
         this.spec = spec;
         this.frame = frame;
         this.bg = bg;
@@ -47,7 +48,7 @@ public class FizzyGui {
     public FramePainter frame() { return frame; }
     public BgPainter background() { return bg; }
     public BehindPainter behind() { return behind; }
-    public List<SlotPadSpec> pads() { return pads; }
+    public List<PadSpec> pads() { return pads; }
     public SplitPainter splitPainter() { return splitPainter; }
     public List<SplitSpec> splits() { return splits; }
 

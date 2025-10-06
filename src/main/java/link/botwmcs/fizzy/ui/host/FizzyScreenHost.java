@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
@@ -61,17 +62,12 @@ public class FizzyScreenHost extends Screen {
         int heightPx = gui.heightPx();
         frame.setLayout(left, top, widthPx, heightPx, true);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
-        if (slotArea == null) {
-            return;
-        }
+
         ElementPainter.InitContext context = new ScreenInitContext();
-        for (SlotPadSpec pad : gui.pads()) {
-            int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
-            int padTop = slotArea.y() + (pad.rowStart() - 1) * UiUnit.SLOT_PX;
-            int padWidth = pad.widthSlots() * UiUnit.SLOT_PX;
-            int padHeight = pad.heightSlots() * UiUnit.SLOT_PX;
+        for (PadSpec pad : gui.pads()) {
+            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
             for (var element : pad.elements()) {
-                element.init(context, padLeft, padTop, padWidth, padHeight);
+                element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height());
             }
         }
     }
@@ -81,9 +77,10 @@ public class FizzyScreenHost extends Screen {
 //        super.render(g, mx, my, dt);
         // 初始化frame
         FramePainter frame = gui.frame();
-        FramePainter.SlotArea slotArea = frame.currentSlotArea();
         int widthPx = gui.widthPx();
         int heightPx = gui.heightPx();
+        frame.setLayout(left, top, widthPx, heightPx, true);
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
         // 绘制在frame后面的背景
         BehindPainter behind = gui.behind();
@@ -100,20 +97,15 @@ public class FizzyScreenHost extends Screen {
         }
 
         // 绘制各个pad内的元素
-        if (slotArea != null) {
-            for (SlotPadSpec pad : gui.pads()) {
-                int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
-                int padTop = slotArea.y() + (pad.rowStart() - 1) * UiUnit.SLOT_PX;
-                int padWidth = pad.widthSlots() * UiUnit.SLOT_PX;
-                int padHeight = pad.heightSlots() * UiUnit.SLOT_PX;
-                for (var element : pad.elements()) {
-                    element.render(g, padLeft, padTop, padWidth, padHeight, dt);
-                }
+        for (PadSpec pad : gui.pads()) {
+            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            for (var element : pad.elements()) {
+                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), dt);
             }
         }
 
         // 绘制frame
-        frame.setLayout(left, top, widthPx, heightPx, true);
+//        frame.setLayout(left, top, widthPx, heightPx, true);
         frame.paint(g, left, top, widthPx, heightPx, true);
 
         // 绘制分割线

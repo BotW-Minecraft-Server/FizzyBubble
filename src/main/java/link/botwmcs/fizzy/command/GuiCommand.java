@@ -58,6 +58,7 @@ public class GuiCommand {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
         }).color(ColoredAbstractButton.Color.YELLOW).build();
         var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
+
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
@@ -67,7 +68,9 @@ public class GuiCommand {
 //                .element((g, leftPx, topPx, widthPx, heightPx, pT) -> {
 //                    g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x6640C4FF);
 //                }).done()
-                .pad(1, 1, 4, 9)
+//                .pad(1, 1, 4, 9)
+//                .element(elementBg).done()
+                .padByFrame()
                 .element(elementBg).done()
                 .pad(1, 1, 1, 3)
                 .element(button0).done()

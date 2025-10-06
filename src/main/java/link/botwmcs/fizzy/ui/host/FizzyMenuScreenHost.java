@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -37,18 +38,14 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     private void initElements() {
         FramePainter frame = gui.frame();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
-        if (slotArea != null) {
-            return;
-        }
+
         ElementPainter.InitContext context = new MenuInitContext();
-        for (SlotPadSpec pad : gui.pads()) {
-            int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
-            int padTop = slotArea.y() + (pad.rowStart() - 1) * UiUnit.SLOT_PX;
-            int padWidth = pad.widthSlots() * UiUnit.SLOT_PX;
-            int padHeight = pad.heightSlots() * UiUnit.SLOT_PX;
+        for (PadSpec pad : gui.pads()) {
             for (var element : pad.elements()) {
-                element.init(context, padLeft, padTop, padWidth, padHeight);
+                PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+                element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height());
             }
         }
     }
@@ -73,15 +70,10 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
             bg.paint(g, frame);
         }
         frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false);
-        if (slotArea != null) {
-            for (SlotPadSpec pad : gui.pads()) {
-                int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
-                int padTop = slotArea.y() + (pad.rowStart() - 1) * UiUnit.SLOT_PX;
-                int padWidth = pad.widthSlots() * UiUnit.SLOT_PX;
-                int padHeight = pad.heightSlots() * UiUnit.SLOT_PX;
-                for (var element : pad.elements()) {
-                    element.render(g, padLeft, padTop, padWidth, padHeight, v);
-                }
+        for (PadSpec pad : gui.pads()) {
+            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            for (var element : pad.elements()) {
+                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), v);
             }
         }
     }
