@@ -10,6 +10,7 @@ import link.botwmcs.fizzy.ui.element.below.LeftButtonBelow;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
@@ -90,6 +91,8 @@ public class GuiCommand {
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
                 .element(button3).done()
+                .pad(2,5,3,8)
+                .element(new SlotElement()).done()
                 .below(belowBtn);
 
         if (rows > 1) {

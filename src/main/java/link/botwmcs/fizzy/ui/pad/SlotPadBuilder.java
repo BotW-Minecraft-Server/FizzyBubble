@@ -1,11 +1,6 @@
 package link.botwmcs.fizzy.ui.pad;
 
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
-import link.botwmcs.fizzy.ui.element.ElementPainter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public final class SlotPadBuilder extends BasePadBuilder<SlotPadBuilder> {
     public final int rowStart;

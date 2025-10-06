@@ -1,6 +1,5 @@
 package link.botwmcs.fizzy.ui.background;
 
-import link.botwmcs.fizzy.ui.behind.SoildColorBehind;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.gui.GuiGraphics;
 

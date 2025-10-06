@@ -3,7 +3,6 @@ package link.botwmcs.fizzy.ui.behind;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
-import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
