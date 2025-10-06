@@ -74,7 +74,8 @@ public class GuiCommand {
                 .pad(3, 1, 3, 3)
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
-                .element(button3).done();
+                .element(button3).done()
+                .pad(4, 4, 4, 9).done();
 
         if (rows > 1) {
 //            builder.split(1, 3, rows, 3);
