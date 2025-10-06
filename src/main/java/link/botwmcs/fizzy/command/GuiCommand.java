@@ -7,8 +7,8 @@ import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
-import link.botwmcs.fizzy.ui.element.button.FizzyButtonElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
@@ -57,7 +57,7 @@ public class GuiCommand {
         var button3 = ColoredButtonElement.builder(Component.literal("Button 3"), btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
         }).color(ColoredAbstractButton.Color.YELLOW).build();
-
+        var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
@@ -75,7 +75,8 @@ public class GuiCommand {
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
                 .element(button3).done()
-                .pad(4, 4, 4, 9).done();
+                .pad(1, 4, 4, 9)
+                .element(elementBg).done();
 
         if (rows > 1) {
 //            builder.split(1, 3, rows, 3);

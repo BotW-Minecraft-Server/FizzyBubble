@@ -79,24 +79,27 @@ public class FizzyScreenHost extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float dt) {
 //        super.render(g, mx, my, dt);
+        // 初始化frame
         FramePainter frame = gui.frame();
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
         int widthPx = gui.widthPx();
         int heightPx = gui.heightPx();
-        BehindPainter behind = gui.behind();
 
+        // 绘制在frame后面的背景
+        BehindPainter behind = gui.behind();
         if (behind != null) {
             behind.paint(g, frame, dt);
             // I think we don't need post this event...
 //            NeoForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered(this, g));
         }
-        frame.setLayout(left, top, widthPx, heightPx, true);
-        FramePainter.SlotArea slotArea = frame.currentSlotArea();
+
+        // 绘制背景
         BgPainter bg = gui.background();
         if (bg != null) {
             bg.paint(g, frame);
         }
-        frame.paint(g, left, top, widthPx, heightPx, true);
 
+        // 绘制各个pad内的元素
         if (slotArea != null) {
             for (SlotPadSpec pad : gui.pads()) {
                 int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
@@ -109,6 +112,11 @@ public class FizzyScreenHost extends Screen {
             }
         }
 
+        // 绘制frame
+        frame.setLayout(left, top, widthPx, heightPx, true);
+        frame.paint(g, left, top, widthPx, heightPx, true);
+
+        // 绘制分割线
         SplitPainter splitPainter = gui.splitPainter();
         if (slotArea != null && splitPainter != null) {
             for (SplitSpec split : gui.splits()) {
@@ -116,6 +124,7 @@ public class FizzyScreenHost extends Screen {
             }
         }
 
+        // 绘制renderables
         for (Renderable renderable : this.renderables) {
             renderable.render(g, mx, my, dt);
         }
