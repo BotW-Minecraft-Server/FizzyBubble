@@ -44,7 +44,7 @@ public record FizzyFrameMetrics(
                 28, 45,
                 46, 5,
                 51, 4,
-                56, 19
+                55, 18
         );
     }
 

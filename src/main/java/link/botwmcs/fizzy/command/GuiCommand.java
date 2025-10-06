@@ -6,7 +6,7 @@ import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
-import link.botwmcs.fizzy.ui.below.DoubleButtonBelow;
+import link.botwmcs.fizzy.ui.element.below.LeftButtonBelow;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
@@ -59,10 +59,14 @@ public class GuiCommand {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
         }).color(ColoredAbstractButton.Color.YELLOW).build();
         var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
-        var belowBtn = new DoubleButtonBelow(Component.literal("Confirm"), btn -> {
-            mc.player.sendSystemMessage(Component.literal("Confirm clicked!"));
-        }, Component.literal("Cancel"), btn -> {
-            mc.player.sendSystemMessage(Component.literal("Cancel clicked!"));
+//        var belowBtn = new DoubleButtonBelow(Component.literal("Confirm"), btn -> {
+//            mc.player.sendSystemMessage(Component.literal("Confirm clicked!"));
+//        }, Component.literal("Cancel"), btn -> {
+//            mc.player.sendSystemMessage(Component.literal("Cancel clicked!"));
+//        });
+        var belowBtn = new LeftButtonBelow(Component.literal("Close"), btn -> {
+            mc.player.sendSystemMessage(Component.literal("Close clicked!"));
+            mc.setScreen(null);
         });
 
         int wPx = painter.panelWidthPx();

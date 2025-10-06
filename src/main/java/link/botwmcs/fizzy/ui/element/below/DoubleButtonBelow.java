@@ -1,4 +1,4 @@
-package link.botwmcs.fizzy.ui.below;
+package link.botwmcs.fizzy.ui.element.below;
 
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.ColoredButton;

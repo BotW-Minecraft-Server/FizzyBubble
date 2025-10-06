@@ -128,12 +128,16 @@ public final class FizzyGuiBuilder {
 
         // Size calculations
         boolean hasBelow = this.below != null;
+        boolean drawBottomEdge = hostType == HostType.SCREEN;
+        int requiredHeight = frame.metrics().totalHeightForRows(rows, drawBottomEdge, hasBelow);
+
         if (overrideW == null) {
             overrideW = frame.metrics().panelW();
         }
         if (overrideH == null) {
-            boolean drawBottomEdge = hostType == HostType.SCREEN;
-            overrideH = frame.metrics().totalHeightForRows(rows, drawBottomEdge, hasBelow);
+            overrideH = requiredHeight;
+        } else if (overrideH < requiredHeight) {
+            overrideH = requiredHeight;
         }
 
         // Final return

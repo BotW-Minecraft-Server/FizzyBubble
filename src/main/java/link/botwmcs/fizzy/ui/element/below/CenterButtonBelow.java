@@ -1,4 +1,4 @@
-package link.botwmcs.fizzy.ui.below;
+package link.botwmcs.fizzy.ui.element.below;
 
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.ColoredButton;
@@ -10,18 +10,16 @@ import net.minecraft.network.chat.Component;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public final class LeftButtonBelow implements ElementPainter {
+public final class CenterButtonBelow implements ElementPainter {
     private static final int BUTTON_WIDTH = 54;
     private static final int BUTTON_HEIGHT = 13;
-    private static final int OFFSET_X = 26;
 
     private final ColoredButtonElement button;
-
-    public LeftButtonBelow(Component message, ColoredButton.OnPress onPress) {
+    public CenterButtonBelow(Component message, ColoredButton.OnPress onPress) {
         this(message, onPress, builder -> {});
     }
 
-    public LeftButtonBelow(Component message, ColoredButton.OnPress onPress, Consumer<ColoredButtonElement.Builder> customizer) {
+    public CenterButtonBelow(Component message, ColoredButton.OnPress onPress, Consumer<ColoredButtonElement.Builder> customizer) {
         Objects.requireNonNull(message, "message");
         Objects.requireNonNull(onPress, "onPress");
         Objects.requireNonNull(customizer, "customizer");
@@ -31,7 +29,7 @@ public final class LeftButtonBelow implements ElementPainter {
         this.button = builder.build();
     }
 
-    public LeftButtonBelow(ColoredButtonElement element) {
+    public CenterButtonBelow(ColoredButtonElement element) {
         this.button = Objects.requireNonNull(element, "element");
     }
 
@@ -39,14 +37,16 @@ public final class LeftButtonBelow implements ElementPainter {
         return button;
     }
 
+
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
-        button.init(context, leftPx + OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT);
+        int btnLeft = leftPx + (widthPx - BUTTON_WIDTH) / 2;
+        int btnTop = topPx + heightPx - BUTTON_HEIGHT - 4; // 底边留 4px 间距
+        button.init(context, btnLeft, btnTop, BUTTON_WIDTH, BUTTON_HEIGHT);
     }
-
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        button.render(g, leftPx + OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
+        int offset = Math.max(0, (widthPx - BUTTON_WIDTH) / 2);
+        button.render(g, leftPx + offset, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
     }
-
 }
