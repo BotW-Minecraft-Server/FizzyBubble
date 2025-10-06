@@ -15,18 +15,20 @@ public final class SlotElement implements ElementPainter {
     private static final int SLOT_SIZE = UiUnit.SLOT_PX; // 18px per slot (vanilla standard)
 
     // Coordinates inside the texture (trimmed to the core 3x3 sample area).
-    private static final int TEX_ORIGIN = 2;       // Skip the outer drop shadow (0/1).
-    private static final int TEX_BORDER = 1;       // 1px black border around slots.
-    private static final int TEX_INNER = 16;       // 16px light background.
-    private static final int TEX_DIVIDER = 2;      // 2px between-slot divider (two 1px borders).
+    private static final int TEX_ORIGIN = 0;           // Top-left pixel of the 3x3 sample grid.
+    private static final int TEX_BORDER = 3;           // 3px outer frame thickness.
+    private static final int TEX_INNER = 16;           // 16px light background.
+    private static final int TEX_DIVIDER = 2;          // 2px between-slot divider.
+    private static final int SAMPLE_SLOT_COUNT = 3;    // slot.png encodes a 3x3 reference grid.
 
-    private static final int TEX_INNER_U = TEX_ORIGIN + TEX_BORDER;                     // 3
-    private static final int TEX_DIVIDER_U = TEX_INNER_U + TEX_INNER;                   // 19
-    private static final int TEX_BORDER_RIGHT_U = TEX_DIVIDER_U + TEX_DIVIDER + TEX_INNER; // 55
+    private static final int TEX_SLOT_U = TEX_ORIGIN + TEX_BORDER; // 3
+    private static final int TEX_DIVIDER_U = TEX_SLOT_U + TEX_INNER; // 19
+    private static final int TEX_BORDER_RIGHT_U = TEX_SLOT_U + SAMPLE_SLOT_COUNT * TEX_INNER + (SAMPLE_SLOT_COUNT - 1) * TEX_DIVIDER; // 55
 
-    private static final int TEX_INNER_V = TEX_ORIGIN + TEX_BORDER;                     // 3
-    private static final int TEX_DIVIDER_V = TEX_INNER_V + TEX_INNER;                   // 19
-    private static final int TEX_BORDER_BOTTOM_V = TEX_DIVIDER_V + TEX_DIVIDER + TEX_INNER; // 55
+    private static final int TEX_TOP_BORDER_V = TEX_ORIGIN;                           // 0
+    private static final int TEX_INNER_V = TEX_ORIGIN + TEX_BORDER;                   // 3
+    private static final int TEX_DIVIDER_V = TEX_INNER_V + TEX_INNER;                 // 19
+    private static final int TEX_BOTTOM_BORDER_V = TEX_INNER_V + SAMPLE_SLOT_COUNT * TEX_INNER + (SAMPLE_SLOT_COUNT - 1) * TEX_DIVIDER;                                  // 55
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
@@ -40,31 +42,39 @@ public final class SlotElement implements ElementPainter {
             return;
         }
 
-        int drawWidth = slotsX * SLOT_SIZE;
-        int drawHeight = slotsY * SLOT_SIZE;
+        int drawWidth = spanForSlots(slotsX);
+        int drawHeight = spanForSlots(slotsY);
 
-        int originX = leftPx + Math.max(0, (widthPx - drawWidth) / 2);
-        int originY = topPx + Math.max(0, (heightPx - drawHeight) / 2);
+        int originX = leftPx + (widthPx - drawWidth) / 2;
+        int originY = topPx + (heightPx - drawHeight) / 2;
 
         int y = originY;
         // Top border row.
-        drawHorizontalStripe(g, originX, y, slotsX, TEX_ORIGIN, TEX_BORDER);
+        drawHorizontalStripe(g, originX, y, slotsX, TEX_TOP_BORDER_V, TEX_BORDER, TEX_SLOT_U, TEX_DIVIDER_U);
         y += TEX_BORDER;
 
         for (int row = 0; row < slotsY; row++) {
-            drawHorizontalStripe(g, originX, y, slotsX, TEX_INNER_V, TEX_INNER);
+            drawHorizontalStripe(g, originX, y, slotsX, TEX_INNER_V, TEX_INNER, TEX_SLOT_U, TEX_DIVIDER_U);
             y += TEX_INNER;
             if (row < slotsY - 1) {
-                drawHorizontalStripe(g, originX, y, slotsX, TEX_DIVIDER_V, TEX_DIVIDER);
+                drawHorizontalStripe(g, originX, y, slotsX, TEX_DIVIDER_V, TEX_DIVIDER, TEX_SLOT_U, TEX_DIVIDER_U);
                 y += TEX_DIVIDER;
             }
         }
 
         // Bottom border row.
-        drawHorizontalStripe(g, originX, y, slotsX, TEX_BORDER_BOTTOM_V, TEX_BORDER);
+        drawHorizontalStripe(g, originX, y, slotsX, TEX_BOTTOM_BORDER_V, TEX_BORDER, TEX_SLOT_U, TEX_DIVIDER_U);
     }
 
-    private static void drawHorizontalStripe(GuiGraphics g, int destX, int destY, int slotsX, int textureV, int height) {
+    private static int spanForSlots(int slots) {
+        if (slots <= 0) {
+            return 0;
+        }
+        return TEX_BORDER * 2 + slots * TEX_INNER + (slots - 1) * TEX_DIVIDER;
+    }
+
+    private static void drawHorizontalStripe(GuiGraphics g, int destX, int destY, int slotsX, int textureV,
+                                             int height, int slotTextureU, int dividerTextureU) {
         int x = destX;
 
         // Left border column.
@@ -73,12 +83,12 @@ public final class SlotElement implements ElementPainter {
 
         for (int col = 0; col < slotsX; col++) {
             // Slot inner background.
-            g.blit(TEXTURE, x, destY, TEX_INNER_U, textureV, TEX_INNER, height, TEXTURE_SIZE, TEXTURE_SIZE);
+            g.blit(TEXTURE, x, destY, slotTextureU, textureV, TEX_INNER, height, TEXTURE_SIZE, TEXTURE_SIZE);
             x += TEX_INNER;
 
             if (col < slotsX - 1) {
                 // Divider between adjacent slots.
-                g.blit(TEXTURE, x, destY, TEX_DIVIDER_U, textureV, TEX_DIVIDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
+                g.blit(TEXTURE, x, destY, dividerTextureU, textureV, TEX_DIVIDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
                 x += TEX_DIVIDER;
             }
         }
