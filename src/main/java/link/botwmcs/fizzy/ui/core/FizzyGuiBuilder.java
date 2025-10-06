@@ -5,6 +5,7 @@ import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
+import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.*;
 import link.botwmcs.fizzy.ui.split.*;
@@ -19,6 +20,7 @@ public final class FizzyGuiBuilder {
     private FramePainter frame;
     private BgPainter bg;
     private BehindPainter behind;
+    private ElementPainter below;
     private Integer overrideW, overrideH;
     private final List<BasePadBuilder<?>> pads;
     private SplitPainter splitPainter;
@@ -35,6 +37,7 @@ public final class FizzyGuiBuilder {
     public FizzyGuiBuilder sizeSlots(int cols, int rows) { this.cols = cols; this.rows = rows; return this; }
     public FizzyGuiBuilder host(HostType hostType) { this.hostType = hostType; return this; }
     public FizzyGuiBuilder frame(FramePainter painter) { this.frame = painter; return this; }
+    public FizzyGuiBuilder below(ElementPainter painter) { this.below = painter; return this; }
     public FizzyGuiBuilder background(BgPainter painter) { this.bg = painter; return this; }
     public FizzyGuiBuilder behind(BehindPainter behind) { this.behind = behind; return this; }
     public FizzyGuiBuilder overrideSizePx(int w, int h) { this.overrideW = w; this.overrideH = h; return this; } // 增加 overrideSizePx() 链式方法
@@ -123,8 +126,18 @@ public final class FizzyGuiBuilder {
             effectiveSplitPainter = new FizzySplit();
         }
 
+        // Size calculations
+        boolean hasBelow = this.below != null;
+        if (overrideW == null) {
+            overrideW = frame.metrics().panelW();
+        }
+        if (overrideH == null) {
+            boolean drawBottomEdge = hostType == HostType.SCREEN;
+            overrideH = frame.metrics().totalHeightForRows(rows, drawBottomEdge, hasBelow);
+        }
+
         // Final return
-        return new FizzyGui(spec, frame, effectiveBg, effectiveBehind, overrideW, overrideH, padSpecs, effectiveSplitPainter, splitSpecs);
+        return new FizzyGui(spec, frame, effectiveBg, effectiveBehind, overrideW, overrideH, padSpecs, effectiveSplitPainter, splitSpecs, below);
     }
 
 }

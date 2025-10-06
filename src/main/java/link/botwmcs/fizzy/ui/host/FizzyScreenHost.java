@@ -60,14 +60,21 @@ public class FizzyScreenHost extends Screen {
         FramePainter frame = gui.frame();
         int widthPx = gui.widthPx();
         int heightPx = gui.heightPx();
-        frame.setLayout(left, top, widthPx, heightPx, true);
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(left, top, widthPx, heightPx, true, hasBelow);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
-        ElementPainter.InitContext context = new ScreenInitContext();
+        ScreenInitContext context = new ScreenInitContext();
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
             for (var element : pad.elements()) {
                 element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height());
+            }
+        }
+        if (hasBelow && gui.below() != null) {
+            FramePainter.BelowArea belowArea = frame.currentBelowArea();
+            if (belowArea != null) {
+                gui.below().init(context, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height());
             }
         }
     }
@@ -79,7 +86,8 @@ public class FizzyScreenHost extends Screen {
         FramePainter frame = gui.frame();
         int widthPx = gui.widthPx();
         int heightPx = gui.heightPx();
-        frame.setLayout(left, top, widthPx, heightPx, true);
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(left, top, widthPx, heightPx, true, hasBelow);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
         // 绘制在frame后面的背景
@@ -106,7 +114,14 @@ public class FizzyScreenHost extends Screen {
 
         // 绘制frame
 //        frame.setLayout(left, top, widthPx, heightPx, true);
-        frame.paint(g, left, top, widthPx, heightPx, true);
+        if (hasBelow && gui.below() != null) {
+            FramePainter.BelowArea belowArea = frame.currentBelowArea();
+            if (belowArea != null) {
+                gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), dt);
+            }
+        }
+
+        frame.paint(g, left, top, widthPx, heightPx, true, hasBelow);
 
         // 绘制分割线
         SplitPainter splitPainter = gui.splitPainter();

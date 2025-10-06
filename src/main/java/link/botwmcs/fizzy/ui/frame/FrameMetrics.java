@@ -21,7 +21,12 @@ public interface FrameMetrics {
 
     // 可选：一些通用辅助
     default int totalHeightForRows(int rows, boolean includeBottomEdge) {
+        return totalHeightForRows(rows, includeBottomEdge, false);
+    }
+
+    default int totalHeightForRows(int rows, boolean includeBottomEdge, boolean includeBelow) {
         return slotStartTopPx() + rows * slotSizePx() + bottomPadHeight()
+                + (includeBelow ? buttomInvExtraHeight() : 0)
                 + (includeBottomEdge ? bottomEdgeHeight() : 0);
     }
     default int totalWidthForCols(int cols) {

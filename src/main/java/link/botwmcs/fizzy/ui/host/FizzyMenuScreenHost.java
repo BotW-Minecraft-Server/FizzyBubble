@@ -38,14 +38,21 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     private void initElements() {
         FramePainter frame = gui.frame();
-        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false);
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
-        ElementPainter.InitContext context = new MenuInitContext();
+        MenuInitContext context = new MenuInitContext();
         for (PadSpec pad : gui.pads()) {
             for (var element : pad.elements()) {
                 PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
                 element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height());
+            }
+        }
+        if (hasBelow && gui.below() != null) {
+            FramePainter.BelowArea belowArea = frame.currentBelowArea();
+            if (belowArea != null) {
+                gui.below().init(context, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height());
             }
         }
     }
@@ -62,14 +69,23 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 //            NeoForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered(this, g));
         }
 
-        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false);
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
         BgPainter bg = gui.background();
         if (bg != null) {
             bg.paint(g, frame);
         }
-        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false);
+        if (hasBelow && gui.below() != null) {
+            FramePainter.BelowArea belowArea = frame.currentBelowArea();
+            if (belowArea != null) {
+                gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), v);
+            }
+        }
+
+        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
+
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
             for (var element : pad.elements()) {

@@ -43,7 +43,7 @@ public class FizzyFrame implements FramePainter {
      * @param drawBottomEdge true=Screen 绘底边；false=Menu 不绘底边
      */
     @Override
-    public void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge) {
+    public void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
         final int texW = m.texW(), texH = m.texH();
         final int drawW = panelWidthPx; // 固定使用面板宽，避免横向拉伸失真
         int y = top;
@@ -54,7 +54,9 @@ public class FizzyFrame implements FramePainter {
         g.drawString(mc.font, this.title, left + m.panelW() / 2 - stringW / 2, y + m.titleStartH(), 0xFFFFFF, true);
 
         // 计算行数（严格基于目标高度反推，防止调用方传错）
-        int expectedRowsPart = h - m.slotStartTopPx() - m.bottomPadHeight() - (drawBottomEdge ? m.bottomEdgeHeight() : 0);
+        int expectedRowsPart = h - m.slotStartTopPx() - m.bottomPadHeight()
+                - (hasBelow ? m.buttomInvExtraHeight() : 0)
+                - (drawBottomEdge ? m.bottomEdgeHeight() : 0);
         if (expectedRowsPart % m.slotSizePx() != 0) {
             // 不整除就“就近取整”，防止溢出（也可抛错看你偏好）
             expectedRowsPart -= expectedRowsPart % m.slotSizePx();
@@ -92,7 +94,13 @@ public class FizzyFrame implements FramePainter {
         blit(g, left, y, 0, m.bottomPadStartY(), drawW, m.bottomPadHeight(), texW, texH);
         y += m.bottomPadHeight();
 
-        // 4) 底边（仅 Screen）
+        // 4) Extra below texture（仅 Below）
+        if (hasBelow) {
+            blit(g, left, y, 0, m.buttomInvExtraStartY(), drawW, m.buttomInvExtraHeight(), texW, texH);
+            y += m.buttomInvExtraHeight();
+        }
+
+        // 5) 底边（仅 Screen）
         if (drawBottomEdge) {
             blit(g, left, y, 0, m.bottomEdgeStartY(), drawW, m.bottomEdgeHeight(), texW, texH);
             y += m.bottomEdgeHeight();
@@ -108,7 +116,11 @@ public class FizzyFrame implements FramePainter {
 
     /** 供宿主用来计算最终面板高度（避免魔法数字） */
     public int computeHeightPx(int rows, boolean includeBottomEdge) {
-        return m.totalHeightForRows(rows, includeBottomEdge);
+        return computeHeightPx(rows, includeBottomEdge, false);
+    }
+
+    public int computeHeightPx(int rows, boolean includeBottomEdge, boolean includeBelow) {
+        return m.totalHeightForRows(rows, includeBottomEdge, includeBelow);
     }
 
     /** 供后续对齐 slot 网格使用 */
@@ -123,8 +135,8 @@ public class FizzyFrame implements FramePainter {
     }
 
     @Override
-    public void setLayout(int left, int top, int w, int h, boolean drawBottomEdge) {
-        this.layout = new Layout(left, top, w, h, drawBottomEdge);
+    public void setLayout(int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
+        this.layout = new Layout(left, top, w, h, drawBottomEdge, hasBelow);
     }
 
     @Override

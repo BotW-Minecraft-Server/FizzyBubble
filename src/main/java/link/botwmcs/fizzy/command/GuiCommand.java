@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
+import link.botwmcs.fizzy.ui.below.DoubleButtonBelow;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
@@ -58,6 +59,11 @@ public class GuiCommand {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
         }).color(ColoredAbstractButton.Color.YELLOW).build();
         var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
+        var belowBtn = new DoubleButtonBelow(Component.literal("Confirm"), btn -> {
+            mc.player.sendSystemMessage(Component.literal("Confirm clicked!"));
+        }, Component.literal("Cancel"), btn -> {
+            mc.player.sendSystemMessage(Component.literal("Cancel clicked!"));
+        });
 
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
@@ -79,7 +85,8 @@ public class GuiCommand {
                 .pad(3, 1, 3, 3)
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
-                .element(button3).done();
+                .element(button3).done()
+                .below(belowBtn);
 
         if (rows > 1) {
 //            builder.split(1, 3, rows, 3);

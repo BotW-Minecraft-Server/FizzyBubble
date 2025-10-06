@@ -22,8 +22,17 @@ public record FizzyFrameMetrics(
 ) implements FrameMetrics {
     public int totalHeightForRows(int rows, boolean includeBottomEdge) {
         // = 顶部装饰 28 + rows * 18 + 留白 5 + （可选底边 4）
-        return slotStartTopPx + rows * slotSizePx + bottomPadHeight + (includeBottomEdge ? bottomEdgeHeight : 0);
+        return totalHeightForRows(rows, includeBottomEdge, false);
+
     }
+
+    public int totalHeightForRows(int rows, boolean includeBottomEdge, boolean includeBelow) {
+        // = 顶部装饰 28 + rows * 18 + 留白 5 + （可选 Extra 19）+ （可选底边 4）
+        return slotStartTopPx + rows * slotSizePx + bottomPadHeight
+                + (includeBelow ? buttomInvExtraHeight : 0)
+                + (includeBottomEdge ? bottomEdgeHeight : 0);
+    }
+
     public int gridOriginX(int panelLeftPx) { return panelLeftPx + slotStartLeftPx; }
     public int gridOriginY(int panelTopPx)  { return panelTopPx  + slotStartTopPx; }
     public static FizzyFrameMetrics ofDefault256x256() {
