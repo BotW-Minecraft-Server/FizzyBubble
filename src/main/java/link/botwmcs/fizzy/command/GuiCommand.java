@@ -91,7 +91,7 @@ public class GuiCommand {
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
                 .element(button3).done()
-                .pad(1,4,1,8)
+                .pad(2,5,3, 8)
                 .element(new SlotElement()).done()
                 .below(belowBtn);
 
@@ -99,7 +99,6 @@ public class GuiCommand {
 //            builder.split(1, 3, rows, 3);
         }
         builder.splitByPx(UiUnit.SLOT_PX * 3 - 1, 0, UiUnit.SLOT_PX * 4, SplitType.VERTICAL);
-
 
         FizzyGui gui = builder
                 .host(HostType.SCREEN)
