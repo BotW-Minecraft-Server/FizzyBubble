@@ -7,6 +7,8 @@ import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
+import link.botwmcs.fizzy.ui.split.SplitPainter;
+import link.botwmcs.fizzy.ui.split.SplitSpec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -94,6 +96,7 @@ public class FizzyScreenHost extends Screen {
             bg.paint(g, frame);
         }
         frame.paint(g, left, top, widthPx, heightPx, true);
+
         if (slotArea != null) {
             for (SlotPadSpec pad : gui.pads()) {
                 int padLeft = slotArea.x() + (pad.colStart() - 1) * UiUnit.SLOT_PX;
@@ -103,6 +106,13 @@ public class FizzyScreenHost extends Screen {
                 for (var element : pad.elements()) {
                     element.render(g, padLeft, padTop, padWidth, padHeight, dt);
                 }
+            }
+        }
+
+        SplitPainter splitPainter = gui.splitPainter();
+        if (slotArea != null && splitPainter != null) {
+            for (SplitSpec split : gui.splits()) {
+                split.paint(g, splitPainter, slotArea);
             }
         }
 

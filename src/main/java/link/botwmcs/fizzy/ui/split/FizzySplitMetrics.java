@@ -16,12 +16,12 @@ public record FizzySplitMetrics(
         return new FizzySplitMetrics(
                 256,
                 256,
-                6,
-                29,
+                5,
+                28,
                 3,
                 18,
-                8,
-                27,
+                7,
+                26,
                 18,
                 3
         );

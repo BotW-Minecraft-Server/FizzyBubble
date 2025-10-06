@@ -8,9 +8,11 @@ import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.PadBuilder;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
+import link.botwmcs.fizzy.ui.split.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class FizzyGuiBuilder {
     private int cols = 9, rows = 3;
@@ -20,9 +22,12 @@ public final class FizzyGuiBuilder {
     private BehindPainter behind;
     private Integer overrideW, overrideH;
     private final List<PadBuilder> pads;
+    private SplitPainter splitPainter;
+    private final List<SplitSpec> splits;
 
     private FizzyGuiBuilder() {
         this.pads = new ArrayList<>();
+        this.splits = new ArrayList<>();
     }
 
     public static FizzyGuiBuilder start() { return new FizzyGuiBuilder(); }
@@ -34,6 +39,7 @@ public final class FizzyGuiBuilder {
     public FizzyGuiBuilder background(BgPainter painter) { this.bg = painter; return this; }
     public FizzyGuiBuilder behind(BehindPainter behind) { this.behind = behind; return this; }
     public FizzyGuiBuilder overrideSizePx(int w, int h) { this.overrideW = w; this.overrideH = h; return this; } // 增加 overrideSizePx() 链式方法
+    private FizzyGuiBuilder splitPainter(SplitPainter painter) { this.splitPainter = Objects.requireNonNull(splitPainter, "splitPainter"); return this; }
 
     public PadBuilder pad(int rowStart, int colStart, int rowEnd, int colEnd) {
         if (rowStart < 1) {
@@ -54,11 +60,27 @@ public final class FizzyGuiBuilder {
         return builder;
     }
 
+    public FizzyGuiBuilder split(int rowStart, int colStart, int rowEnd, int colEnd) {
+        splits.add(new SlotSplitSpec(rowStart, colStart, rowEnd, colEnd));
+        return this;
+    }
+
+    public FizzyGuiBuilder splitByPx(int offsetX, int offsetY, int lengthPx, SplitType type) {
+        splits.add(new PixelSplitSpec(offsetX, offsetY, lengthPx, Objects.requireNonNull(type, "type")));
+        return this;
+    }
+
+
     public FizzyGui build() {
         if (frame == null) throw new IllegalStateException("FramePainter not set");
+        // Base spec
         FizzyGuiSpec spec = new FizzyGuiSpec(cols, rows, hostType);
+
+        // Background
         BgPainter effectiveBg = (bg != null) ? bg : new FizzyBg(BgType.STONE);
         BehindPainter effectiveBehind = (behind != null) ? behind : new BlurBehind();
+
+        // Pads
         List<SlotPadSpec> padSpecs = new ArrayList<>(pads.size());
         for (PadBuilder pad : pads) {
             if (pad.rowEnd > rows) {
@@ -69,8 +91,27 @@ public final class FizzyGuiBuilder {
             }
             padSpecs.add(new SlotPadSpec(pad.rowStart, pad.colStart, pad.rowEnd, pad.colEnd, pad.elements));
         }
-        return new FizzyGui(spec, frame, effectiveBg, effectiveBehind, overrideW, overrideH, padSpecs);
 
+        // Splits
+        List<SplitSpec> splitSpecs = new ArrayList<>(splits.size());
+        for (SplitSpec split : splits) {
+            if (split instanceof SlotSplitSpec slotSplit) {
+                if (slotSplit.rowStart() < 1 || slotSplit.rowEnd() > rows) {
+                    throw new IllegalStateException("Split row range exceeds configured rows");
+                }
+                if (slotSplit.colStart() < 1 || slotSplit.colEnd() > cols) {
+                    throw new IllegalStateException("Split column range exceeds configured cols");
+                }
+            }
+            splitSpecs.add(split);
+        }
+        SplitPainter effectiveSplitPainter = this.splitPainter;
+        if (effectiveSplitPainter == null && !splitSpecs.isEmpty()) {
+            effectiveSplitPainter = new FizzySplit();
+        }
+
+        // Final return
+        return new FizzyGui(spec, frame, effectiveBg, effectiveBehind, overrideW, overrideH, padSpecs, effectiveSplitPainter, splitSpecs);
     }
 
 }

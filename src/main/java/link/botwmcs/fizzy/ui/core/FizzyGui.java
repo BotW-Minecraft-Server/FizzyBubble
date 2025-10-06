@@ -7,6 +7,8 @@ import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.SlotPadSpec;
+import link.botwmcs.fizzy.ui.split.SplitPainter;
+import link.botwmcs.fizzy.ui.split.SplitSpec;
 
 import java.util.List;
 
@@ -18,16 +20,18 @@ public class FizzyGui {
     private final Integer overrideW;  // 可空
     private final Integer overrideH;  // 可空
     private final List<SlotPadSpec> pads;
+    private final SplitPainter splitPainter;
+    private final List<SplitSpec> splits;
 
     public FizzyGui(FizzyGuiSpec spec, FramePainter frame) {
         this(spec, frame, new FizzyBg(BgType.STONE), new BlurBehind(), null, null);
     }
 
     public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH) {
-        this(spec, frame, bg, behind, overrideW, overrideH, null);
+        this(spec, frame, bg, behind, overrideW, overrideH, null, null, null);
     }
 
-    public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH, List<SlotPadSpec> pads) {
+    public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH, List<SlotPadSpec> pads, SplitPainter splitPainter, List<SplitSpec> splits) {
         this.spec = spec;
         this.frame = frame;
         this.bg = bg;
@@ -35,6 +39,8 @@ public class FizzyGui {
         this.overrideW = overrideW;
         this.overrideH = overrideH;
         this.pads = List.copyOf(pads != null ? pads : List.of());
+        this.splitPainter = splitPainter;
+        this.splits = List.copyOf(splits != null ? splits : List.of());
     }
 
     public FizzyGuiSpec spec() { return spec; }
@@ -42,6 +48,8 @@ public class FizzyGui {
     public BgPainter background() { return bg; }
     public BehindPainter behind() { return behind; }
     public List<SlotPadSpec> pads() { return pads; }
+    public SplitPainter splitPainter() { return splitPainter; }
+    public List<SplitSpec> splits() { return splits; }
 
     public int widthPx()  { return overrideW != null ? overrideW : spec.pixelWidth(); }
     public int heightPx() { return overrideH != null ? overrideH : spec.pixelHeight(); }

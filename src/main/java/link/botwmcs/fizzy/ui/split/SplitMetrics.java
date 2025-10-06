@@ -16,7 +16,9 @@ public interface SplitMetrics {
     default int splitorStartU(SplitType type) {
         return switch (type) {
             case VERTICAL -> horizontalSplitorStartX();
+//            case VERTICAL -> 5;
             case HORIZONTAL -> verticalSplitorStartX();
+//            case HORIZONTAL -> 7;
         };
     }
 
@@ -24,7 +26,9 @@ public interface SplitMetrics {
     default int splitorStartV(SplitType type) {
         return switch (type) {
             case VERTICAL -> horizontalSplitorStartY();
+//            case VERTICAL -> 28;
             case HORIZONTAL -> verticalSplitorStartY();
+//            case HORIZONTAL -> 26;
         };
     }
 
@@ -35,7 +39,9 @@ public interface SplitMetrics {
     default int splitorWidth(SplitType type) {
         return switch (type) {
             case VERTICAL -> horizontalSplitorWidth();
+//            case VERTICAL -> 3;
             case HORIZONTAL -> verticalSplitorWidth();
+//            case HORIZONTAL -> 18;
         };
     }
 
@@ -46,7 +52,9 @@ public interface SplitMetrics {
     default int splitorHeight(SplitType type) {
         return switch (type) {
             case VERTICAL -> horizontalSplitorHeight();
+//            case VERTICAL -> 18;
             case HORIZONTAL -> verticalSplitorHeight();
+//            case HORIZONTAL -> 3;
         };
     }
 
@@ -66,7 +74,9 @@ public interface SplitMetrics {
     default int perpendicularThickness(SplitType type) {
         return switch (type) {
             case VERTICAL -> horizontalSplitorWidth();
+//            case VERTICAL -> 3;
             case HORIZONTAL -> verticalSplitorHeight();
+//            case HORIZONTAL -> 3;
         };
     }
 
