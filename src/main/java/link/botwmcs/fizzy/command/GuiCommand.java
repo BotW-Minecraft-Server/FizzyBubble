@@ -67,6 +67,8 @@ public class GuiCommand {
 //                .element((g, leftPx, topPx, widthPx, heightPx, pT) -> {
 //                    g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x6640C4FF);
 //                }).done()
+                .pad(1, 1, 4, 9)
+                .element(elementBg).done()
                 .pad(1, 1, 1, 3)
                 .element(button0).done()
                 .pad(2, 1, 2, 3)
@@ -74,9 +76,7 @@ public class GuiCommand {
                 .pad(3, 1, 3, 3)
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
-                .element(button3).done()
-                .pad(1, 4, 4, 9)
-                .element(elementBg).done();
+                .element(button3).done();
 
         if (rows > 1) {
 //            builder.split(1, 3, rows, 3);
@@ -87,7 +87,7 @@ public class GuiCommand {
         FizzyGui gui = builder
                 .host(HostType.SCREEN)
                 .behind(behind)
-                .background(background)
+//                .background(background)
                 .frame(painter)
                 .overrideSizePx(wPx, hPx)
                 .build();
