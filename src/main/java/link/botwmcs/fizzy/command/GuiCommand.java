@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
+import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
@@ -10,6 +11,7 @@ import link.botwmcs.fizzy.ui.element.below.LeftButtonBelow;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
@@ -70,6 +72,18 @@ public class GuiCommand {
             mc.setScreen(null);
         });
 
+        var widget0 = WidgetButtonElement.builder(Component.empty(), btn -> {
+            mc.player.sendSystemMessage(Component.literal("Widget clicked!"));
+        }).type(WidgetAbstractButton.WidgetType.TRIANGLE)
+                .color(WidgetAbstractButton.WidgetColor.VANILLA)
+                .direction(WidgetAbstractButton.ArrowDirection.LEFT).build();
+
+        var widget1 = WidgetButtonElement.builder(Component.empty(), btn -> {
+            mc.player.sendSystemMessage(Component.literal("Widget clicked!"));
+        }).type(WidgetAbstractButton.WidgetType.TRIANGLE)
+                .color(WidgetAbstractButton.WidgetColor.VANILLA)
+                .direction(WidgetAbstractButton.ArrowDirection.RIGHT).build();
+
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
@@ -93,6 +107,10 @@ public class GuiCommand {
                 .element(button3).done()
                 .pad(2,5,3, 8)
                 .element(new SlotElement()).done()
+                .padByPx(UiUnit.SLOT_PX * 4 - UiUnit.SLOT_PX / 2, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
+                .element(widget0).done()
+                .padByPx(UiUnit.SLOT_PX * 9 - UiUnit.SLOT_PX / 2 - 3, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
+                .element(widget1).done()
                 .below(belowBtn);
 
         if (rows > 1) {

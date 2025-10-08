@@ -7,8 +7,11 @@ import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
+import link.botwmcs.fizzy.ui.split.SplitPainter;
+import link.botwmcs.fizzy.ui.split.SplitSpec;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -91,6 +94,18 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         }
 
         frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
+
+        SplitPainter splitPainter = gui.splitPainter();
+        if (slotArea != null && splitPainter != null) {
+            for (SplitSpec split : gui.splits()) {
+                split.paint(g, splitPainter, slotArea);
+            }
+        }
+
+        for (Renderable renderable : this.renderables) {
+            renderable.render(g, i, i1, v);
+        }
+
     }
 
     private class MenuInitContext implements ElementPainter.InitContext {
