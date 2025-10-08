@@ -60,22 +60,29 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     @Override
     protected void renderBg(GuiGraphics g, float v, int i, int i1) {
         FramePainter frame = gui.frame();
-        BehindPainter behind = gui.behind();
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
+        BehindPainter behind = gui.behind();
         if (behind != null) {
             behind.paint(g, frame, v);
             // I think we don't need post this event...
 //            NeoForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered(this, g));
         }
 
-        boolean hasBelow = gui.hasBelow();
-        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
-        FramePainter.SlotArea slotArea = frame.currentSlotArea();
-
         BgPainter bg = gui.background();
         if (bg != null) {
             bg.paint(g, frame);
         }
+
+        for (PadSpec pad : gui.pads()) {
+            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            for (var element : pad.elements()) {
+                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), v);
+            }
+        }
+
         if (hasBelow && gui.below() != null) {
             FramePainter.BelowArea belowArea = frame.currentBelowArea();
             if (belowArea != null) {
@@ -84,13 +91,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         }
 
         frame.paint(g, leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
-
-        for (PadSpec pad : gui.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
-            for (var element : pad.elements()) {
-                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), v);
-            }
-        }
     }
 
     private class MenuInitContext implements ElementPainter.InitContext {
