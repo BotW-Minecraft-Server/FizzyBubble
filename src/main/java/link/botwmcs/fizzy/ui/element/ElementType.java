@@ -4,6 +4,6 @@ public enum ElementType {
     SLOT,
     BUTTON,
     COMPONENT,
-    IMAGE,
+    ICON,
     CUSTOM
 }

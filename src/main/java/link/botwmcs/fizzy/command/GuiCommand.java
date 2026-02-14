@@ -11,6 +11,7 @@ import link.botwmcs.fizzy.ui.element.below.LeftButtonBelow;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.element.button.IconButtonElement;
 import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
@@ -23,6 +24,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class GuiCommand {
     public static void register(CommandDispatcher<CommandSourceStack> d) {
@@ -84,6 +86,13 @@ public class GuiCommand {
                 .color(WidgetAbstractButton.WidgetColor.VANILLA)
                 .direction(WidgetAbstractButton.ArrowDirection.RIGHT).build();
 
+        var appleIcon = IconButtonElement.builder(
+                        Component.empty(),
+                        btn -> mc.player.sendSystemMessage(Component.literal("Apple icon clicked!")),
+                        ResourceLocation.withDefaultNamespace("textures/item/apple.png")
+                )
+                .build();
+
         int wPx = painter.panelWidthPx();
         int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
@@ -107,6 +116,8 @@ public class GuiCommand {
                 .element(button3).done()
                 .pad(2,5,3, 8)
                 .element(new SlotElement()).done()
+                .pad(2, 5, 2, 5)
+                .element(appleIcon).done()
                 .padByPx(UiUnit.SLOT_PX * 4 - UiUnit.SLOT_PX / 2, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
                 .element(widget0).done()
                 .padByPx(UiUnit.SLOT_PX * 9 - UiUnit.SLOT_PX / 2 - 3, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
