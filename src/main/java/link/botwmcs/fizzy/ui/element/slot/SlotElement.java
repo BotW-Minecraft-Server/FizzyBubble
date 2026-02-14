@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.ui.element.slot;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -64,6 +65,11 @@ public final class SlotElement implements ElementPainter {
 
         // Bottom border row.
         drawHorizontalStripe(g, originX, y, slotsX, TEX_BOTTOM_BORDER_V, TEX_BORDER, TEX_SLOT_U, TEX_DIVIDER_U);
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.SLOT;
     }
 
     private static int spanForSlots(int slots) {

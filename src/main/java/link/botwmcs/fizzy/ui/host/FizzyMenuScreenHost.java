@@ -17,6 +17,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
     private final FizzyGui gui;
 
@@ -113,5 +117,55 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         public <W extends AbstractWidget> W addRenderableWidget(W widget) {
             return FizzyMenuScreenHost.this.addRenderableWidget(widget);
         }
+    }
+
+    /** 通过 slot 坐标(1-based)获取该区域内的元素列表 */
+    public List<ElementPainter> elementsAtSlot(int row, int col) {
+        FramePainter frame = gui.frame();
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
+        if (slotArea == null) {
+            return Collections.emptyList();
+        }
+
+        int slotX = slotArea.x() + (col - 1) * UiUnit.SLOT_PX;
+        int slotY = slotArea.y() + (row - 1) * UiUnit.SLOT_PX;
+        return elementsInRect(frame, slotArea, slotX, slotY, UiUnit.SLOT_PX, UiUnit.SLOT_PX);
+    }
+
+    /** 通过屏幕像素坐标获取该点覆盖的元素列表 */
+    public List<ElementPainter> elementsAtPx(int x, int y) {
+        FramePainter frame = gui.frame();
+        boolean hasBelow = gui.hasBelow();
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, false, hasBelow);
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
+        return elementsInRect(frame, slotArea, x, y, 1, 1);
+    }
+
+    private List<ElementPainter> elementsInRect(FramePainter frame, FramePainter.SlotArea slotArea,
+                                                int x, int y, int w, int h) {
+        List<ElementPainter> out = new ArrayList<>();
+        for (PadSpec pad : gui.pads()) {
+            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            if (intersects(bounds.left(), bounds.top(), bounds.width(), bounds.height(), x, y, w, h)) {
+                out.addAll(pad.elements());
+            }
+        }
+        if (gui.hasBelow() && gui.below() != null) {
+            FramePainter.BelowArea belowArea = frame.currentBelowArea();
+            if (belowArea != null && intersects(belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), x, y, w, h)) {
+                out.add(gui.below());
+            }
+        }
+        return out;
+    }
+
+    private static boolean intersects(int ax, int ay, int aw, int ah, int bx, int by, int bw, int bh) {
+        int ar = ax + aw;
+        int ab = ay + ah;
+        int br = bx + bw;
+        int bb = by + bh;
+        return ar > bx && br > ax && ab > by && bb > ay;
     }
 }

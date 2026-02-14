@@ -2,6 +2,7 @@ package link.botwmcs.fizzy.ui.element.icon;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -71,6 +72,11 @@ public final class IconElement implements ElementPainter {
         int drawY = topPx + (heightPx - drawH) / 2;
 
         g.blit(texture, drawX, drawY, 0, 0, drawW, drawH, texW, texH);
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.ICON;
     }
 
     public static final class Builder {

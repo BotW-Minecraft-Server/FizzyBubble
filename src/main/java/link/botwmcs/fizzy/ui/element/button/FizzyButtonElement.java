@@ -2,11 +2,14 @@ package link.botwmcs.fizzy.ui.element.button;
 
 import link.botwmcs.fizzy.client.elements.FizzyButton;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -55,6 +58,16 @@ public final class FizzyButtonElement implements ElementPainter {
         this.button.setY(topPx);
         this.button.setWidth(widthPx);
         this.button.setHeight(heightPx);
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.BUTTON;
+    }
+
+    @Override
+    public List<AbstractWidget> widgets() {
+        return this.button == null ? List.of() : List.of(this.button);
     }
 
     @Nullable

@@ -5,5 +5,6 @@ public enum ElementType {
     BUTTON,
     COMPONENT,
     ICON,
+    IMAGE,
     CUSTOM
 }

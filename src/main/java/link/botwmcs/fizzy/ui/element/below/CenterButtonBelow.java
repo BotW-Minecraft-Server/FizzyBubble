@@ -3,10 +3,13 @@ package link.botwmcs.fizzy.ui.element.below;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.ColoredButton;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -48,5 +51,15 @@ public final class CenterButtonBelow implements ElementPainter {
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         int offset = Math.max(0, (widthPx - BUTTON_WIDTH) / 2);
         button.render(g, leftPx + offset, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.BUTTON;
+    }
+
+    @Override
+    public List<AbstractWidget> widgets() {
+        return button.widgets();
     }
 }

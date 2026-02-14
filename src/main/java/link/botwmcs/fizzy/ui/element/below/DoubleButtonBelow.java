@@ -3,10 +3,14 @@ package link.botwmcs.fizzy.ui.element.below;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.ColoredButton;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -69,5 +73,18 @@ public final class DoubleButtonBelow implements ElementPainter {
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         leftButton.render(g, leftPx + LEFT_OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
         rightButton.render(g, leftPx + RIGHT_OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.BUTTON;
+    }
+
+    @Override
+    public List<AbstractWidget> widgets() {
+        List<AbstractWidget> out = new ArrayList<>();
+        out.addAll(leftButton.widgets());
+        out.addAll(rightButton.widgets());
+        return out;
     }
 }

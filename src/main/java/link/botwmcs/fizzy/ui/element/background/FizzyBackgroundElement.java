@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -48,6 +49,11 @@ public final class FizzyBackgroundElement implements ElementPainter {
         }
 
         tile(g, tex, leftPx, topPx, widthPx, heightPx);
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.IMAGE;
     }
 
     private record TextureSize(int w, int h) {

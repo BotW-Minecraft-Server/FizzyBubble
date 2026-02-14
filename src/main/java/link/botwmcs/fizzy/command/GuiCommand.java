@@ -13,6 +13,7 @@ import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
 import link.botwmcs.fizzy.ui.element.button.IconButtonElement;
 import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
+import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
@@ -51,8 +52,11 @@ public class GuiCommand {
 //        var behind = new ImageBehind(ResourceLocation.withDefaultNamespace("textures/block/gold_block.png"));
         var behind = new BlurBehind();
 
+        var appleBlocker = new SlotBlockerElement(false);
         var button0 = ColoredButtonElement.builder(Component.literal("Button 0"), btn -> {
-            mc.player.sendSystemMessage(Component.literal("Button 0 clicked!"));
+            boolean open = !appleBlocker.isOpen();
+            appleBlocker.setOpen(open);
+            mc.player.sendSystemMessage(Component.literal(open ? "Blocker opened!" : "Blocker closed!"));
         }).color(ColoredAbstractButton.Color.BLUE).build();
         var button1 = ColoredButtonElement.builder(Component.literal("Button 1"), btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 1 clicked!"));
@@ -117,7 +121,8 @@ public class GuiCommand {
                 .pad(2,5,3, 8)
                 .element(new SlotElement()).done()
                 .pad(2, 5, 2, 5)
-                .element(appleIcon).done()
+                .element(appleIcon)
+                .element(appleBlocker).done()
                 .padByPx(UiUnit.SLOT_PX * 4 - UiUnit.SLOT_PX / 2, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
                 .element(widget0).done()
                 .padByPx(UiUnit.SLOT_PX * 9 - UiUnit.SLOT_PX / 2 - 3, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
