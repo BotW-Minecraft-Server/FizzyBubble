@@ -5,20 +5,21 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
 import link.botwmcs.fizzy.ui.background.BgType;
-import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
-import link.botwmcs.fizzy.ui.element.below.LeftButtonBelow;
-import link.botwmcs.fizzy.ui.core.UiUnit;
-import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
-import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
-import link.botwmcs.fizzy.ui.element.button.IconButtonElement;
-import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
-import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
-import link.botwmcs.fizzy.ui.element.slot.SlotElement;
-import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
 import link.botwmcs.fizzy.ui.core.HostType;
+import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
+import link.botwmcs.fizzy.ui.element.background.MapBackgroundElement;
+import link.botwmcs.fizzy.ui.element.below.DoubleButtonBelow;
+import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.element.button.IconButtonElement;
+import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
+import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
+import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
+import link.botwmcs.fizzy.ui.element.slot.SlotElement;
+import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
 import link.botwmcs.fizzy.ui.split.SplitType;
 import net.minecraft.client.Minecraft;
@@ -28,31 +29,82 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public class GuiCommand {
+    private static final int DEFAULT_ROWS = 4;
+    private static final int PAGE_ONE = 1;
+    private static final int PAGE_TWO = 2;
+
     public static void register(CommandDispatcher<CommandSourceStack> d) {
         d.register(
                 Commands.literal("fizzygui")
                         .then(Commands.literal("open")
-                                .executes(ctx -> openPanel(/*rows*/3)) // 默认 3 行
-                                .then(Commands.argument("rows", IntegerArgumentType.integer(1, 6))
-                                        .executes(ctx -> openPanel(IntegerArgumentType.getInteger(ctx, "rows")))
-                                )
+                                .executes(ctx -> openPanel(DEFAULT_ROWS))
                         )
         );
     }
 
-    /** 实际打开 GUI（Screen 版本，带底边） */
     private static int openPanel(int rows) {
+        return openPanelPage(rows, PAGE_ONE);
+    }
+
+    private static int openPanelPage(int rows, int page) {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return 0;
 
         var painter = new FizzyFrame(Component.literal("Test Panel"));
-        var background = new FizzyBg(BgType.STONE);
-//        var background = new SoildColorBg(0xFF202020);
-//        var behind = new SoildColorBehind(0xFF202020);
-//        var behind = new ImageBehind(ResourceLocation.withDefaultNamespace("textures/block/gold_block.png"));
         var behind = new BlurBehind();
+        var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
 
+        int pageRows = Math.max(rows, minRowsForPage(page));
+        int wPx = painter.panelWidthPx();
+        int hPx = painter.computeHeightPx(pageRows, /*includeBottomEdge*/ true);
+
+        FizzyGuiBuilder builder = switch (page) {
+            case PAGE_TWO -> buildPage2(mc, rows, pageRows, elementBg);
+            case PAGE_ONE -> buildPage1(mc, rows, pageRows, elementBg);
+            default -> buildPage1(mc, rows, pageRows, elementBg);
+        };
+
+        FizzyGui gui = builder
+                .host(HostType.SCREEN)
+                .behind(behind)
+                .frame(painter)
+                .overrideSizePx(wPx, hPx)
+                .build();
+
+        int effectivePage = page == PAGE_TWO ? PAGE_TWO : PAGE_ONE;
+        String title1 = "Fizzy Panel (" + pageRows + " rows) - Page " + effectivePage;
+        mc.tell(() -> {
+            mc.setScreen(new FizzyScreenHost(gui) {
+                @Override public Component getTitle() {
+                    return Component.literal(title1);
+                }
+            });
+        });
+
+        return 1;
+    }
+
+    private static int minRowsForPage(int page) {
+        return page == PAGE_TWO ? 3 : 1;
+    }
+
+    private static FizzyGuiBuilder buildPage1(Minecraft mc, int rows, int pageRows, FizzyBackgroundElement elementBg) {
         var appleBlocker = new SlotBlockerElement(false);
+        var appleIcon = IconButtonElement.builder(
+                        Component.empty(),
+                        btn -> mc.player.sendSystemMessage(Component.literal("Apple icon clicked!")),
+                        ResourceLocation.withDefaultNamespace("textures/item/apple.png")
+                )
+                .build();
+
+        var headerText = FizzyComponentElement.builder(Component.literal("Fizzy Text Demo"))
+                .singleLine()
+                .align(FizzyComponentElement.Align.CENTER)
+                .textScale(1.05f)
+                .shadow(true)
+                .rainbow(0.1f,'f','8').rainbowStatic()
+                .build();
+
         var button0 = ColoredButtonElement.builder(Component.literal("Button 0"), btn -> {
             boolean open = !appleBlocker.isOpen();
             appleBlocker.setOpen(open);
@@ -67,16 +119,13 @@ public class GuiCommand {
         var button3 = ColoredButtonElement.builder(Component.literal("Button 3"), btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
         }).color(ColoredAbstractButton.Color.YELLOW).build();
-        var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
-//        var belowBtn = new DoubleButtonBelow(Component.literal("Confirm"), btn -> {
-//            mc.player.sendSystemMessage(Component.literal("Confirm clicked!"));
-//        }, Component.literal("Cancel"), btn -> {
-//            mc.player.sendSystemMessage(Component.literal("Cancel clicked!"));
-//        });
-        var belowBtn = new LeftButtonBelow(Component.literal("Close"), btn -> {
-            mc.player.sendSystemMessage(Component.literal("Close clicked!"));
-            mc.setScreen(null);
-        });
+
+        var belowBtn = new DoubleButtonBelow(
+                Component.literal("Exit"),
+                btn -> mc.setScreen(null),
+                Component.literal("Next"),
+                btn -> openPanelPage(rows, PAGE_TWO)
+        );
 
         var widget0 = WidgetButtonElement.builder(Component.empty(), btn -> {
             mc.player.sendSystemMessage(Component.literal("Widget clicked!"));
@@ -90,24 +139,9 @@ public class GuiCommand {
                 .color(WidgetAbstractButton.WidgetColor.VANILLA)
                 .direction(WidgetAbstractButton.ArrowDirection.RIGHT).build();
 
-        var appleIcon = IconButtonElement.builder(
-                        Component.empty(),
-                        btn -> mc.player.sendSystemMessage(Component.literal("Apple icon clicked!")),
-                        ResourceLocation.withDefaultNamespace("textures/item/apple.png")
-                )
-                .build();
-
-        int wPx = painter.panelWidthPx();
-        int hPx = painter.computeHeightPx(rows, /*includeBottomEdge*/ true);
 
         FizzyGuiBuilder builder = FizzyGuiBuilder.start()
-                .sizeSlots(rows)          // 记录网格尺寸（后续 split/region/elements 会用）
-//                .pad(1,1,1,9)
-//                .element((g, leftPx, topPx, widthPx, heightPx, pT) -> {
-//                    g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x6640C4FF);
-//                }).done()
-//                .pad(1, 1, 4, 9)
-//                .element(elementBg).done()
+                .sizeSlots(pageRows)
                 .padByFrame()
                 .element(elementBg).done()
                 .pad(1, 1, 1, 3)
@@ -118,7 +152,9 @@ public class GuiCommand {
                 .element(button2).done()
                 .pad(4, 1, 4, 3)
                 .element(button3).done()
-                .pad(2,5,3, 8)
+                .pad(1, 4, 1, 9)
+                .element(headerText).done()
+                .pad(2, 5, 3, 8)
                 .element(new SlotElement()).done()
                 .pad(2, 5, 2, 5)
                 .element(appleIcon)
@@ -129,27 +165,35 @@ public class GuiCommand {
                 .element(widget1).done()
                 .below(belowBtn);
 
-        if (rows > 1) {
-//            builder.split(1, 3, rows, 3);
-        }
         builder.splitByPx(UiUnit.SLOT_PX * 3 - 1, 0, UiUnit.SLOT_PX * 4, SplitType.VERTICAL);
 
-        FizzyGui gui = builder
-                .host(HostType.SCREEN)
-                .behind(behind)
-//                .background(background)
-                .frame(painter)
-                .overrideSizePx(wPx, hPx)
-                .build();
+        return builder;
+    }
 
-        mc.tell(() -> {
-            mc.setScreen(new FizzyScreenHost(gui) {
-                @Override public Component getTitle() {
-                    return Component.literal("Fizzy Panel (" + rows + " rows)");
-                }
-            });
-        });
+    private static FizzyGuiBuilder buildPage2(Minecraft mc, int rows, int pageRows, FizzyBackgroundElement elementBg) {
+        var mapBg = new MapBackgroundElement();
+        var mapSlots = new SlotElement();
+        var page2Below = new DoubleButtonBelow(
+                Component.literal("Close"),
+                btn -> mc.setScreen(null),
+                Component.literal("Prev"),
+                btn -> openPanelPage(rows, PAGE_ONE)
+        );
 
-        return 1;
+        FizzyGuiBuilder builder = FizzyGuiBuilder.start()
+                .sizeSlots(pageRows)
+                .padByFrame()
+                .element(elementBg).done()
+                .pad(1, 1, 3, 3)
+                .element(mapBg)
+                .done()
+                .pad(4,1,4,3)
+                .element(mapSlots)
+                .done()
+                .below(page2Below);
+
+        builder.splitByPx(UiUnit.SLOT_PX * 3 - 1, 0, UiUnit.SLOT_PX * 4, SplitType.VERTICAL);
+
+        return builder;
     }
 }
