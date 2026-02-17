@@ -1,8 +1,8 @@
 package link.botwmcs.fizzy.ui.element.background;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class MapBackgroundElement implements ElementPainter {
+public final class MapBackgroundElement implements AnimatableElement {
     private static final ResourceLocation MAP_BG = ResourceLocation.withDefaultNamespace("textures/map/map_background.png");
     private static final int BORDER_PX = 3;
 

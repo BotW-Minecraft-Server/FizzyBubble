@@ -1,12 +1,13 @@
 package link.botwmcs.fizzy.ui.element.button;
 
-import link.botwmcs.fizzy.client.elements.FizzyButton;
+import link.botwmcs.fizzy.client.elements.CustomIconButton;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
@@ -14,39 +15,47 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public final class FizzyButtonElement implements ElementPainter {
+public final class TransparentButtonElement implements ElementPainter {
     private final Component message;
-    private final FizzyButton.OnPress onPress;
+    private final CustomIconButton.OnPress onPress;
+    private final ResourceLocation texture;
+    private final boolean stretchToFit;
+    private final boolean allowUpscale;
     private final @Nullable Tooltip tooltip;
-    private final Consumer<FizzyButton.Builder> builderCustomizer;
-    private final Consumer<FizzyButton> buttonConsumer;
+    private final Consumer<CustomIconButton.Builder> builderCustomizer;
+    private final Consumer<CustomIconButton> buttonConsumer;
     private final @Nullable SoundEvent pressSound;
 
-    private FizzyButton button;
+    private CustomIconButton button;
 
-    private FizzyButtonElement(Builder builder) {
+    private TransparentButtonElement(Builder builder) {
         this.message = builder.message;
         this.onPress = builder.onPress;
+        this.texture = builder.texture;
+        this.stretchToFit = builder.stretchToFit;
+        this.allowUpscale = builder.allowUpscale;
         this.tooltip = builder.tooltip;
         this.builderCustomizer = builder.builderCustomizer;
         this.buttonConsumer = builder.buttonConsumer;
         this.pressSound = builder.pressSound;
     }
 
-    public static Builder builder(Component message, FizzyButton.OnPress onPress) {
+    public static Builder builder(Component message, CustomIconButton.OnPress onPress) {
         return new Builder(message, onPress);
     }
 
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
         this.button = null;
-        FizzyButton.Builder builder = FizzyButton.builder(this.message, this.onPress);
+        CustomIconButton.Builder builder = CustomIconButton.builder(this.message, this.onPress, this.texture);
         this.builderCustomizer.accept(builder);
         builder.bounds(leftPx, topPx, widthPx, heightPx);
+        builder.stretchToFit(this.stretchToFit);
+        builder.allowUpscale(this.allowUpscale);
         if (this.tooltip != null) {
             builder.tooltip(this.tooltip);
         }
-        FizzyButton built = builder.build();
+        CustomIconButton built = builder.build();
         if (this.pressSound != null) {
             built.setPressSound(this.pressSound);
         }
@@ -77,21 +86,35 @@ public final class FizzyButtonElement implements ElementPainter {
     }
 
     @Nullable
-    public FizzyButton button() {
+    public CustomIconButton button() {
         return this.button;
     }
 
     public static final class Builder {
         private final Component message;
-        private final FizzyButton.OnPress onPress;
+        private final CustomIconButton.OnPress onPress;
+        private final ResourceLocation texture;
+        private boolean stretchToFit;
+        private boolean allowUpscale;
         private @Nullable Tooltip tooltip;
-        private Consumer<FizzyButton.Builder> builderCustomizer = builder -> {};
-        private Consumer<FizzyButton> buttonConsumer = button -> {};
+        private Consumer<CustomIconButton.Builder> builderCustomizer = builder -> {};
+        private Consumer<CustomIconButton> buttonConsumer = button -> {};
         private @Nullable SoundEvent pressSound;
 
-        private Builder(Component message, FizzyButton.OnPress onPress) {
+        private Builder(Component message, CustomIconButton.OnPress onPress) {
             this.message = Objects.requireNonNull(message, "message");
             this.onPress = Objects.requireNonNull(onPress, "onPress");
+            this.texture = ResourceLocation.withDefaultNamespace("textures/gui/tab_header_background.png");
+        }
+
+        public Builder stretchToFit(boolean stretchToFit) {
+            this.stretchToFit = stretchToFit;
+            return this;
+        }
+
+        public Builder allowUpscale(boolean allowUpscale) {
+            this.allowUpscale = allowUpscale;
+            return this;
         }
 
         public Builder tooltip(@Nullable Tooltip tooltip) {
@@ -108,20 +131,20 @@ public final class FizzyButtonElement implements ElementPainter {
             return this;
         }
 
-        public Builder customize(Consumer<FizzyButton.Builder> customizer) {
+        public Builder customize(Consumer<CustomIconButton.Builder> customizer) {
             Objects.requireNonNull(customizer, "customizer");
             this.builderCustomizer = this.builderCustomizer.andThen(customizer);
             return this;
         }
 
-        public Builder applyToButton(Consumer<FizzyButton> consumer) {
+        public Builder applyToButton(Consumer<CustomIconButton> consumer) {
             Objects.requireNonNull(consumer, "consumer");
             this.buttonConsumer = this.buttonConsumer.andThen(consumer);
             return this;
         }
 
-        public FizzyButtonElement build() {
-            return new FizzyButtonElement(this);
+        public TransparentButtonElement build() {
+            return new TransparentButtonElement(this);
         }
     }
 }

@@ -1,8 +1,8 @@
 package link.botwmcs.fizzy.ui.element.icon;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class IconElement implements ElementPainter {
+public final class IconElement implements AnimatableElement {
     private final ResourceLocation texture;
     private final boolean stretchToFit;
     private final boolean allowUpscale;

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,6 +24,7 @@ public final class IconButtonElement implements ElementPainter {
     private final @Nullable Tooltip tooltip;
     private final Consumer<CustomIconButton.Builder> builderCustomizer;
     private final Consumer<CustomIconButton> buttonConsumer;
+    private final @Nullable SoundEvent pressSound;
 
     private CustomIconButton button;
 
@@ -35,6 +37,7 @@ public final class IconButtonElement implements ElementPainter {
         this.tooltip = builder.tooltip;
         this.builderCustomizer = builder.builderCustomizer;
         this.buttonConsumer = builder.buttonConsumer;
+        this.pressSound = builder.pressSound;
     }
 
     public static Builder builder(Component message, CustomIconButton.OnPress onPress, ResourceLocation texture) {
@@ -53,6 +56,9 @@ public final class IconButtonElement implements ElementPainter {
             builder.tooltip(this.tooltip);
         }
         CustomIconButton built = builder.build();
+        if (this.pressSound != null) {
+            built.setPressSound(this.pressSound);
+        }
         this.button = built;
         this.buttonConsumer.accept(built);
         context.addRenderableWidget(built);
@@ -93,6 +99,7 @@ public final class IconButtonElement implements ElementPainter {
         private @Nullable Tooltip tooltip;
         private Consumer<CustomIconButton.Builder> builderCustomizer = builder -> {};
         private Consumer<CustomIconButton> buttonConsumer = button -> {};
+        private @Nullable SoundEvent pressSound;
 
         private Builder(Component message, CustomIconButton.OnPress onPress, ResourceLocation texture) {
             this.message = Objects.requireNonNull(message, "message");
@@ -117,6 +124,11 @@ public final class IconButtonElement implements ElementPainter {
 
         public Builder tooltip(Component component) {
             return this.tooltip(Tooltip.create(component));
+        }
+
+        public Builder pressSound(SoundEvent sound) {
+            this.pressSound = Objects.requireNonNull(sound, "sound");
+            return this;
         }
 
         public Builder customize(Consumer<CustomIconButton.Builder> customizer) {

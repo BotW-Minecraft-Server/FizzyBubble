@@ -157,6 +157,34 @@ Builder 是链式 API，Pad 叠加顺序为添加顺序。需要覆盖型元素�
 ./gradlew runClient
 ```
 
+## TextRenderer 管线说明（研究笔记）
+
+本节以“可复现实验记录”的方式描述 TextRenderer 的渲染与 span 合成过程，重点说明 `t2*` 规则的命中、叠加与最终绘制结果。示意图如下：
+
+![TextRenderer 管线图](docs/text_renderer_pipeline.svg)
+
+### 1) 规范化文本流
+渲染器首先通过 `resolveLines` 生成行列表，再把每行转换为纯文本字符串以计算宽度，并拼接成 `fullText`。多行文本会用 `\n` 作为行分隔符。所有 `t2*` span 的索引范围都以 `fullText` 为基准。
+
+### 2) Span 构造与插入顺序
+`t2*` 输入会被转换为 `StyleSpan`。插入顺序是确定的：
+- 显式 span（`styleRange` / `styleIndex`）优先加入。
+- 随后按 `t2*` Map 的插入顺序加入（内部复制为 `LinkedHashMap` 以保持顺序）。
+- 若 key 是子串匹配，会按从左到右的匹配顺序追加 span。
+
+这些 span 不会预合并，而是在渲染阶段按字符逐一处理。
+
+### 3) 逐字符合并语义
+对于 `fullText` 的每个字符索引，遍历所有命中的 span，并按列表顺序合并：
+- 布尔类样式（加粗/下划线/删除线/浮动/像素化）为叠加式，只有显式设置才会覆盖默认值。
+- 颜色模式（纯色/渐变/彩虹/彩虹渐变）互斥，最后命中的颜色模式生效。
+- 若无 span 命中，则回退为 Builder 的基础样式。
+
+### 4) 绘制阶段
+每个字符先计算位置（对齐 + 可选浮动偏移），然后通过 `GuiGraphics.drawString` 绘制（可带阴影）。下划线与删除线为绘制后的 fill 叠加，颜色取该字符的最终颜色。
+
+该模型保证 `t2*` 的作用范围严格局限在命中区间，同时在逻辑上可叠加、可推导。
+
 ## TODO
 - 增加更多元素（Text, Image, TextField, Slider, Checkbox, RadioButton, Dropdown）
 - 如有需要，调整 Menu 的渲染顺序

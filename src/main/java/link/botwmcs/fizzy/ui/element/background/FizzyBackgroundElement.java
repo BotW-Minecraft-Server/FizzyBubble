@@ -3,8 +3,8 @@ package link.botwmcs.fizzy.ui.element.background;
 import com.mojang.blaze3d.platform.NativeImage;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.background.BgType;
-import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +16,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class FizzyBackgroundElement implements ElementPainter {
+public final class FizzyBackgroundElement implements AnimatableElement {
     private final BgType type;
 
     private static final ResourceLocation TEX_STONE = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/background/background1.png");

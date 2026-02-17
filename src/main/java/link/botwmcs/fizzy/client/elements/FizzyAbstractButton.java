@@ -9,9 +9,12 @@ import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+
+import javax.annotation.Nullable;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class FizzyAbstractButton extends AbstractButton {
@@ -20,6 +23,7 @@ public abstract class FizzyAbstractButton extends AbstractButton {
         Fizzy.resourceLocation("button"),
         Fizzy.resourceLocation("button_highlighted")
     );
+    private @Nullable SoundEvent pressSound;
 
     public FizzyAbstractButton(int x, int y, int width, int height, Component message) {
         super(x, y, width, height, message);
@@ -58,8 +62,15 @@ public abstract class FizzyAbstractButton extends AbstractButton {
 
     @Override
     public void playDownSound(SoundManager handler) {
-        // handler.play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_HIT, 1.0F));
+        if (pressSound != null) {
+            handler.play(SimpleSoundInstance.forUI(pressSound, 1.0F));
+            return;
+        }
         handler.play(SimpleSoundInstance.forUI(SoundEvents.BONE_BLOCK_BREAK, 1.0F));
+    }
+
+    public void setPressSound(@Nullable SoundEvent sound) {
+        this.pressSound = sound;
     }
 
     public void playHoverSound(SoundManager handler) {

@@ -1,23 +1,27 @@
 package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
+import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
 import link.botwmcs.fizzy.ui.core.HostType;
 import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.element.animate.vector.ScaleAnimation;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.background.MapBackgroundElement;
 import link.botwmcs.fizzy.ui.element.below.DoubleButtonBelow;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
 import link.botwmcs.fizzy.ui.element.button.IconButtonElement;
+import link.botwmcs.fizzy.ui.element.button.TransparentButtonElement;
 import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
+import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
+import link.botwmcs.fizzy.ui.element.icon.IconElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
@@ -27,6 +31,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.Map;
 
 public class GuiCommand {
     private static final int DEFAULT_ROWS = 4;
@@ -52,7 +58,7 @@ public class GuiCommand {
 
         var painter = new FizzyFrame(Component.literal("Test Panel"));
         var behind = new BlurBehind();
-        var elementBg = new FizzyBackgroundElement(BgType.BARRIER);
+        var elementBg = new FizzyBackgroundElement(BgType.STONE);
 
         int pageRows = Math.max(rows, minRowsForPage(page));
         int wPx = painter.panelWidthPx();
@@ -97,12 +103,63 @@ public class GuiCommand {
                 )
                 .build();
 
-        var headerText = FizzyComponentElement.builder(Component.literal("Fizzy Text Demo"))
-                .singleLine()
-                .align(FizzyComponentElement.Align.CENTER)
-                .textScale(1.05f)
+        var transparentBtn = TransparentButtonElement.builder(
+                Component.empty(),
+                btn -> mc.player.sendSystemMessage(Component.literal("Transparent clicked!"))
+                )
+                .build();
+
+        var nuggetIcon = IconElement.builder(
+                ResourceLocation.withDefaultNamespace("textures/item/gold_nugget.png")
+                )
+                .build()
+                .animated(ScaleAnimation.pulse(1.0f, 0.2f, 0.1f));
+
+        var headerText = FizzyComponentElement.builder(Component.literal(""))
+                .multiLine()
                 .shadow(true)
-                .rainbow(0.1f,'f','8').rainbowStatic()
+                .wrap(false)
+                .textScale(1.0f)
+                .align(TextRenderer.Align.CENTER)
+                .rainbow(0.01f, '6', 'e')
+//                .color(0xE6EEF7)                 // 全局颜色
+//                .bold(true)                       // 全局加粗
+//                .lineSpacing(2.0f)                // 行间距
+//                .letterSpacing(0.5f)              // 字间距
+//                .floating(false, 0.01f)
+//                .t2c(Map.of(
+//                        "[0:5]", 0x57D7FF,        // “Hello” 上色
+//                        "Text", 0xFFFFFF          // “Text” 上色
+//                ))
+//                .t2g(Map.of(
+//                        "Fizzy", new int[]{0xFF5F6D, 0xFFC371} // “Fizzy” 渐变
+//                ))
+//                .t2b(Map.of(
+//                        "Hello", true             // “Hello” 加粗
+//                ))
+//                .t2u(Map.of(
+//                        "Hello", true              // “Text” 下划线
+//                ))
+//                .t2f(Map.of(
+//                        "Hello", 0.1f,
+//                        "Fizzy", 0.1f,
+//                        "Text", 0.1f
+//                ), true, true) // 总开关, 像素感
+                // 测试 t2g/t2c 是否越界影响后续字符（应只有 Fizzy 渐变，Text 保持白色）
+                .text(Component.literal("How about 2nd text\nFizzy Text"))
+                .lineSpacing(5f)
+//                .t2c(Map.of("Text", 0xFFFFFF))
+                .t2r(Map.of("Fizzy", true))
+                .build();
+
+        var tooltip1 = FizzyTooltipElement.builder(Component.literal("This is a tooltip\n1. line 1\n2. line 2"))
+                .multiLine()
+                .wrap(true)
+                .textScale(1f)
+                .color(0xFFFFFF)
+                .shadow(true)
+                .maxWidthPx(180)
+//                .tooltipColors(0xB31B1F2A, 0xB312161F, 0xB36FC2FF, 0xB3408FD4)
                 .build();
 
         var button0 = ColoredButtonElement.builder(Component.literal("Button 0"), btn -> {
@@ -159,6 +216,10 @@ public class GuiCommand {
                 .pad(2, 5, 2, 5)
                 .element(appleIcon)
                 .element(appleBlocker).done()
+                .pad(2, 6,2,6)
+                .element(nuggetIcon)
+                .element(transparentBtn)
+                .element(tooltip1).done()
                 .padByPx(UiUnit.SLOT_PX * 4 - UiUnit.SLOT_PX / 2, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
                 .element(widget0).done()
                 .padByPx(UiUnit.SLOT_PX * 9 - UiUnit.SLOT_PX / 2 - 3, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -21,6 +22,7 @@ public final class ColoredButtonElement implements ElementPainter {
     private final Consumer<ColoredButton.Builder> builderCustomizer;
     private final Consumer<ColoredButton> buttonConsumer;
     private final ColoredAbstractButton.Color color;
+    private final @Nullable SoundEvent pressSound;
 
     private ColoredButton button;
 
@@ -31,6 +33,7 @@ public final class ColoredButtonElement implements ElementPainter {
         this.builderCustomizer = builder.builderCustomizer;
         this.buttonConsumer = builder.buttonConsumer;
         this.color = builder.color != null ? builder.color : ColoredAbstractButton.Color.BLUE;
+        this.pressSound = builder.pressSound;
     }
 
     public static Builder builder(Component message, ColoredButton.OnPress onPress) {
@@ -48,6 +51,9 @@ public final class ColoredButtonElement implements ElementPainter {
             builder.tooltip(this.tooltip);
         }
         ColoredButton built = builder.build();
+        if (this.pressSound != null) {
+            built.setPressSound(this.pressSound);
+        }
         this.button = built;
         this.buttonConsumer.accept(built);
         context.addRenderableWidget(built);
@@ -86,6 +92,7 @@ public final class ColoredButtonElement implements ElementPainter {
         private Consumer<ColoredButton.Builder> builderCustomizer = builder -> {};
         private Consumer<ColoredButton> buttonConsumer = button -> {};
         private @Nullable ColoredAbstractButton.Color color;
+        private @Nullable SoundEvent pressSound;
 
         private Builder(Component message, ColoredButton.OnPress onPress) {
             this.message = Objects.requireNonNull(message, "message");
@@ -103,6 +110,11 @@ public final class ColoredButtonElement implements ElementPainter {
 
         public Builder color(ColoredAbstractButton.Color color) {
             this.color = color;
+            return this;
+        }
+
+        public Builder pressSound(SoundEvent sound) {
+            this.pressSound = Objects.requireNonNull(sound, "sound");
             return this;
         }
 

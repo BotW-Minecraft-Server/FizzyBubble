@@ -161,6 +161,34 @@ Requires Java 21.
 ./gradlew runClient
 ```
 
+## TextRenderer Pipeline (Research Note)
+
+This section documents the TextRenderer rendering pipeline with a reproducible, implementation-faithful view of span resolution and style composition. The goal is to clarify how `t2*` spans are matched, merged, and finally rasterized. See the schematic below.
+
+![TextRenderer pipeline diagram](docs/text_renderer_pipeline.svg)
+
+### 1) Canonical Text Stream
+The renderer first produces a line list (`resolveLines`), then converts each line into a plain string to compute widths and a single `fullText` string. For multiline text, `fullText` is the concatenation of line strings separated by `\n`. This `fullText` is the **index domain** for all `t2*` span matches.
+
+### 2) Span Construction and Ordering
+`t2*` inputs are converted into `StyleSpan` entries. The insertion order is deterministic:
+- Explicit spans (`styleRange`, `styleIndex`) are stored first.
+- `t2*` map entries are inserted next in the order provided by the map (the builder copies into a `LinkedHashMap` to preserve insertion order).
+- Substring keys produce multiple spans in scan order from left to right.
+
+This ordered list is **not merged** upfront; it is evaluated per character at render time.
+
+### 3) Per-Character Merge Semantics
+For each codepoint index in `fullText`, all spans that contain that index are visited in list order. The merge rules are:
+- Boolean flags (bold, underline, strikethrough, floating, pixelated) **accumulate**. Later spans can override only when they explicitly set that flag.
+- Color modes (direct color, gradient, rainbow, rainbow-gradient) are **mutually exclusive**. The last matching span that sets a color mode wins for that character.
+- When no span matches, base styles from the builder are used.
+
+### 4) Rendering
+Each character is positioned (align + optional floating offset) and rendered via `GuiGraphics.drawString`, with optional shadow. Underline and strikethrough are drawn as post-pass fills using the resolved color for that character.
+
+This model ensures `t2*` spans are strictly local to their match ranges and composable in a predictable, paper-traceable manner.
+
 ## TODO
 - Additional elements (Text, Image, TextField, Slider, Checkbox, RadioButton, Dropdown)
 - Improve menu render order if needed

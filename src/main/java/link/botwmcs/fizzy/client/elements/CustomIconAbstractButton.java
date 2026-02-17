@@ -4,20 +4,25 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.sounds.SoundEvent;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 
 public abstract class CustomIconAbstractButton extends AbstractButton {
     private final ResourceLocation texture;
     private final boolean stretchToFit;
     private final boolean allowUpscale;
+    private @Nullable SoundEvent pressSound;
 
     public CustomIconAbstractButton(int x, int y, int width, int height, Component message,
                                     ResourceLocation texture, boolean stretchToFit, boolean allowUpscale) {
@@ -77,6 +82,19 @@ public abstract class CustomIconAbstractButton extends AbstractButton {
 
     public boolean allowUpscale() {
         return this.allowUpscale;
+    }
+
+    public void setPressSound(@Nullable SoundEvent sound) {
+        this.pressSound = sound;
+    }
+
+    @Override
+    public void playDownSound(SoundManager soundManager) {
+        if (pressSound != null) {
+            soundManager.play(SimpleSoundInstance.forUI(pressSound, 1.0F));
+            return;
+        }
+        super.playDownSound(soundManager);
     }
 
     private record TextureSize(int w, int h) {

@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -26,6 +27,7 @@ public class WidgetButtonElement implements ElementPainter {
     private final @Nullable Tooltip tooltip;
     private final Consumer<WidgetButton.Builder> builderCustomizer;
     private final Consumer<WidgetButton> buttonConsumer;
+    private final @Nullable SoundEvent pressSound;
 
     private WidgetButton button;
 
@@ -39,6 +41,7 @@ public class WidgetButtonElement implements ElementPainter {
         this.tooltip = builder.tooltip;
         this.builderCustomizer = builder.builderCustomizer;
         this.buttonConsumer = builder.buttonConsumer;
+        this.pressSound = builder.pressSound;
     }
 
     public static Builder builder(Component message, WidgetButton.OnPress onPress) {
@@ -59,6 +62,9 @@ public class WidgetButtonElement implements ElementPainter {
             builder.tooltip(this.tooltip);
         }
         WidgetButton built = builder.build();
+        if (this.pressSound != null) {
+            built.setPressSound(this.pressSound);
+        }
         this.button = built;
         this.buttonConsumer.accept(built);
         context.addRenderableWidget(built);
@@ -91,6 +97,7 @@ public class WidgetButtonElement implements ElementPainter {
         return this.button;
     }
 
+
     public static final class Builder {
         private final Component message;
         private final WidgetButton.OnPress onPress;
@@ -101,6 +108,7 @@ public class WidgetButtonElement implements ElementPainter {
         private @Nullable Tooltip tooltip;
         private Consumer<WidgetButton.Builder> builderCustomizer = builder -> {};
         private Consumer<WidgetButton> buttonConsumer = button -> {};
+        private @Nullable SoundEvent pressSound;
 
         private Builder(Component message, WidgetButton.OnPress onPress) {
             this.message = Objects.requireNonNull(message, "message");
@@ -140,6 +148,11 @@ public class WidgetButtonElement implements ElementPainter {
             return this.tooltip(Tooltip.create(component));
         }
 
+        public Builder pressSound(SoundEvent sound) {
+            this.pressSound = Objects.requireNonNull(sound, "sound");
+            return this;
+        }
+
         public Builder customize(Consumer<WidgetButton.Builder> customizer) {
             Objects.requireNonNull(customizer, "customizer");
             this.builderCustomizer = this.builderCustomizer.andThen(customizer);
@@ -156,4 +169,5 @@ public class WidgetButtonElement implements ElementPainter {
             return new WidgetButtonElement(this);
         }
     }
+
 }

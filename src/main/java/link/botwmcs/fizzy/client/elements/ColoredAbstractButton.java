@@ -6,7 +6,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+
+import javax.annotation.Nullable;
 
 public abstract class ColoredAbstractButton extends AbstractButton {
     private static final WidgetSprites BLUE_SPRITES = new WidgetSprites(
@@ -15,6 +20,7 @@ public abstract class ColoredAbstractButton extends AbstractButton {
     );
 
     private WidgetSprites sprites = BLUE_SPRITES;
+    private @Nullable SoundEvent pressSound;
 
     public enum Color {
         BLUE,
@@ -89,6 +95,19 @@ public abstract class ColoredAbstractButton extends AbstractButton {
         int textX = this.getX() + (this.getWidth() - textWidth) / 2;
         int textY = this.getY() + (this.getHeight() - 8) / 2;
         g.drawString(font, msg, textX, textY, color, true);
+    }
+
+    public void setPressSound(@Nullable SoundEvent sound) {
+        this.pressSound = sound;
+    }
+
+    @Override
+    public void playDownSound(SoundManager handler) {
+        if (pressSound != null) {
+            handler.play(SimpleSoundInstance.forUI(pressSound, 1.0F));
+            return;
+        }
+        super.playDownSound(handler);
     }
 
     @Override

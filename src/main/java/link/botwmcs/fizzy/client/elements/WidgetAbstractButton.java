@@ -4,8 +4,13 @@ import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+
+import javax.annotation.Nullable;
 
 public abstract class WidgetAbstractButton extends AbstractButton {
     private static final ResourceLocation WIDGETS_TEXTURE = Fizzy.resourceLocation("textures/gui/ui/widgets.png");
@@ -22,6 +27,7 @@ public abstract class WidgetAbstractButton extends AbstractButton {
     private final ArrowDirection direction;
     private final boolean stretchToFit;
     private final Sprite sprite;
+    private @Nullable SoundEvent pressSound;
 
     public WidgetAbstractButton(int x, int y, int width, int height, Component message,
                                 WidgetType type, WidgetColor color, ArrowDirection direction,
@@ -95,6 +101,19 @@ public abstract class WidgetAbstractButton extends AbstractButton {
 
     public Sprite sprite() {
         return this.sprite;
+    }
+
+    public void setPressSound(@Nullable SoundEvent sound) {
+        this.pressSound = sound;
+    }
+
+    @Override
+    public void playDownSound(SoundManager handler) {
+        if (pressSound != null) {
+            handler.play(SimpleSoundInstance.forUI(pressSound, 1.0F));
+            return;
+        }
+        super.playDownSound(handler);
     }
 
     protected static Sprite spriteFor(WidgetType type, WidgetColor color, ArrowDirection direction) {

@@ -9,8 +9,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.sounds.SoundEvents;
 import com.mojang.blaze3d.platform.NativeImage;
 
 import java.io.IOException;
@@ -172,10 +175,14 @@ public final class SlotBlockerElement implements ElementPainter {
 
         @Override
         public void onClick(double mouseX, double mouseY) {
+            if (this.active && this.visible) {
+                this.playDownSound(Minecraft.getInstance().getSoundManager());
+            }
         }
 
         @Override
-        public void playDownSound(net.minecraft.client.sounds.SoundManager soundManager) {
+        public void playDownSound(SoundManager soundManager) {
+            soundManager.play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_HARP.value(), 1.0F));
         }
     }
 
