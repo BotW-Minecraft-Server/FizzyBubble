@@ -4,7 +4,6 @@ import link.botwmcs.fizzy.ui.background.BgPainter;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
-import link.botwmcs.fizzy.ui.behind.BlurBehind;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.*;
@@ -34,7 +33,7 @@ public final class FizzyGuiBuilder {
     public static FizzyGuiBuilder start() { return new FizzyGuiBuilder(); }
 
     public FizzyGuiBuilder sizeSlots(int rows) {this.cols = 9; this.rows = rows; return this; }
-    public FizzyGuiBuilder sizeSlots(int cols, int rows) { this.cols = cols; this.rows = rows; return this; }
+    @Deprecated public FizzyGuiBuilder sizeSlots(int cols, int rows) { this.cols = cols; this.rows = rows; return this; }
     public FizzyGuiBuilder host(HostType hostType) { this.hostType = hostType; return this; }
     public FizzyGuiBuilder frame(FramePainter painter) { this.frame = painter; return this; }
     public FizzyGuiBuilder below(ElementPainter painter) { this.below = painter; return this; }
@@ -92,7 +91,7 @@ public final class FizzyGuiBuilder {
 
         // Background
         BgPainter effectiveBg = (bg != null) ? bg : new FizzyBg(BgType.STONE);
-        BehindPainter effectiveBehind = (behind != null) ? behind : new BlurBehind();
+        BehindPainter effectiveBehind = behind;
 
         // Pads
         List<PadSpec> padSpecs = new ArrayList<>(pads.size());
@@ -127,9 +126,10 @@ public final class FizzyGuiBuilder {
         }
 
         // Size calculations
-        boolean hasBelow = this.below != null;
+        boolean hasBelowElement = this.below != null;
         boolean drawBottomEdge = hostType == HostType.SCREEN;
-        int requiredHeight = frame.metrics().totalHeightForRows(rows, drawBottomEdge, hasBelow);
+        boolean includeBelowBand = hostType == HostType.MENU || hasBelowElement;
+        int requiredHeight = frame.metrics().totalHeightForRows(rows, drawBottomEdge, includeBelowBand);
 
         if (overrideW == null) {
             overrideW = frame.metrics().panelW();

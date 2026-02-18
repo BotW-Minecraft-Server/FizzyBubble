@@ -83,6 +83,71 @@ var appleButton = IconButtonElement.builder(
 ).build();
 ```
 
+### ProgressElement（BossBar 风格进度条）
+
+`ProgressElement` 是一个使用原版 BossBar 精灵的进度条元素，会自动适配 pad 宽度。
+
+特性：
+- 使用原版 `textures/gui/sprites/boss_bar/*` 精灵。
+- 支持颜色：`blue`、`green`、`pink`、`purple`、`red`、`white`、`yellow`。
+- 进度条宽度始终等于 pad 宽度。
+- 进度条高度在 pad 内垂直居中。
+- 支持手动 notch 和自动 notch 两种模式。
+- 当 pad 宽度 `<= 1 个 slot`（18px）或不足以容纳一个 notch 分段时，不绘制 notch。
+
+示例：
+```java
+import link.botwmcs.fizzy.ui.element.funstuff.vector.ProgressElement;
+
+ProgressElement progressBar = ProgressElement.builder()
+        .progress(0.35f)                             // 0.0 ~ 1.0
+        .color(ProgressElement.Color.GREEN)          // 或 .color("green")
+        .barHeight(5)                                // 原版 bossbar 高度
+        .autoNotches(true)                           // 自动 notch
+        .minNotchSegmentWidthPx(4)                   // 每段最小宽度
+        .addNotches(10, 20)                          // 手动候选（可选）
+        .build();
+
+FizzyGui gui = FizzyGuiBuilder.start()
+        .sizeSlots(4)
+        .frame(new FizzyFrame(Component.literal("Progress Demo")))
+        .pad(2, 2, 2, 8)
+        .element(progressBar)
+        .done()
+        .build();
+
+// 运行时修改
+progressBar.setProgress(0.72f);
+progressBar.setColor("yellow");
+
+// 强制使用手动 notch
+progressBar.setAutoNotches(false);
+progressBar.clearNotches();
+progressBar.addNotch(12);
+```
+
+Builder 配置项：
+- `progress(float)` 设置当前进度，范围 `[0, 1]`。
+- `color(Color)` / `color(String)` 设置进度条颜色。
+- `barHeight(int)` 设置进度条像素高度。
+- `autoNotches(boolean)` 开关自动 notch 模式。
+- `minNotchSegmentWidthPx(int)` 设置 notch 每段最小宽度。
+- `addNotch(int)` / `addNotches(int...)` 添加手动 notch 候选。
+- `removeNotch(int)` / `removeNotchAt(int)` / `updateNotch(int, int)` 修改手动候选。
+- `clearNotches()` 清空手动候选。
+
+运行时 API（增删查改）：
+- `setProgress` / `getProgress`
+- `setColor` / `getColor`
+- `setBarHeight` / `getBarHeight`
+- `setAutoNotches` / `isAutoNotches`
+- `addNotch`、`removeNotch`、`getNotch`、`setNotch`、`clearNotches`、`setNotches`、`getNotches`
+
+notch 选择规则：
+- 手动 notch 候选会映射到原版 `notched_6`、`notched_10`、`notched_12`、`notched_20`（最近匹配）。
+- 如果多个手动候选都可用，会优先选择分段数更高的样式。
+- 当手动候选都不满足且 `autoNotches=true` 时，会自动按 `20 -> 12 -> 10 -> 6` 依次回退选择。
+
 ### 5) 分割线（Split）
 
 ```java

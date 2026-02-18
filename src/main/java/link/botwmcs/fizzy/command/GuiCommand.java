@@ -4,8 +4,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
 import link.botwmcs.fizzy.client.util.TextRenderer;
+import link.botwmcs.fizzy.menu.FizzyTestMenu;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.behind.BlurBehind;
+import link.botwmcs.fizzy.ui.behind.VanillaBehind;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
 import link.botwmcs.fizzy.ui.core.HostType;
@@ -21,6 +23,7 @@ import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
+import link.botwmcs.fizzy.ui.element.funstuff.vector.ProgressElement;
 import link.botwmcs.fizzy.ui.element.icon.IconElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
@@ -31,6 +34,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
 
 import java.util.Map;
 
@@ -45,7 +50,22 @@ public class GuiCommand {
                         .then(Commands.literal("open")
                                 .executes(ctx -> openPanel(DEFAULT_ROWS))
                         )
+                        .then(Commands.literal("menu")
+                                .executes(ctx -> openTestMenu(ctx.getSource()))
+                        )
         );
+    }
+
+    private static int openTestMenu(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.literal("This subcommand can only be used by a player."));
+            return 0;
+        }
+        return player.openMenu(new SimpleMenuProvider(
+                (containerId, inventory, menuPlayer) -> new FizzyTestMenu(containerId, inventory),
+                Component.literal("Fizzy Test Menu")
+        )).isPresent() ? 1 : 0;
     }
 
     private static int openPanel(int rows) {
@@ -57,7 +77,7 @@ public class GuiCommand {
         if (mc.player == null) return 0;
 
         var painter = new FizzyFrame(Component.literal("Test Panel"));
-        var behind = new BlurBehind();
+        var behind = new VanillaBehind();
         var elementBg = new FizzyBackgroundElement(BgType.STONE);
 
         int pageRows = Math.max(rows, minRowsForPage(page));
@@ -242,6 +262,12 @@ public class GuiCommand {
     private static FizzyGuiBuilder buildPage2(Minecraft mc, int rows, int pageRows, FizzyBackgroundElement elementBg) {
         var mapBg = new MapBackgroundElement();
         var mapSlots = new SlotElement();
+        var progress = ProgressElement.builder()
+                .progress(0.68f)
+                .color(ProgressElement.Color.YELLOW)
+                .autoNotches(true)
+                .minNotchSegmentWidthPx(4)
+                .build();
         var page2Below = new DoubleButtonBelow(
                 Component.literal("Close"),
                 btn -> mc.setScreen(null),
@@ -255,6 +281,9 @@ public class GuiCommand {
                 .element(elementBg).done()
                 .pad(1, 1, 3, 3)
                 .element(mapBg)
+                .done()
+                .pad(2, 4, 2, 9)
+                .element(progress)
                 .done()
                 .pad(4,1,4,3)
                 .element(mapSlots)

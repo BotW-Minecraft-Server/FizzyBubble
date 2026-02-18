@@ -4,7 +4,7 @@ import link.botwmcs.fizzy.ui.background.BgPainter;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
-import link.botwmcs.fizzy.ui.behind.BlurBehind;
+import link.botwmcs.fizzy.ui.behind.VanillaBehind;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
@@ -26,7 +26,7 @@ public class FizzyGui {
     private ElementPainter below;
 
     public FizzyGui(FizzyGuiSpec spec, FramePainter frame) {
-        this(spec, frame, new FizzyBg(BgType.STONE), new BlurBehind(), null, null);
+        this(spec, frame, new FizzyBg(BgType.STONE), new VanillaBehind(), null, null);
     }
 
     public FizzyGui(FizzyGuiSpec spec, FramePainter frame, BgPainter bg, BehindPainter behind, Integer overrideW, Integer overrideH) {

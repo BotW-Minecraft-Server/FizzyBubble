@@ -1,0 +1,432 @@
+package link.botwmcs.fizzy.ui.element.funstuff.vector;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import link.botwmcs.fizzy.ui.core.UiUnit;
+import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+
+public final class ProgressElement implements AnimatableElement {
+    private static final int VANILLA_BAR_HEIGHT = 5;
+    private static final int DEFAULT_MIN_NOTCH_SEGMENT_WIDTH_PX = 4;
+
+    private float progress;
+    private Color color;
+    private int barHeight;
+    private boolean autoNotches;
+    private int minNotchSegmentWidthPx;
+    private final List<Integer> manualNotches;
+
+    private ProgressElement(Builder builder) {
+        this.progress = clampProgress(builder.progress);
+        this.color = builder.color;
+        this.barHeight = builder.barHeight;
+        this.autoNotches = builder.autoNotches;
+        this.minNotchSegmentWidthPx = builder.minNotchSegmentWidthPx;
+        this.manualNotches = new ArrayList<>(builder.manualNotches);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    @Override
+    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+        if (widthPx <= 0 || heightPx <= 0) {
+            return;
+        }
+
+        int drawHeight = Math.min(heightPx, Math.max(1, barHeight));
+        int drawY = topPx + (heightPx - drawHeight) / 2;
+
+        int filledWidth = Mth.clamp(Mth.lerpDiscrete(progress, 0, widthPx), 0, widthPx);
+        NotchSprite notchSprite = resolveNotchSprite(widthPx);
+
+        RenderSystem.enableBlend();
+        try {
+            g.blitSprite(color.backgroundSprite(), leftPx, drawY, widthPx, drawHeight);
+            blitProgress(g, color.progressSprite(), leftPx, drawY, widthPx, drawHeight, filledWidth);
+
+            if (notchSprite != null) {
+                g.blitSprite(notchSprite.backgroundSprite(), leftPx, drawY, widthPx, drawHeight);
+                blitProgress(g, notchSprite.progressSprite(), leftPx, drawY, widthPx, drawHeight, filledWidth);
+            }
+        } finally {
+            RenderSystem.disableBlend();
+        }
+    }
+
+    @Override
+    public ElementType type() {
+        return ElementType.CUSTOM;
+    }
+
+    public synchronized void setProgress(float progress) {
+        this.progress = clampProgress(progress);
+    }
+
+    public synchronized float getProgress() {
+        return progress;
+    }
+
+    public synchronized void setColor(Color color) {
+        this.color = Objects.requireNonNull(color, "color");
+    }
+
+    public synchronized void setColor(String colorName) {
+        this.color = Color.fromName(colorName);
+    }
+
+    public synchronized Color getColor() {
+        return color;
+    }
+
+    public synchronized void setBarHeight(int barHeight) {
+        if (barHeight <= 0) {
+            throw new IllegalArgumentException("barHeight must be > 0");
+        }
+        this.barHeight = barHeight;
+    }
+
+    public synchronized int getBarHeight() {
+        return barHeight;
+    }
+
+    public synchronized void setAutoNotches(boolean autoNotches) {
+        this.autoNotches = autoNotches;
+    }
+
+    public synchronized boolean isAutoNotches() {
+        return autoNotches;
+    }
+
+    public synchronized void setMinNotchSegmentWidthPx(int px) {
+        if (px <= 0) {
+            throw new IllegalArgumentException("min notch segment width must be > 0");
+        }
+        this.minNotchSegmentWidthPx = px;
+    }
+
+    public synchronized int getMinNotchSegmentWidthPx() {
+        return minNotchSegmentWidthPx;
+    }
+
+    public synchronized void addNotch(int notchCount) {
+        validateNotchCount(notchCount);
+        this.manualNotches.add(notchCount);
+    }
+
+    public synchronized void addNotches(int... notchCounts) {
+        Objects.requireNonNull(notchCounts, "notchCounts");
+        for (int notchCount : notchCounts) {
+            addNotch(notchCount);
+        }
+    }
+
+    public synchronized boolean removeNotch(int notchCount) {
+        return this.manualNotches.remove((Integer) notchCount);
+    }
+
+    public synchronized int removeNotchAt(int index) {
+        return this.manualNotches.remove(index);
+    }
+
+    public synchronized int getNotch(int index) {
+        return this.manualNotches.get(index);
+    }
+
+    public synchronized void setNotch(int index, int notchCount) {
+        validateNotchCount(notchCount);
+        this.manualNotches.set(index, notchCount);
+    }
+
+    public synchronized int notchSize() {
+        return this.manualNotches.size();
+    }
+
+    public synchronized List<Integer> getNotches() {
+        return List.copyOf(this.manualNotches);
+    }
+
+    public synchronized void setNotches(List<Integer> notchCounts) {
+        Objects.requireNonNull(notchCounts, "notchCounts");
+        this.manualNotches.clear();
+        for (int notchCount : notchCounts) {
+            validateNotchCount(notchCount);
+            this.manualNotches.add(notchCount);
+        }
+    }
+
+    public synchronized void clearNotches() {
+        this.manualNotches.clear();
+    }
+
+    private synchronized NotchSprite resolveNotchSprite(int widthPx) {
+        if (widthPx <= UiUnit.SLOT_PX) {
+            return null;
+        }
+
+        NotchSprite manual = resolveManualNotchSprite(widthPx);
+        if (manual != null) {
+            return manual;
+        }
+
+        return autoNotches ? resolveAutoNotchSprite(widthPx) : null;
+    }
+
+    private NotchSprite resolveManualNotchSprite(int widthPx) {
+        if (manualNotches.isEmpty()) {
+            return null;
+        }
+
+        LinkedHashSet<NotchSprite> unique = new LinkedHashSet<>();
+        for (int notchCount : manualNotches) {
+            unique.add(NotchSprite.closestTo(notchCount));
+        }
+
+        NotchSprite selected = null;
+        for (NotchSprite sprite : unique) {
+            if (!canUseNotch(widthPx, sprite.segmentCount())) {
+                continue;
+            }
+            if (selected == null || sprite.segmentCount() > selected.segmentCount()) {
+                selected = sprite;
+            }
+        }
+        return selected;
+    }
+
+    private NotchSprite resolveAutoNotchSprite(int widthPx) {
+        for (NotchSprite sprite : NotchSprite.AUTO_ORDER) {
+            if (canUseNotch(widthPx, sprite.segmentCount())) {
+                return sprite;
+            }
+        }
+        return null;
+    }
+
+    private boolean canUseNotch(int widthPx, int segmentCount) {
+        if (segmentCount <= 0) {
+            return false;
+        }
+        if (widthPx < segmentCount) {
+            return false;
+        }
+        float segmentWidth = widthPx / (float) segmentCount;
+        return segmentWidth >= minNotchSegmentWidthPx;
+    }
+
+    private static void blitProgress(GuiGraphics g, ResourceLocation sprite, int x, int y, int width, int height, int filledWidth) {
+        if (filledWidth <= 0 || width <= 0 || height <= 0) {
+            return;
+        }
+
+        int clampedFill = Math.min(width, filledWidth);
+        if (clampedFill <= 0) {
+            return;
+        }
+
+        g.enableScissor(x, y, x + clampedFill, y + height);
+        try {
+            g.blitSprite(sprite, x, y, width, height);
+        } finally {
+            g.disableScissor();
+        }
+    }
+
+    private static float clampProgress(float progress) {
+        return Mth.clamp(progress, 0.0f, 1.0f);
+    }
+
+    private static void validateNotchCount(int notchCount) {
+        if (notchCount <= 0) {
+            throw new IllegalArgumentException("notch count must be > 0");
+        }
+    }
+
+    public enum Color {
+        BLUE("blue"),
+        GREEN("green"),
+        PINK("pink"),
+        PURPLE("purple"),
+        RED("red"),
+        WHITE("white"),
+        YELLOW("yellow");
+
+        private final ResourceLocation backgroundSprite;
+        private final ResourceLocation progressSprite;
+
+        Color(String name) {
+            this.backgroundSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + name + "_background");
+            this.progressSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + name + "_progress");
+        }
+
+        public ResourceLocation backgroundSprite() {
+            return backgroundSprite;
+        }
+
+        public ResourceLocation progressSprite() {
+            return progressSprite;
+        }
+
+        public static Color fromName(String colorName) {
+            Objects.requireNonNull(colorName, "colorName");
+            return switch (colorName.toLowerCase(Locale.ROOT)) {
+                case "blue" -> BLUE;
+                case "green" -> GREEN;
+                case "pink" -> PINK;
+                case "purple" -> PURPLE;
+                case "red" -> RED;
+                case "white" -> WHITE;
+                case "yellow" -> YELLOW;
+                default -> throw new IllegalArgumentException("Unsupported progress color: " + colorName);
+            };
+        }
+    }
+
+    public static final class Builder {
+        private float progress = 0.0f;
+        private Color color = Color.BLUE;
+        private int barHeight = VANILLA_BAR_HEIGHT;
+        private boolean autoNotches = true;
+        private int minNotchSegmentWidthPx = DEFAULT_MIN_NOTCH_SEGMENT_WIDTH_PX;
+        private final List<Integer> manualNotches = new ArrayList<>();
+
+        public Builder progress(float progress) {
+            this.progress = clampProgress(progress);
+            return this;
+        }
+
+        public Builder color(Color color) {
+            this.color = Objects.requireNonNull(color, "color");
+            return this;
+        }
+
+        public Builder color(String colorName) {
+            this.color = Color.fromName(colorName);
+            return this;
+        }
+
+        public Builder barHeight(int barHeight) {
+            if (barHeight <= 0) {
+                throw new IllegalArgumentException("barHeight must be > 0");
+            }
+            this.barHeight = barHeight;
+            return this;
+        }
+
+        public Builder autoNotches(boolean enabled) {
+            this.autoNotches = enabled;
+            return this;
+        }
+
+        public Builder autoNotches() {
+            return autoNotches(true);
+        }
+
+        public Builder minNotchSegmentWidthPx(int px) {
+            if (px <= 0) {
+                throw new IllegalArgumentException("min notch segment width must be > 0");
+            }
+            this.minNotchSegmentWidthPx = px;
+            return this;
+        }
+
+        public Builder addNotch(int notchCount) {
+            validateNotchCount(notchCount);
+            this.manualNotches.add(notchCount);
+            return this;
+        }
+
+        public Builder addNotches(int... notchCounts) {
+            Objects.requireNonNull(notchCounts, "notchCounts");
+            for (int notchCount : notchCounts) {
+                addNotch(notchCount);
+            }
+            return this;
+        }
+
+        public Builder removeNotch(int notchCount) {
+            this.manualNotches.remove((Integer) notchCount);
+            return this;
+        }
+
+        public Builder removeNotchAt(int index) {
+            this.manualNotches.remove(index);
+            return this;
+        }
+
+        public Builder updateNotch(int index, int notchCount) {
+            validateNotchCount(notchCount);
+            this.manualNotches.set(index, notchCount);
+            return this;
+        }
+
+        public Builder clearNotches() {
+            this.manualNotches.clear();
+            return this;
+        }
+
+        public List<Integer> notches() {
+            return List.copyOf(this.manualNotches);
+        }
+
+        public ProgressElement build() {
+            return new ProgressElement(this);
+        }
+    }
+
+    private enum NotchSprite {
+        NOTCH_6(6, "notched_6"),
+        NOTCH_10(10, "notched_10"),
+        NOTCH_12(12, "notched_12"),
+        NOTCH_20(20, "notched_20");
+
+        private static final NotchSprite[] VALUES = values();
+        private static final NotchSprite[] AUTO_ORDER = {NOTCH_20, NOTCH_12, NOTCH_10, NOTCH_6};
+
+        private final int segmentCount;
+        private final ResourceLocation backgroundSprite;
+        private final ResourceLocation progressSprite;
+
+        NotchSprite(int segmentCount, String spriteName) {
+            this.segmentCount = segmentCount;
+            this.backgroundSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + spriteName + "_background");
+            this.progressSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + spriteName + "_progress");
+        }
+
+        int segmentCount() {
+            return segmentCount;
+        }
+
+        ResourceLocation backgroundSprite() {
+            return backgroundSprite;
+        }
+
+        ResourceLocation progressSprite() {
+            return progressSprite;
+        }
+
+        static NotchSprite closestTo(int segmentCount) {
+            NotchSprite closest = VALUES[0];
+            int closestDiff = Math.abs(segmentCount - closest.segmentCount);
+            for (int i = 1; i < VALUES.length; i++) {
+                NotchSprite candidate = VALUES[i];
+                int diff = Math.abs(segmentCount - candidate.segmentCount);
+                if (diff < closestDiff) {
+                    closest = candidate;
+                    closestDiff = diff;
+                }
+            }
+            return closest;
+        }
+    }
+}

@@ -83,6 +83,71 @@ var appleButton = IconButtonElement.builder(
 ).build();
 ```
 
+### ProgressElement (Boss Bar Style)
+
+`ProgressElement` is a bossbar-style progress bar element that renders with vanilla `boss_bar` sprites and adapts to pad width automatically.
+
+Features:
+- Uses vanilla bossbar sprites from `textures/gui/sprites/boss_bar/*`.
+- Supported colors: `blue`, `green`, `pink`, `purple`, `red`, `white`, `yellow`.
+- Bar width always equals pad width.
+- Bar height is vertically centered inside the pad.
+- Supports both manual and automatic notch selection.
+- If pad width is `<= 1 slot` (`18px`) or too narrow for one notch segment, notch overlay is not rendered.
+
+Example:
+```java
+import link.botwmcs.fizzy.ui.element.funstuff.vector.ProgressElement;
+
+ProgressElement progressBar = ProgressElement.builder()
+        .progress(0.35f)                             // 0.0 ~ 1.0
+        .color(ProgressElement.Color.GREEN)          // or .color("green")
+        .barHeight(5)                                // vanilla bossbar height
+        .autoNotches(true)                           // automatic notch mode
+        .minNotchSegmentWidthPx(4)                   // minimum segment width
+        .addNotches(10, 20)                          // manual candidates (optional)
+        .build();
+
+FizzyGui gui = FizzyGuiBuilder.start()
+        .sizeSlots(4)
+        .frame(new FizzyFrame(Component.literal("Progress Demo")))
+        .pad(2, 2, 2, 8)
+        .element(progressBar)
+        .done()
+        .build();
+
+// Runtime updates
+progressBar.setProgress(0.72f);
+progressBar.setColor("yellow");
+
+// Force manual notch mode
+progressBar.setAutoNotches(false);
+progressBar.clearNotches();
+progressBar.addNotch(12);
+```
+
+Builder options:
+- `progress(float)` sets current progress in `[0, 1]`.
+- `color(Color)` / `color(String)` sets bossbar color.
+- `barHeight(int)` sets visual bar height in px.
+- `autoNotches(boolean)` enables/disables auto notch mode.
+- `minNotchSegmentWidthPx(int)` sets minimum width per notch segment.
+- `addNotch(int)` / `addNotches(int...)` adds manual notch candidates.
+- `removeNotch(int)` / `removeNotchAt(int)` / `updateNotch(int, int)` mutates candidates.
+- `clearNotches()` removes all manual notch candidates.
+
+Runtime API (CRUD):
+- `setProgress` / `getProgress`
+- `setColor` / `getColor`
+- `setBarHeight` / `getBarHeight`
+- `setAutoNotches` / `isAutoNotches`
+- `addNotch`, `removeNotch`, `getNotch`, `setNotch`, `clearNotches`, `setNotches`, `getNotches`
+
+Notch selection rules:
+- Manual notch candidates are mapped to vanilla notch sprites: `notched_6`, `notched_10`, `notched_12`, `notched_20` (nearest match).
+- If multiple manual candidates are valid for current width, the one with higher segment count is preferred.
+- If no valid manual candidate is available and `autoNotches=true`, automatic fallback tries `20 -> 12 -> 10 -> 6`.
+
 ### 5) Text Elements (FCE / FTE)
 
 FCE = `FizzyComponentElement`, FTE = `FizzyTooltipElement`.
