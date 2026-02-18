@@ -115,13 +115,15 @@ public class GuiCommand {
                 .build()
                 .animated(ScaleAnimation.pulse(1.0f, 0.2f, 0.1f));
 
-        var headerText = FizzyComponentElement.builder(Component.literal(""))
-                .multiLine()
+        var headerText = FizzyComponentElement.builder()
+//                .addText(Component.literal("How about 2nd text"))
+                .addText(Component.literal("Fizzy Component"))
                 .shadow(true)
                 .wrap(false)
                 .textScale(1.0f)
                 .align(TextRenderer.Align.CENTER)
                 .rainbow(0.01f, '6', 'e')
+//                .rainbowStatic(true)
 //                .color(0xE6EEF7)                 // 全局颜色
 //                .bold(true)                       // 全局加粗
 //                .lineSpacing(2.0f)                // 行间距
@@ -146,20 +148,26 @@ public class GuiCommand {
 //                        "Text", 0.1f
 //                ), true, true) // 总开关, 像素感
                 // 测试 t2g/t2c 是否越界影响后续字符（应只有 Fizzy 渐变，Text 保持白色）
-                .text(Component.literal("How about 2nd text\nFizzy Text"))
-                .lineSpacing(5f)
+//                .text(Component.literal("How about 2nd text\nFizzy Text"))
+//                .lineSpacing(5f)
 //                .t2c(Map.of("Text", 0xFFFFFF))
-                .t2r(Map.of("Fizzy", true))
+//                .t2r(Map.of("Fizzy", TextRenderer.RainbowConfig.of()))
+//                .t2b(Map.of("Fizzy", true))
                 .build();
 
-        var tooltip1 = FizzyTooltipElement.builder(Component.literal("This is a tooltip\n1. line 1\n2. line 2"))
-                .multiLine()
+        var tooltip1 = FizzyTooltipElement.builder()
+                .addText(Component.literal("This is a tooltip"))
+                .addText(Component.literal("1. line 1"))
+                .addText(Component.literal("2. line 2"))
+                .addText(Component.literal(""))
+                .addText(Component.literal("Ofcourse you can RAINBOW"))
                 .wrap(true)
-                .textScale(1f)
+//                .textScale(1f)
                 .color(0xFFFFFF)
                 .shadow(true)
-                .maxWidthPx(180)
-//                .tooltipColors(0xB31B1F2A, 0xB312161F, 0xB36FC2FF, 0xB3408FD4)
+//                .maxWidthPx(180)
+                .tooltipColors(0xB31B1F2A, 0xB312161F, 0xB36FC2FF, 0xB3408FD4)
+                .t2r(Map.of("Ofcourse you can RAINBOW", TextRenderer.RainbowConfig.of().rainbowStatic(true)))
                 .build();
 
         var button0 = ColoredButtonElement.builder(Component.literal("Button 0"), btn -> {

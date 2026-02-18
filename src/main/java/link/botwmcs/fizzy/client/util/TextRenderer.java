@@ -31,6 +31,14 @@ public final class TextRenderer {
     private static final float FLOAT_MAX_DELTA_SECONDS = 0.25f;
     private static final float FLOAT_CHAR_STEP = 0.08f;
     private static final float FLOAT_DEFAULT_AMPLITUDE = 2.0f;
+    private static final int CODEPOINT_CACHE_LIMIT = 256;
+    private static final String[] CODEPOINT_CACHE = new String[CODEPOINT_CACHE_LIMIT];
+
+    static {
+        for (int i = 0; i < CODEPOINT_CACHE_LIMIT; i++) {
+            CODEPOINT_CACHE[i] = String.valueOf((char) i);
+        }
+    }
 
     private final Component text;
     private final List<Component> lines;
@@ -51,7 +59,6 @@ public final class TextRenderer {
     private final boolean underline;
     private final boolean strikethrough;
     private final int[] gradientColors;
-    private final boolean rainbowGradient;
     private final boolean floating;
     private final float floatingSpeed;
     private final float floatingAmplitude;
@@ -84,7 +91,6 @@ public final class TextRenderer {
         this.underline = builder.underline;
         this.strikethrough = builder.strikethrough;
         this.gradientColors = builder.gradientColors;
-        this.rainbowGradient = builder.rainbowGradient;
         this.floating = builder.floating;
         this.floatingSpeed = builder.floatingSpeed;
         this.floatingAmplitude = builder.floatingAmplitude;
@@ -93,28 +99,29 @@ public final class TextRenderer {
         this.styleKeys = List.copyOf(builder.styleKeys);
     }
 
+    public static Builder<?> builder(Component text) {
+        return new Builder<>(Objects.requireNonNull(text, "text"));
+    }
+
     public float textScale() {
         return textScale;
     }
 
+    @Deprecated
     public boolean wrap() {
         return wrap;
     }
 
     public TextMetrics measure(Font font, int wrapWidth) {
-        List<FormattedCharSequence> rendered = resolveLines(font, wrapWidth);
-        if (rendered.isEmpty()) {
-            return new TextMetrics(List.of(), 0, 0f);
+        FormattedCharSequence line = this.text.getVisualOrderText();
+        String lineText = toPlainString(line);
+        if (lineText.isEmpty()) {
+            return new TextMetrics(List.of(line), 0, font.lineHeight);
         }
-        List<LineInfo> lineInfos = buildLineInfos(font, rendered);
-        int maxWidth = 0;
-        for (LineInfo info : lineInfos) {
-            maxWidth = Math.max(maxWidth, Math.round(info.width()));
-        }
-        int lineCount = lineInfos.size();
-        float extraSpacing = (multiline && lineCount > 1) ? this.lineSpacing : 0.0f;
-        float totalHeight = lineCount * font.lineHeight + Math.max(0, lineCount - 1) * extraSpacing;
-        return new TextMetrics(rendered, maxWidth, totalHeight);
+        int codepoints = lineText.codePointCount(0, lineText.length());
+        int width = Math.round(measureLineWidth(font, lineText, codepoints));
+        float totalHeight = font.lineHeight;
+        return new TextMetrics(List.of(line), width, totalHeight);
     }
 
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
@@ -127,23 +134,16 @@ public final class TextRenderer {
         }
         Font font = mc.font;
         float scale = Math.max(0.01f, this.textScale);
-        float availableWidth = widthPx / scale;
-        float availableHeight = heightPx / scale;
-        int wrapWidth = (int) Math.floor(availableWidth);
-
-        List<FormattedCharSequence> renderedLines = resolveLines(font, wrapWidth);
-        if (renderedLines.isEmpty()) {
+        FormattedCharSequence lineSequence = this.text.getVisualOrderText();
+        String lineText = toPlainString(lineSequence);
+        if (lineText.isEmpty()) {
             return;
         }
 
-        List<LineInfo> lineInfos = buildLineInfos(font, renderedLines);
-        String fullText = joinLines(lineInfos);
-        List<StyleSpan> spans = resolveStyleSpans(fullText);
+        List<StyleSpan> spans = resolveStyleSpans(lineText);
+        List<StyleSegment> segments = buildStyleSegments(lineText, spans);
 
-        int totalVisibleChars = 0;
-        for (LineInfo info : lineInfos) {
-            totalVisibleChars += info.codepointCount();
-        }
+        int totalVisibleChars = lineText.codePointCount(0, lineText.length());
 
         boolean anyFloating = this.floating;
         if (!anyFloating && !spans.isEmpty()) {
@@ -156,11 +156,26 @@ public final class TextRenderer {
             }
         }
 
-        float basePhase = 0f;
-        if (rainbow && !rainbowStatic) {
+        boolean anyRainbowAnimated = this.rainbow && this.rainbowSpeed > 0f;
+        if (!spans.isEmpty()) {
+            for (StyleSpan span : spans) {
+                TextStyle s = span.style();
+                if (!s.isRainbow()) {
+                    continue;
+                }
+                float speed = s.rainbowSpeed() != null ? s.rainbowSpeed() : this.rainbowSpeed;
+                if (speed > 0f) {
+                    anyRainbowAnimated = true;
+                    break;
+                }
+            }
+        }
+
+        float rainbowTime = this.rainbowPhase;
+        if (anyRainbowAnimated) {
             float delta = advanceRainbowPhase();
-            this.rainbowPhase += delta * Math.max(0f, this.rainbowSpeed);
-            basePhase = this.rainbowPhase;
+            this.rainbowPhase += delta;
+            rainbowTime = this.rainbowPhase;
         }
         float baseFloatPhase = 0f;
         if (anyFloating) {
@@ -177,48 +192,35 @@ public final class TextRenderer {
         g.pose().translate(leftPx, topPx, 0);
         g.pose().scale(scale, scale, 1.0f);
 
-        float extraSpacing = (multiline && lineInfos.size() > 1) ? this.lineSpacing : 0.0f;
-        float step = font.lineHeight + extraSpacing;
-        float y = 0.0f;
-        if (align == Align.CENTER) {
-            int lineCount = lineInfos.size();
-            float totalHeight = lineCount * font.lineHeight + Math.max(0, lineCount - 1) * extraSpacing;
-            y = (availableHeight - totalHeight) * 0.5f;
-        }
-
         int globalCharIndex = 0;
         int visibleIndex = 0;
-        for (int lineIdx = 0; lineIdx < lineInfos.size(); lineIdx++) {
-            LineInfo lineInfo = lineInfos.get(lineIdx);
-            String lineText = lineInfo.text();
-            int lineWidth = Math.round(lineInfo.width());
-            float x;
-            switch (align) {
-                case CENTER -> x = (availableWidth - lineWidth) * 0.5f;
-                case RIGHT -> x = availableWidth - lineWidth;
-                default -> x = 0.0f;
+        int segmentIndex = 0;
+        StyleSegment currentSegment = segments.isEmpty() ? null : segments.get(0);
+        int lineCharIndex = 0;
+        int lineVisibleIndex = 0;
+        float drawX = 0.0f;
+        float y = 0.0f;
+        while (lineCharIndex < lineText.length()) {
+            int codePoint = lineText.codePointAt(lineCharIndex);
+            int charLen = Character.charCount(codePoint);
+            boolean lineBreak = codePoint == '\n' || codePoint == '\r';
+            String ch = lineBreak ? " " : stringForCodePoint(codePoint);
+
+            while (currentSegment != null && globalCharIndex >= currentSegment.end()) {
+                segmentIndex++;
+                currentSegment = segmentIndex < segments.size() ? segments.get(segmentIndex) : null;
             }
+            ResolvedStyle resolved = resolveStyleFromState(
+                    currentSegment,
+                    globalCharIndex,
+                    visibleIndex,
+                    lineVisibleIndex,
+                    totalVisibleChars,
+                    rainbowTime
+            );
 
-            int lineCharIndex = 0;
-            int lineVisibleIndex = 0;
-            float drawX = x;
-            int lineCodepoints = Math.max(1, lineInfo.codepointCount());
-            while (lineCharIndex < lineText.length()) {
-                int codePoint = lineText.codePointAt(lineCharIndex);
-                int charLen = Character.charCount(codePoint);
-                String ch = new String(Character.toChars(codePoint));
-
-                ResolvedStyle resolved = resolveStyle(
-                        spans,
-                        globalCharIndex,
-                        visibleIndex,
-                        lineVisibleIndex,
-                        lineCodepoints,
-                        totalVisibleChars,
-                        basePhase
-                );
-
-                float advance = font.width(ch);
+            float advance = font.width(ch);
+            if (!lineBreak) {
                 float yOffset = 0.0f;
                 if (resolved.floating()) {
                     float phase = baseFloatPhase * resolved.floatingSpeed() + lineVisibleIndex * FLOAT_CHAR_STEP;
@@ -229,18 +231,13 @@ public final class TextRenderer {
                 } else {
                     drawStyledChar(g, font, ch, drawX, y + yOffset, advance, resolved, shadow);
                 }
-
-                drawX += advance + letterSpacing;
-                lineCharIndex += charLen;
-                globalCharIndex += charLen;
-                lineVisibleIndex++;
-                visibleIndex++;
             }
 
-            y += step;
-            if (lineIdx < lineInfos.size() - 1) {
-                globalCharIndex += 1; // newline separator in fullText
-            }
+            drawX += advance + letterSpacing;
+            lineCharIndex += charLen;
+            globalCharIndex += charLen;
+            lineVisibleIndex++;
+            visibleIndex++;
         }
         g.pose().popPose();
         if (clipToPad) {
@@ -288,75 +285,38 @@ public final class TextRenderer {
         return (color & 0xFF000000) == 0 ? (color | 0xFF000000) : color;
     }
 
-    private ResolvedStyle resolveStyle(List<StyleSpan> spans,
-                                       int globalCharIndex,
-                                       int visibleIndex,
-                                       int lineVisibleIndex,
-                                       int lineVisibleCount,
-                                       int totalVisibleChars,
-                                       float basePhase) {
-        boolean finalBold = this.bold;
-        boolean finalUnderline = this.underline;
-        boolean finalStrike = this.strikethrough;
-        Boolean finalFloating = this.floating;
-        float finalFloatingSpeed = this.floatingSpeed;
-        float finalFloatingAmplitude = this.floatingAmplitude;
-        Boolean finalFloatingPixelated = this.floatingPixelated;
-        Integer directColor = null;
-        int[] gradient = null;
-        StyleSpan gradientSpan = null;
-        boolean useRainbow = false;
-        boolean useRainbowGradient = false;
-        StyleSpan rainbowGradientSpan = null;
-        for (StyleSpan span : spans) {
-            if (!span.contains(globalCharIndex)) {
-                continue;
-            }
-            TextStyle override = span.style();
-            if (override.bold() != null) finalBold = override.bold();
-            if (override.underline() != null) finalUnderline = override.underline();
-            if (override.strikethrough() != null) finalStrike = override.strikethrough();
-            if (override.floating() != null) finalFloating = override.floating();
-            if (override.floatingSpeed() != null) finalFloatingSpeed = override.floatingSpeed();
-            if (override.floatingAmplitude() != null) finalFloatingAmplitude = override.floatingAmplitude();
-            if (override.floatingPixelated() != null) finalFloatingPixelated = override.floatingPixelated();
+    private ResolvedStyle resolveStyleFromState(StyleSegment segment,
+                                                int globalCharIndex,
+                                                int visibleIndex,
+                                                int lineVisibleIndex,
+                                                int totalVisibleChars,
+                                                float rainbowTime) {
+        StyleState state = segment != null ? segment.state() : null;
+        boolean finalBold = state != null ? state.bold() : this.bold;
+        boolean finalUnderline = state != null ? state.underline() : this.underline;
+        boolean finalStrike = state != null ? state.strikethrough() : this.strikethrough;
+        boolean floating = state != null ? state.floating() : this.floating;
+        float finalFloatingSpeed = state != null ? state.floatingSpeed() : this.floatingSpeed;
+        float finalFloatingAmplitude = state != null ? state.floatingAmplitude() : this.floatingAmplitude;
+        boolean pixelated = state == null || state.floatingPixelated();
+        Integer directColor = state != null ? state.directColor() : null;
+        int[] gradient = state != null ? state.gradientColors() : null;
+        StyleSpan gradientSpan = state != null ? state.gradientSpan() : null;
+        boolean useRainbow = state != null && state.useRainbow();
+        Float rainbowSpeed = state != null ? state.rainbowSpeed() : null;
+        Boolean rainbowStatic = state != null ? state.rainbowStatic() : null;
+        int[] rainbowColors = state != null ? state.rainbowColors() : null;
 
-            if (override.color() != null) {
-                directColor = override.color();
-                gradient = null;
-                gradientSpan = null;
-                useRainbow = false;
-                useRainbowGradient = false;
-                rainbowGradientSpan = null;
-            } else if (override.gradientColors() != null) {
-                gradient = override.gradientColors();
-                gradientSpan = span;
-                directColor = null;
-                useRainbow = false;
-                useRainbowGradient = false;
-                rainbowGradientSpan = null;
-            } else if (override.rainbowGradient()) {
-                useRainbowGradient = true;
-                rainbowGradientSpan = span;
-                directColor = null;
-                gradient = null;
-                gradientSpan = null;
-                useRainbow = false;
-            } else if (override.isRainbow()) {
-                useRainbow = true;
-                directColor = null;
-                gradient = null;
-                gradientSpan = null;
-                useRainbowGradient = false;
-                rainbowGradientSpan = null;
-            }
-        }
-
-        if (directColor == null && gradient == null && !useRainbow && !useRainbowGradient) {
+        if (directColor == null && gradient == null && !useRainbow) {
             gradient = this.gradientColors;
-            useRainbowGradient = this.rainbowGradient;
             useRainbow = this.rainbow;
         }
+
+        float effectiveRainbowSpeed = rainbowSpeed != null ? rainbowSpeed : this.rainbowSpeed;
+        boolean effectiveRainbowStatic = rainbowStatic != null ? rainbowStatic : this.rainbowStatic;
+        int[] effectiveRainbowColors = (rainbowColors != null && rainbowColors.length > 0)
+                ? rainbowColors
+                : this.rainbowColors;
 
         int finalColor;
         if (directColor != null) {
@@ -366,25 +326,16 @@ public final class TextRenderer {
                     ? resolveGradientT(globalCharIndex, gradientSpan)
                     : resolveGlobalGradientT(visibleIndex, totalVisibleChars);
             finalColor = sampleGradient(gradient, t);
-        } else if (useRainbowGradient) {
-            float t = rainbowGradientSpan != null
-                    ? resolveGradientT(globalCharIndex, rainbowGradientSpan)
-                    : resolveGlobalGradientT(visibleIndex, totalVisibleChars);
-            finalColor = sampleRainbowColor(t);
         } else if (useRainbow) {
-            if (this.rainbowStatic) {
-                float t = resolveGlobalGradientT(visibleIndex, totalVisibleChars);
-                finalColor = sampleRainbowColor(t);
-            } else {
-                float phase = basePhase + lineVisibleIndex * RAINBOW_CHAR_STEP;
-                finalColor = sampleRainbowColor(phase);
+            float phase = rainbowTime * Math.max(0f, effectiveRainbowSpeed);
+            if (!effectiveRainbowStatic) {
+                phase += lineVisibleIndex * RAINBOW_CHAR_STEP;
             }
+            finalColor = sampleRainbowColor(phase, effectiveRainbowColors);
         } else {
             finalColor = this.color;
         }
 
-        boolean floating = finalFloating != null && finalFloating;
-        boolean pixelated = finalFloatingPixelated == null || finalFloatingPixelated;
         return new ResolvedStyle(finalColor, finalBold, finalUnderline, finalStrike,
                 floating, finalFloatingSpeed, finalFloatingAmplitude, pixelated);
     }
@@ -416,17 +367,6 @@ public final class TextRenderer {
         return t;
     }
 
-    private List<LineInfo> buildLineInfos(Font font, List<FormattedCharSequence> renderedLines) {
-        List<LineInfo> out = new ArrayList<>(renderedLines.size());
-        for (FormattedCharSequence line : renderedLines) {
-            String text = toPlainString(line);
-            int codepoints = text.codePointCount(0, text.length());
-            float width = measureLineWidth(font, text, codepoints);
-            out.add(new LineInfo(text, width, codepoints));
-        }
-        return out;
-    }
-
     private float measureLineWidth(Font font, String text, int codepoints) {
         if (text.isEmpty()) {
             return 0f;
@@ -435,7 +375,7 @@ public final class TextRenderer {
         int idx = 0;
         while (idx < text.length()) {
             int codePoint = text.codePointAt(idx);
-            String ch = new String(Character.toChars(codePoint));
+            String ch = stringForCodePoint(codePoint);
             width += font.width(ch);
             idx += Character.charCount(codePoint);
         }
@@ -443,20 +383,6 @@ public final class TextRenderer {
             width += letterSpacing * (codepoints - 1);
         }
         return width;
-    }
-
-    private String joinLines(List<LineInfo> lineInfos) {
-        if (lineInfos.isEmpty()) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < lineInfos.size(); i++) {
-            if (i > 0) {
-                sb.append('\n');
-            }
-            sb.append(lineInfos.get(i).text());
-        }
-        return sb.toString();
     }
 
     private List<StyleSpan> resolveStyleSpans(String fullText) {
@@ -536,36 +462,6 @@ public final class TextRenderer {
         return Math.min(idx, len);
     }
 
-    private List<FormattedCharSequence> resolveLines(Font font, int wrapWidth) {
-        if (!multiline) {
-            return List.of(this.text.getVisualOrderText());
-        }
-        if (lines != null && !lines.isEmpty()) {
-            if (!wrap) {
-                List<FormattedCharSequence> out = new ArrayList<>(lines.size());
-                for (Component line : lines) {
-                    out.add(line.getVisualOrderText());
-                }
-                return out;
-            }
-            if (wrapWidth <= 0) {
-                return List.of();
-            }
-            List<FormattedCharSequence> out = new ArrayList<>();
-            for (Component line : lines) {
-                out.addAll(font.split(line, wrapWidth));
-            }
-            return out;
-        }
-        if (wrap) {
-            if (wrapWidth <= 0) {
-                return List.of();
-            }
-            return font.split(this.text, wrapWidth);
-        }
-        return font.split(this.text, Integer.MAX_VALUE);
-    }
-
     private static String toPlainString(FormattedCharSequence sequence) {
         StringBuilder sb = new StringBuilder();
         sequence.accept((index, style, codePoint) -> {
@@ -573,6 +469,111 @@ public final class TextRenderer {
             return true;
         });
         return sb.toString();
+    }
+
+    private static String stringForCodePoint(int codePoint) {
+        if (codePoint >= 0 && codePoint < CODEPOINT_CACHE_LIMIT) {
+            return CODEPOINT_CACHE[codePoint];
+        }
+        return new String(Character.toChars(codePoint));
+    }
+
+    private List<StyleSegment> buildStyleSegments(String fullText, List<StyleSpan> spans) {
+        int len = fullText.length();
+        if (len <= 0) {
+            return List.of();
+        }
+        if (spans.isEmpty()) {
+            return List.of(new StyleSegment(0, len, resolveStyleState(spans, 0)));
+        }
+        int[] boundaries = new int[spans.size() * 2 + 2];
+        int count = 0;
+        boundaries[count++] = 0;
+        boundaries[count++] = len;
+        for (StyleSpan span : spans) {
+            int start = Math.max(0, Math.min(len, span.start()));
+            int end = Math.max(0, Math.min(len, span.end()));
+            boundaries[count++] = start;
+            boundaries[count++] = end;
+        }
+        java.util.Arrays.sort(boundaries, 0, count);
+        int uniqueCount = 0;
+        for (int i = 0; i < count; i++) {
+            if (i == 0 || boundaries[i] != boundaries[i - 1]) {
+                boundaries[uniqueCount++] = boundaries[i];
+            }
+        }
+        List<StyleSegment> segments = new ArrayList<>(Math.max(1, uniqueCount - 1));
+        for (int i = 0; i < uniqueCount - 1; i++) {
+            int start = boundaries[i];
+            int end = boundaries[i + 1];
+            if (start >= end) {
+                continue;
+            }
+            segments.add(new StyleSegment(start, end, resolveStyleState(spans, start)));
+        }
+        return segments;
+    }
+
+    private StyleState resolveStyleState(List<StyleSpan> spans, int globalCharIndex) {
+        boolean finalBold = this.bold;
+        boolean finalUnderline = this.underline;
+        boolean finalStrike = this.strikethrough;
+        Boolean finalFloating = this.floating;
+        float finalFloatingSpeed = this.floatingSpeed;
+        float finalFloatingAmplitude = this.floatingAmplitude;
+        Boolean finalFloatingPixelated = this.floatingPixelated;
+        Integer directColor = null;
+        int[] gradient = null;
+        StyleSpan gradientSpan = null;
+        boolean useRainbow = false;
+        Float rainbowSpeed = null;
+        Boolean rainbowStatic = null;
+        int[] rainbowColors = null;
+        for (StyleSpan span : spans) {
+            if (!span.contains(globalCharIndex)) {
+                continue;
+            }
+            TextStyle override = span.style();
+            if (override.bold() != null) finalBold = override.bold();
+            if (override.underline() != null) finalUnderline = override.underline();
+            if (override.strikethrough() != null) finalStrike = override.strikethrough();
+            if (override.floating() != null) finalFloating = override.floating();
+            if (override.floatingSpeed() != null) finalFloatingSpeed = override.floatingSpeed();
+            if (override.floatingAmplitude() != null) finalFloatingAmplitude = override.floatingAmplitude();
+            if (override.floatingPixelated() != null) finalFloatingPixelated = override.floatingPixelated();
+
+            if (override.color() != null) {
+                directColor = override.color();
+                gradient = null;
+                gradientSpan = null;
+                useRainbow = false;
+                rainbowSpeed = null;
+                rainbowStatic = null;
+                rainbowColors = null;
+            } else if (override.gradientColors() != null) {
+                gradient = override.gradientColors();
+                gradientSpan = span;
+                directColor = null;
+                useRainbow = false;
+                rainbowSpeed = null;
+                rainbowStatic = null;
+                rainbowColors = null;
+            } else if (override.isRainbow()) {
+                useRainbow = true;
+                directColor = null;
+                gradient = null;
+                gradientSpan = null;
+                rainbowSpeed = override.rainbowSpeed();
+                rainbowStatic = override.getRainbowStatic();
+                rainbowColors = override.rainbowColors();
+            }
+        }
+        boolean floating = finalFloating != null && finalFloating;
+        boolean pixelated = finalFloatingPixelated == null || finalFloatingPixelated;
+        return new StyleState(finalBold, finalUnderline, finalStrike,
+                floating, finalFloatingSpeed, finalFloatingAmplitude, pixelated,
+                directColor, gradient, gradientSpan, useRainbow, rainbowSpeed, rainbowStatic, rainbowColors);
     }
 
     private int[] resolveRainbowColors() {
@@ -586,12 +587,16 @@ public final class TextRenderer {
     }
 
     private int sampleRainbowColor(float phase) {
+        return sampleRainbowColor(phase, this.rainbowColors);
+    }
+
+    private int sampleRainbowColor(float phase, int[] colors) {
         float t = phase % 1.0f;
         if (t < 0f) {
             t += 1.0f;
         }
-        if (this.rainbowColors != null && this.rainbowColors.length > 0) {
-            return samplePaletteWrap(this.rainbowColors, t);
+        if (colors != null && colors.length > 0) {
+            return samplePaletteWrap(colors, t);
         }
         return hsvToRgb(t, 1.0f, 1.0f);
     }
@@ -720,9 +725,6 @@ public final class TextRenderer {
     public record TextMetrics(List<FormattedCharSequence> lines, int maxWidth, float totalHeight) {
     }
 
-    private record LineInfo(String text, float width, int codepointCount) {
-    }
-
     private record StyleSpan(int start, int end, TextStyle style) {
         boolean contains(int index) {
             return index >= start && index < end;
@@ -736,8 +738,87 @@ public final class TextRenderer {
     private record StyleKey(String key, TextStyle style) {
     }
 
+    private record StyleState(boolean bold, boolean underline, boolean strikethrough,
+                              boolean floating, float floatingSpeed, float floatingAmplitude, boolean floatingPixelated,
+                              Integer directColor, int[] gradientColors, StyleSpan gradientSpan,
+                              boolean useRainbow, Float rainbowSpeed, Boolean rainbowStatic, int[] rainbowColors) {
+    }
+
+    private record StyleSegment(int start, int end, StyleState state) {
+    }
+
     private record ResolvedStyle(int color, boolean bold, boolean underline, boolean strikethrough,
                                  boolean floating, float floatingSpeed, float floatingAmplitude, boolean floatingPixelated) {
+    }
+
+    public static final class RainbowConfig {
+        private boolean enabled = true;
+        private Float speed;
+        private Boolean staticMode;
+        private int[] colors;
+
+        public static RainbowConfig of() {
+            return new RainbowConfig();
+        }
+
+        public RainbowConfig enable(boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public boolean enabled() {
+            return enabled;
+        }
+
+        public RainbowConfig speed(float speed) {
+            this.speed = speed;
+            return this;
+        }
+
+        public RainbowConfig height(float height) {
+            return speed(height);
+        }
+
+        public Float speed() {
+            return speed;
+        }
+
+        public RainbowConfig rainbowStatic(boolean staticMode) {
+            this.staticMode = staticMode;
+            return this;
+        }
+
+        Boolean getRainbowStatic() {
+            return staticMode;
+        }
+
+        public RainbowConfig colors(char... codes) {
+            if (codes == null || codes.length == 0) {
+                this.colors = null;
+                return this;
+            }
+            if (codes.length > 7) {
+                throw new IllegalArgumentException("rainbow colors must be <= 7");
+            }
+            this.colors = colorsFromCodes(codes);
+            return this;
+        }
+
+        public RainbowConfig colors(int... colors) {
+            if (colors == null || colors.length == 0) {
+                this.colors = null;
+                return this;
+            }
+            if (colors.length > 7) {
+                throw new IllegalArgumentException("rainbow colors must be <= 7");
+            }
+            this.colors = colors.clone();
+            return this;
+        }
+
+        public int[] colors() {
+            return colors;
+        }
     }
 
     public static final class TextStyle {
@@ -746,8 +827,10 @@ public final class TextRenderer {
         private final Boolean underline;
         private final Boolean strikethrough;
         private final boolean rainbow;
+        private final Float rainbowSpeed;
+        private final Boolean rainbowStatic;
+        private final int[] rainbowColors;
         private final int[] gradientColors;
-        private final boolean rainbowGradient;
         private final Boolean floating;
         private final Float floatingSpeed;
         private final Float floatingAmplitude;
@@ -759,8 +842,10 @@ public final class TextRenderer {
             this.underline = builder.underline;
             this.strikethrough = builder.strikethrough;
             this.rainbow = builder.rainbow;
+            this.rainbowSpeed = builder.rainbowSpeed;
+            this.rainbowStatic = builder.rainbowStatic;
+            this.rainbowColors = builder.rainbowColors;
             this.gradientColors = builder.gradientColors;
-            this.rainbowGradient = builder.rainbowGradient;
             this.floating = builder.floating;
             this.floatingSpeed = builder.floatingSpeed;
             this.floatingAmplitude = builder.floatingAmplitude;
@@ -787,12 +872,20 @@ public final class TextRenderer {
             return rainbow;
         }
 
-        public int[] gradientColors() {
-            return gradientColors;
+        public Float rainbowSpeed() {
+            return rainbowSpeed;
         }
 
-        public boolean rainbowGradient() {
-            return rainbowGradient;
+        Boolean getRainbowStatic() {
+            return rainbowStatic;
+        }
+
+        public int[] rainbowColors() {
+            return rainbowColors;
+        }
+
+        public int[] gradientColors() {
+            return gradientColors;
         }
 
         public Boolean floating() {
@@ -823,6 +916,22 @@ public final class TextRenderer {
             return builder().rainbow().build();
         }
 
+        public static TextStyle rainbow(char... codes) {
+            return builder().rainbow(codes).build();
+        }
+
+        public static TextStyle rainbow(float speed) {
+            return builder().rainbow(speed).build();
+        }
+
+        public static TextStyle rainbow(float speed, char... codes) {
+            return builder().rainbow(speed, codes).build();
+        }
+
+        public static TextStyle rainbowStatic(boolean staticMode) {
+            return builder().rainbowStatic(staticMode).build();
+        }
+
         public static TextStyle gradient(int... colors) {
             return builder().gradient(colors).build();
         }
@@ -841,8 +950,10 @@ public final class TextRenderer {
             private Boolean underline;
             private Boolean strikethrough;
             private boolean rainbow;
+            private Float rainbowSpeed;
+            private Boolean rainbowStatic;
+            private int[] rainbowColors;
             private int[] gradientColors;
-            private boolean rainbowGradient;
             private Boolean floating;
             private Float floatingSpeed;
             private Float floatingAmplitude;
@@ -885,17 +996,65 @@ public final class TextRenderer {
                 return this;
             }
 
+            public Builder rainbow(char... codes) {
+                this.rainbow = true;
+                if (codes == null || codes.length == 0) {
+                    this.rainbowColors = null;
+                    return this;
+                }
+                if (codes.length > 7) {
+                    throw new IllegalArgumentException("rainbow colors must be <= 7");
+                }
+                this.rainbowColors = colorsFromCodes(codes);
+                return this;
+            }
+
+            public Builder rainbow(float speed) {
+                this.rainbow = true;
+                this.rainbowSpeed = speed;
+                this.rainbowColors = null;
+                return this;
+            }
+
+            public Builder rainbow(float speed, char... codes) {
+                this.rainbow = true;
+                this.rainbowSpeed = speed;
+                if (codes == null || codes.length == 0) {
+                    this.rainbowColors = null;
+                    return this;
+                }
+                if (codes.length > 7) {
+                    throw new IllegalArgumentException("rainbow colors must be <= 7");
+                }
+                this.rainbowColors = colorsFromCodes(codes);
+                return this;
+            }
+
+            public Builder rainbowStatic(boolean staticMode) {
+                this.rainbow = true;
+                this.rainbowStatic = staticMode;
+                return this;
+            }
+
+            public Builder rainbowColors(int... colors) {
+                this.rainbow = true;
+                if (colors == null || colors.length == 0) {
+                    this.rainbowColors = null;
+                    return this;
+                }
+                if (colors.length > 7) {
+                    throw new IllegalArgumentException("rainbow colors must be <= 7");
+                }
+                this.rainbowColors = colors.clone();
+                return this;
+            }
+
             public Builder gradient(int... colors) {
                 if (colors == null || colors.length == 0) {
                     this.gradientColors = null;
                 } else {
                     this.gradientColors = colors.clone();
                 }
-                return this;
-            }
-
-            public Builder rainbowGradient() {
-                this.rainbowGradient = true;
                 return this;
             }
 
@@ -969,7 +1128,6 @@ public final class TextRenderer {
         private boolean underline;
         private boolean strikethrough;
         private int[] gradientColors;
-        private boolean rainbowGradient;
         private boolean floating = false;
         private float floatingSpeed = 0.01f;
         private float floatingAmplitude = FLOAT_DEFAULT_AMPLITUDE;
@@ -986,33 +1144,67 @@ public final class TextRenderer {
             return (B) this;
         }
 
+        public Builder<?> copyForText(Component text) {
+            Builder<?> copy = new Builder<>(Objects.requireNonNull(text, "text"));
+            copy.lines = this.lines != null ? List.copyOf(this.lines) : null;
+            copy.multiline = this.multiline;
+            copy.wrap = this.wrap;
+            copy.align = this.align;
+            copy.textScale = this.textScale;
+            copy.lineSpacing = this.lineSpacing;
+            copy.letterSpacing = this.letterSpacing;
+            copy.color = this.color;
+            copy.shadow = this.shadow;
+            copy.clipToPad = this.clipToPad;
+            copy.rainbow = this.rainbow;
+            copy.rainbowColors = this.rainbowColors != null ? this.rainbowColors.clone() : null;
+            copy.rainbowSpeed = this.rainbowSpeed;
+            copy.rainbowStatic = this.rainbowStatic;
+            copy.bold = this.bold;
+            copy.underline = this.underline;
+            copy.strikethrough = this.strikethrough;
+            copy.gradientColors = this.gradientColors != null ? this.gradientColors.clone() : null;
+            copy.floating = this.floating;
+            copy.floatingSpeed = this.floatingSpeed;
+            copy.floatingAmplitude = this.floatingAmplitude;
+            copy.floatingPixelated = this.floatingPixelated;
+            copy.styleSpans.addAll(this.styleSpans);
+            copy.styleKeys.addAll(this.styleKeys);
+            return copy;
+        }
+
         @Deprecated
         public B text(Component text) {
             this.text = Objects.requireNonNull(text, "text");
             return self();
         }
 
+        @Deprecated
         public B lines(List<Component> lines) {
             this.lines = List.copyOf(Objects.requireNonNull(lines, "lines"));
             this.multiline = true;
             return self();
         }
 
+        @Deprecated
         public B singleLine() {
             this.multiline = false;
             return self();
         }
 
+        @Deprecated
         public B multiLine() {
             this.multiline = true;
             return self();
         }
 
+        @Deprecated
         public B wrap(boolean wrap) {
             this.wrap = wrap;
             return self();
         }
 
+        @Deprecated
         public B align(Align align) {
             this.align = Objects.requireNonNull(align, "align");
             return self();
@@ -1023,6 +1215,11 @@ public final class TextRenderer {
             return self();
         }
 
+        public float getTextScale() {
+            return textScale;
+        }
+
+        @Deprecated
         public B lineSpacing(float spacing) {
             this.lineSpacing = spacing;
             return self();
@@ -1089,11 +1286,6 @@ public final class TextRenderer {
             return self();
         }
 
-        public B rainbowGradient() {
-            this.rainbowGradient = true;
-            return self();
-        }
-
         public B rainbow() {
             this.rainbow = true;
             this.rainbowColors = null;
@@ -1132,10 +1324,6 @@ public final class TextRenderer {
             }
             this.rainbowColors = colorsFromCodes(codes);
             return self();
-        }
-
-        public B rainbowStatic() {
-            return rainbowStatic(true);
         }
 
         public B rainbowStatic(boolean staticMode) {
@@ -1180,6 +1368,11 @@ public final class TextRenderer {
             this.floatingPixelated = pixelated;
             this.floatingSpeed = speed;
             this.floatingAmplitude = amplitude;
+            return self();
+        }
+
+        public B floatingPixelated(boolean pixelated) {
+            this.floatingPixelated = pixelated;
             return self();
         }
 
@@ -1232,17 +1425,28 @@ public final class TextRenderer {
             return self();
         }
 
-        public B t2r(Map<String, Boolean> rainbows) {
+        public B t2r(Map<String, RainbowConfig> rainbows) {
             if (rainbows == null || rainbows.isEmpty()) {
                 return self();
             }
-            Map<String, Boolean> ordered = new LinkedHashMap<>(rainbows);
-            for (Map.Entry<String, Boolean> entry : ordered.entrySet()) {
+            Map<String, RainbowConfig> ordered = new LinkedHashMap<>(rainbows);
+            for (Map.Entry<String, RainbowConfig> entry : ordered.entrySet()) {
                 String key = entry.getKey();
-                Boolean value = entry.getValue();
-                if (key != null && Boolean.TRUE.equals(value)) {
-                    style(key, TextStyle.rainbow());
+                RainbowConfig value = entry.getValue();
+                if (key == null || value == null || !value.enabled()) {
+                    continue;
                 }
+                TextStyle.Builder style = TextStyle.builder().rainbow();
+                if (value.speed() != null) {
+                    style.rainbow(value.speed());
+                }
+                if (value.colors() != null && value.colors().length > 0) {
+                    style.rainbowColors(value.colors());
+                }
+                if (value.getRainbowStatic() != null) {
+                    style.rainbowStatic(value.getRainbowStatic());
+                }
+                style(key, style.build());
             }
             return self();
         }

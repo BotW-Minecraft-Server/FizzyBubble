@@ -83,6 +83,65 @@ var appleButton = IconButtonElement.builder(
 ).build();
 ```
 
+### 5) Text Elements (FCE / FTE)
+
+FCE = `FizzyComponentElement`, FTE = `FizzyTooltipElement`.
+These are text renderers with per-line `TextRenderer` instances. The builder no longer accepts a `Component` in the constructor. Each `addText(...)` creates a new line.
+
+**FizzyComponentElement (FCE) constructors / factories**
+1. `FizzyComponentElement.builder()`  
+   Creates a builder. Use `addText(...)` to append lines.
+2. `FizzyComponentElement.singleLine(Component text)`  
+   One-line component element.
+3. `FizzyComponentElement.singleLine(String text)`  
+   One-line string convenience.
+4. `FizzyComponentElement.multiLine(Component text)`  
+   Splits by `\n`, creates multiple lines, and enables wrapping.
+5. `FizzyComponentElement.multiLine(String text)`  
+   Multi-line string convenience.
+6. `FizzyComponentElement.multiLine(List<Component> lines)`  
+   Uses explicit lines, no wrapping.
+
+**FizzyComponentElement examples**
+```java
+// Global styles apply to all lines
+var fce = FizzyComponentElement.builder()
+        .addText(Component.literal("Line 1"))
+        .addText(Component.literal("Line 2"))
+        .shadow(true)
+        .rainbow(0.01f, '6', 'e')
+        .align(TextRenderer.Align.CENTER)
+        .lineSpacing(2.0f)
+        .build();
+
+// Per-line override using lambda
+var fce2 = FizzyComponentElement.builder()
+        .addText(Component.literal("Normal line"))
+        .addText(Component.literal("Blue line"), b -> b.color(0x57D7FF))
+        .build();
+```
+
+**FizzyTooltipElement (FTE) constructors / factories**
+1. `FizzyTooltipElement.builder()`  
+   Creates a builder. Use `addText(...)` to append lines.
+
+**FizzyTooltipElement examples**
+```java
+var fte = FizzyTooltipElement.builder()
+        .addText(Component.literal("Line 1"))
+        .addText(Component.literal("Line 2"))
+        .wrap(true)
+        .maxWidthPx(180)
+        .tooltipColors(0xB31B1F2A, 0xB312161F, 0xB36FC2FF, 0xB3408FD4)
+        .build();
+
+// Per-line override
+var fte2 = FizzyTooltipElement.builder()
+        .addText(Component.literal("Normal"))
+        .addText(Component.literal("Rainbow"), b -> b.rainbow(0.02f))
+        .build();
+```
+
 ### 5) Splits
 
 Splits draw simple separators on the slot grid.

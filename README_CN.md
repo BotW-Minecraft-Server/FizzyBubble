@@ -188,3 +188,62 @@ Builder 是链式 API，Pad 叠加顺序为添加顺序。需要覆盖型元素�
 ## TODO
 - 增加更多元素（Text, Image, TextField, Slider, Checkbox, RadioButton, Dropdown）
 - 如有需要，调整 Menu 的渲染顺序
+
+### 5) 文本元素（FCE / FTE）
+
+FCE = `FizzyComponentElement`，FTE = `FizzyTooltipElement`。
+Builder 不再在构造时传 `Component`，而是通过 `addText(...)` 逐行添加。每次 `addText` 都会生成一行对应的 `TextRenderer`。
+
+**FizzyComponentElement (FCE) 构造/工厂方法**
+1. `FizzyComponentElement.builder()`  
+   创建 Builder，用 `addText(...)` 添加行。
+2. `FizzyComponentElement.singleLine(Component text)`  
+   单行文本。
+3. `FizzyComponentElement.singleLine(String text)`  
+   单行字符串便捷方法。
+4. `FizzyComponentElement.multiLine(Component text)`  
+   按 `\n` 拆分多行，并启用自动换行。
+5. `FizzyComponentElement.multiLine(String text)`  
+   多行字符串便捷方法。
+6. `FizzyComponentElement.multiLine(List<Component> lines)`  
+   直接使用明确的行列表，不自动换行。
+
+**FizzyComponentElement 示例**
+```java
+// 全局样式作用于所有行
+var fce = FizzyComponentElement.builder()
+        .addText(Component.literal("Line 1"))
+        .addText(Component.literal("Line 2"))
+        .shadow(true)
+        .rainbow(0.01f, '6', 'e')
+        .align(TextRenderer.Align.CENTER)
+        .lineSpacing(2.0f)
+        .build();
+
+// 单行覆盖
+var fce2 = FizzyComponentElement.builder()
+        .addText(Component.literal("Normal line"))
+        .addText(Component.literal("Blue line"), b -> b.color(0x57D7FF))
+        .build();
+```
+
+**FizzyTooltipElement (FTE) 构造/工厂方法**
+1. `FizzyTooltipElement.builder()`  
+   创建 Builder，用 `addText(...)` 添加行。
+
+**FizzyTooltipElement 示例**
+```java
+var fte = FizzyTooltipElement.builder()
+        .addText(Component.literal("Line 1"))
+        .addText(Component.literal("Line 2"))
+        .wrap(true)
+        .maxWidthPx(180)
+        .tooltipColors(0xB31B1F2A, 0xB312161F, 0xB36FC2FF, 0xB3408FD4)
+        .build();
+
+// 单行覆盖
+var fte2 = FizzyTooltipElement.builder()
+        .addText(Component.literal("Normal"))
+        .addText(Component.literal("Rainbow"), b -> b.rainbow(0.02f))
+        .build();
+```
