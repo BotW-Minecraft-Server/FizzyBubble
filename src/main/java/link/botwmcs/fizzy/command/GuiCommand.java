@@ -282,7 +282,7 @@ public class GuiCommand {
                 .pad(1, 1, 3, 3)
                 .element(mapBg)
                 .done()
-                .pad(2, 4, 2, 9)
+                .pad(2, 5, 2, 5)
                 .element(progress)
                 .done()
                 .pad(4,1,4,3)

@@ -1,4 +1,4 @@
-package link.botwmcs.fizzy.client.util.animate;
+package link.botwmcs.fizzy.client.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;

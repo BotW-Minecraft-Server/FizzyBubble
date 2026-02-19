@@ -16,13 +16,17 @@ import java.util.Objects;
 
 public final class ProgressElement implements AnimatableElement {
     private static final int VANILLA_BAR_HEIGHT = 5;
+    private static final int VANILLA_BAR_TEXTURE_WIDTH = 182;
+    private static final int VANILLA_BAR_TEXTURE_HEIGHT = 5;
     private static final int DEFAULT_MIN_NOTCH_SEGMENT_WIDTH_PX = 4;
+    private static final int DEFAULT_CAP_WIDTH_PX = 4;
 
     private float progress;
     private Color color;
     private int barHeight;
     private boolean autoNotches;
     private int minNotchSegmentWidthPx;
+    private int capWidthPx;
     private final List<Integer> manualNotches;
 
     private ProgressElement(Builder builder) {
@@ -31,6 +35,7 @@ public final class ProgressElement implements AnimatableElement {
         this.barHeight = builder.barHeight;
         this.autoNotches = builder.autoNotches;
         this.minNotchSegmentWidthPx = builder.minNotchSegmentWidthPx;
+        this.capWidthPx = builder.capWidthPx;
         this.manualNotches = new ArrayList<>(builder.manualNotches);
     }
 
@@ -52,12 +57,12 @@ public final class ProgressElement implements AnimatableElement {
 
         RenderSystem.enableBlend();
         try {
-            g.blitSprite(color.backgroundSprite(), leftPx, drawY, widthPx, drawHeight);
-            blitProgress(g, color.progressSprite(), leftPx, drawY, widthPx, drawHeight, filledWidth);
+            renderNineSlice(g, color.backgroundTexture(), leftPx, drawY, widthPx, drawHeight, capWidthPx);
+            blitProgress(g, color.progressTexture(), leftPx, drawY, widthPx, drawHeight, filledWidth, capWidthPx);
 
             if (notchSprite != null) {
-                g.blitSprite(notchSprite.backgroundSprite(), leftPx, drawY, widthPx, drawHeight);
-                blitProgress(g, notchSprite.progressSprite(), leftPx, drawY, widthPx, drawHeight, filledWidth);
+                renderNineSlice(g, notchSprite.backgroundTexture(), leftPx, drawY, widthPx, drawHeight, capWidthPx);
+                blitProgress(g, notchSprite.progressTexture(), leftPx, drawY, widthPx, drawHeight, filledWidth, capWidthPx);
             }
         } finally {
             RenderSystem.disableBlend();
@@ -117,6 +122,14 @@ public final class ProgressElement implements AnimatableElement {
 
     public synchronized int getMinNotchSegmentWidthPx() {
         return minNotchSegmentWidthPx;
+    }
+
+    public synchronized void setCapWidthPx(int capWidthPx) {
+        this.capWidthPx = validateCapWidth(capWidthPx);
+    }
+
+    public synchronized int getCapWidthPx() {
+        return capWidthPx;
     }
 
     public synchronized void addNotch(int notchCount) {
@@ -224,7 +237,14 @@ public final class ProgressElement implements AnimatableElement {
         return segmentWidth >= minNotchSegmentWidthPx;
     }
 
-    private static void blitProgress(GuiGraphics g, ResourceLocation sprite, int x, int y, int width, int height, int filledWidth) {
+    private static void blitProgress(GuiGraphics g,
+                                     ResourceLocation texture,
+                                     int x,
+                                     int y,
+                                     int width,
+                                     int height,
+                                     int filledWidth,
+                                     int capWidthPx) {
         if (filledWidth <= 0 || width <= 0 || height <= 0) {
             return;
         }
@@ -236,10 +256,90 @@ public final class ProgressElement implements AnimatableElement {
 
         g.enableScissor(x, y, x + clampedFill, y + height);
         try {
-            g.blitSprite(sprite, x, y, width, height);
+            renderNineSlice(g, texture, x, y, width, height, capWidthPx);
         } finally {
             g.disableScissor();
         }
+    }
+
+    private static void renderNineSlice(GuiGraphics g,
+                                        ResourceLocation texture,
+                                        int x,
+                                        int y,
+                                        int width,
+                                        int height,
+                                        int capWidthPx) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        int safeCap = Math.min(validateCapWidth(capWidthPx), VANILLA_BAR_TEXTURE_WIDTH / 2);
+        int sourceCenterWidth = VANILLA_BAR_TEXTURE_WIDTH - safeCap * 2;
+        if (sourceCenterWidth <= 0) {
+            g.blit(texture, x, y, width, height, 0, 0, VANILLA_BAR_TEXTURE_WIDTH, VANILLA_BAR_TEXTURE_HEIGHT, VANILLA_BAR_TEXTURE_WIDTH, VANILLA_BAR_TEXTURE_HEIGHT);
+            return;
+        }
+
+        int leftDestWidth;
+        int rightDestWidth;
+        int centerDestWidth;
+        if (width <= safeCap * 2) {
+            float scale = width / (safeCap * 2.0f);
+            leftDestWidth = Math.max(1, Math.round(safeCap * scale));
+            rightDestWidth = Math.max(1, width - leftDestWidth);
+            centerDestWidth = 0;
+        } else {
+            leftDestWidth = safeCap;
+            rightDestWidth = safeCap;
+            centerDestWidth = width - leftDestWidth - rightDestWidth;
+        }
+
+        // left cap
+        g.blit(
+                texture,
+                x,
+                y,
+                leftDestWidth,
+                height,
+                0,
+                0,
+                safeCap,
+                VANILLA_BAR_TEXTURE_HEIGHT,
+                VANILLA_BAR_TEXTURE_WIDTH,
+                VANILLA_BAR_TEXTURE_HEIGHT
+        );
+
+        // center stretch
+        if (centerDestWidth > 0) {
+            g.blit(
+                    texture,
+                    x + leftDestWidth,
+                    y,
+                    centerDestWidth,
+                    height,
+                    safeCap,
+                    0,
+                    sourceCenterWidth,
+                    VANILLA_BAR_TEXTURE_HEIGHT,
+                    VANILLA_BAR_TEXTURE_WIDTH,
+                    VANILLA_BAR_TEXTURE_HEIGHT
+            );
+        }
+
+        // right cap
+        g.blit(
+                texture,
+                x + width - rightDestWidth,
+                y,
+                rightDestWidth,
+                height,
+                VANILLA_BAR_TEXTURE_WIDTH - safeCap,
+                0,
+                safeCap,
+                VANILLA_BAR_TEXTURE_HEIGHT,
+                VANILLA_BAR_TEXTURE_WIDTH,
+                VANILLA_BAR_TEXTURE_HEIGHT
+        );
     }
 
     private static float clampProgress(float progress) {
@@ -250,6 +350,13 @@ public final class ProgressElement implements AnimatableElement {
         if (notchCount <= 0) {
             throw new IllegalArgumentException("notch count must be > 0");
         }
+    }
+
+    private static int validateCapWidth(int capWidthPx) {
+        if (capWidthPx <= 0) {
+            throw new IllegalArgumentException("capWidthPx must be > 0");
+        }
+        return capWidthPx;
     }
 
     public enum Color {
@@ -265,15 +372,15 @@ public final class ProgressElement implements AnimatableElement {
         private final ResourceLocation progressSprite;
 
         Color(String name) {
-            this.backgroundSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + name + "_background");
-            this.progressSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + name + "_progress");
+            this.backgroundSprite = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/" + name + "_background.png");
+            this.progressSprite = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/" + name + "_progress.png");
         }
 
-        public ResourceLocation backgroundSprite() {
+        public ResourceLocation backgroundTexture() {
             return backgroundSprite;
         }
 
-        public ResourceLocation progressSprite() {
+        public ResourceLocation progressTexture() {
             return progressSprite;
         }
 
@@ -298,6 +405,7 @@ public final class ProgressElement implements AnimatableElement {
         private int barHeight = VANILLA_BAR_HEIGHT;
         private boolean autoNotches = true;
         private int minNotchSegmentWidthPx = DEFAULT_MIN_NOTCH_SEGMENT_WIDTH_PX;
+        private int capWidthPx = DEFAULT_CAP_WIDTH_PX;
         private final List<Integer> manualNotches = new ArrayList<>();
 
         public Builder progress(float progress) {
@@ -337,6 +445,11 @@ public final class ProgressElement implements AnimatableElement {
                 throw new IllegalArgumentException("min notch segment width must be > 0");
             }
             this.minNotchSegmentWidthPx = px;
+            return this;
+        }
+
+        public Builder capWidthPx(int capWidthPx) {
+            this.capWidthPx = validateCapWidth(capWidthPx);
             return this;
         }
 
@@ -399,19 +512,19 @@ public final class ProgressElement implements AnimatableElement {
 
         NotchSprite(int segmentCount, String spriteName) {
             this.segmentCount = segmentCount;
-            this.backgroundSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + spriteName + "_background");
-            this.progressSprite = ResourceLocation.withDefaultNamespace("boss_bar/" + spriteName + "_progress");
+            this.backgroundSprite = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/" + spriteName + "_background.png");
+            this.progressSprite = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/" + spriteName + "_progress.png");
         }
 
         int segmentCount() {
             return segmentCount;
         }
 
-        ResourceLocation backgroundSprite() {
+        ResourceLocation backgroundTexture() {
             return backgroundSprite;
         }
 
-        ResourceLocation progressSprite() {
+        ResourceLocation progressTexture() {
             return progressSprite;
         }
 
