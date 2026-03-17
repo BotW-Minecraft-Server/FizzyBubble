@@ -87,11 +87,54 @@ public class GuiCommand {
         int widthPx = painter.panelWidthPx();
         int heightPx = painter.computeHeightPx(MOTIVE_ROWS, true);
 
+        var warningIcon = IconElement.builder(
+                        ResourceLocation.fromNamespaceAndPath("fizzy", "textures/gui/components/icon/warning.png")
+                )
+                .stretchToFit()
+                .allowUpscale()
+                .build();
+
+        var motiveText = FizzyComponentElement.builder()
+                .addText(Component.literal("Warning / Placeholder"))
+                .addText(Component.literal("This is a symbolic placeholder block for Motive menu content."))
+                .addText(Component.literal("Replace this area with your final copy and actions later."))
+                .wrap(true)
+                .shadow(true)
+                .color(0xFFFFFF)
+                .lineSpacing(1.0f)
+                .build();
+
+        var confirmButton = ColoredButtonElement.builder(
+                        Component.literal("Confirm"),
+                        btn -> mc.player.sendSystemMessage(Component.literal("Motive: confirm clicked (placeholder)."))
+                )
+                .color(ColoredAbstractButton.Color.LIME)
+                .build();
+
+        var exitButton = ColoredButtonElement.builder(
+                        Component.literal("Exit"),
+                        btn -> mc.setScreen(null)
+                )
+                .color(ColoredAbstractButton.Color.RED)
+                .build();
+
         FizzyGui gui = FizzyGuiBuilder.start()
                 .host(HostType.SCREEN)
                 .sizeSlots(MOTIVE_ROWS)
                 .behind(new BlurBehind())
                 .frame(painter)
+                .pad(1, 1, 3, 2).inner()
+                .element(warningIcon)
+                .done()
+                .pad(1, 3, 3, 9).inner()
+                .element(motiveText)
+                .done()
+                .pad(4, 3, 4, 5).inner()
+                .element(confirmButton)
+                .done()
+                .pad(4, 6, 4, 8).inner()
+                .element(exitButton)
+                .done()
                 .overrideSizePx(widthPx, heightPx)
                 .build();
 
