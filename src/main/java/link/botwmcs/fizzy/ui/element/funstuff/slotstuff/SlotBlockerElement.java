@@ -4,6 +4,7 @@ import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.host.FizzyMenuScreenHost;
 import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,16 +13,11 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvents;
-import com.mojang.blaze3d.platform.NativeImage;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class SlotBlockerElement implements ElementPainter {
     private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("textures/block/glass.png");
@@ -65,13 +61,7 @@ public final class SlotBlockerElement implements ElementPainter {
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        if (this.widget == null) {
-            return;
-        }
-        this.widget.setX(leftPx);
-        this.widget.setY(topPx);
-        this.widget.setWidth(widthPx);
-        this.widget.setHeight(heightPx);
+        FizzyGuiUtils.syncWidgetBounds(this.widget, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override
@@ -116,7 +106,7 @@ public final class SlotBlockerElement implements ElementPainter {
             tickAnimation();
             updateUnderlyingButtons();
 
-            TextureSize size = SIZE_CACHE.computeIfAbsent(TEXTURE, SlotBlockerElement::resolveTextureSize);
+            FizzyGuiUtils.TextureSize size = FizzyGuiUtils.textureSize(TEXTURE);
             int texW = Math.max(1, size.w());
             int texH = Math.max(1, size.h());
 
@@ -186,45 +176,9 @@ public final class SlotBlockerElement implements ElementPainter {
         }
     }
 
-    private record TextureSize(int w, int h) {
-        static final TextureSize FALLBACK = new TextureSize(16, 16);
-    }
-
-    private static final Map<ResourceLocation, TextureSize> SIZE_CACHE = new ConcurrentHashMap<>();
-
-    private static TextureSize resolveTextureSize(ResourceLocation tex) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc == null) {
-            return TextureSize.FALLBACK;
-        }
-        try {
-            var resourceOpt = mc.getResourceManager().getResource(tex);
-            if (resourceOpt.isEmpty()) {
-                return TextureSize.FALLBACK;
-            }
-
-            Resource resource = resourceOpt.get();
-            try (InputStream stream = resource.open(); NativeImage image = NativeImage.read(stream)) {
-                int width = image.getWidth();
-                int height = image.getHeight();
-                if (width <= 0 || height <= 0) {
-                    return TextureSize.FALLBACK;
-                }
-                return new TextureSize(width, height);
-            }
-        } catch (IOException e) {
-            return TextureSize.FALLBACK;
-        }
-    }
-
     private void updateUnderlyingButtons() {
         if (openTarget) {
-            if (!storedActive.isEmpty()) {
-                for (var entry : storedActive.entrySet()) {
-                    entry.getKey().active = entry.getValue();
-                }
-                storedActive.clear();
-            }
+            FizzyGuiUtils.restoreWidgetStates(storedActive);
             return;
         }
 
@@ -239,10 +193,7 @@ public final class SlotBlockerElement implements ElementPainter {
             if (element == this || element.type() != ElementType.BUTTON) {
                 continue;
             }
-            for (AbstractWidget button : element.widgets()) {
-                storedActive.putIfAbsent(button, button.active);
-                button.active = false;
-            }
+            FizzyGuiUtils.disableWidgets(element.widgets(), storedActive);
         }
     }
 

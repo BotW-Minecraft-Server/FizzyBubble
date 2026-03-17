@@ -4,6 +4,7 @@ import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.host.FizzyMenuScreenHost;
 import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -53,13 +54,7 @@ public final class TransparentBlockerElement implements ElementPainter {
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        if (this.widget == null) {
-            return;
-        }
-        this.widget.setX(leftPx);
-        this.widget.setY(topPx);
-        this.widget.setWidth(widthPx);
-        this.widget.setHeight(heightPx);
+        FizzyGuiUtils.syncWidgetBounds(this.widget, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override
@@ -119,21 +114,12 @@ public final class TransparentBlockerElement implements ElementPainter {
             if (element == this || element.type() != ElementType.BUTTON) {
                 continue;
             }
-            for (AbstractWidget button : element.widgets()) {
-                storedActive.putIfAbsent(button, button.active);
-                button.active = false;
-            }
+            FizzyGuiUtils.disableWidgets(element.widgets(), storedActive);
         }
     }
 
     private void restoreUnderlyingButtons() {
-        if (storedActive.isEmpty()) {
-            return;
-        }
-        for (var entry : storedActive.entrySet()) {
-            entry.getKey().active = entry.getValue();
-        }
-        storedActive.clear();
+        FizzyGuiUtils.restoreWidgetStates(storedActive);
     }
 
     private List<ElementPainter> elementsAtPx(int x, int y) {

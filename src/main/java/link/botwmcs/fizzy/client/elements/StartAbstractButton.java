@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.client.elements;
 
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -45,13 +46,18 @@ public abstract class StartAbstractButton extends AbstractButton {
     /** 渲染按钮文字，y 偏移与 GreatAbstractButton 不同：hover 时下移 2px */
     public void renderString(GuiGraphics g, Font font, int color) {
         int yOffset = this.isHoveredOrFocused() ? 2 : 0;
-        Component msg = this.getMessage();
-        int textWidth = font.width(msg);
-
-        int textX = this.getX() + (this.getWidth() - textWidth) / 2;
-        int textY = this.getY() + (this.getHeight() - 8) / 2 + yOffset;
-
-        g.drawString(font, msg, textX, textY, color, true);
+        FizzyGuiUtils.drawCenteredLabel(
+                g,
+                font,
+                this.getMessage(),
+                this.getX(),
+                this.getY(),
+                this.getWidth(),
+                this.getHeight(),
+                color,
+                true,
+                yOffset
+        );
     }
 
     /** 鼠标点击 */

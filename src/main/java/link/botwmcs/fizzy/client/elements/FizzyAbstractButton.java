@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.client.elements;
 
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -43,13 +44,18 @@ public abstract class FizzyAbstractButton extends AbstractButton {
 
     public void renderString(GuiGraphics g, Font font, int color) {
         int yOffset = this.isHoveredOrFocused() ? 1 : 0;
-        Component msg = this.getMessage();
-        int textWidth = font.width(msg);
-
-        int textX = this.getX() + (this.getWidth() - textWidth) / 2;
-        int textY = this.getY() + (this.getHeight() - 8) / 2 + yOffset;
-
-        g.drawString(font, msg, textX, textY, color, true);
+        FizzyGuiUtils.drawCenteredLabel(
+                g,
+                font,
+                this.getMessage(),
+                this.getX(),
+                this.getY(),
+                this.getWidth(),
+                this.getHeight(),
+                color,
+                true,
+                yOffset
+        );
     }
 
     @Override

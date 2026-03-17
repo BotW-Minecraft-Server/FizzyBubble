@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.ui.element.component;
 
 import link.botwmcs.fizzy.client.util.TextRenderer;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.Minecraft;
@@ -11,7 +12,6 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
 import org.joml.Vector2i;
 import org.joml.Vector2ic;
 
@@ -89,13 +89,7 @@ public final class FizzyTooltipElement implements ElementPainter {
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        if (this.widget == null) {
-            return;
-        }
-        this.widget.setX(leftPx);
-        this.widget.setY(topPx);
-        this.widget.setWidth(widthPx);
-        this.widget.setHeight(heightPx);
+        FizzyGuiUtils.syncWidgetBounds(this.widget, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override
@@ -251,7 +245,7 @@ public final class FizzyTooltipElement implements ElementPainter {
             }
             float lineScale = Math.max(0.01f, configured.getTextScale());
             int wrapWidth = doWrap ? Math.max(1, (int) Math.floor(wrapWidthPx / lineScale)) : Integer.MAX_VALUE;
-            List<Component> parts = doWrap ? splitLine(font, spec.text, wrapWidth) : List.of(spec.text);
+            List<Component> parts = doWrap ? FizzyGuiUtils.splitLine(font, spec.text, wrapWidth) : List.of(spec.text);
             for (Component part : parts) {
                 TextRenderer renderer = configured.copyForText(part).buildRenderer();
                 float scale = Math.max(0.01f, renderer.textScale());
@@ -271,27 +265,6 @@ public final class FizzyTooltipElement implements ElementPainter {
         }
 
         return new LineLayout(List.copyOf(renderers), List.copyOf(widthsPx), totalHeightPx, maxWidth);
-    }
-
-    private static List<Component> splitLine(Font font, Component text, int wrapWidth) {
-        if (wrapWidth <= 0) {
-            return List.of();
-        }
-        List<FormattedCharSequence> parts = font.split(text, wrapWidth);
-        List<Component> out = new ArrayList<>(parts.size());
-        for (FormattedCharSequence part : parts) {
-            out.add(Component.literal(toPlainString(part)));
-        }
-        return out;
-    }
-
-    private static String toPlainString(FormattedCharSequence sequence) {
-        StringBuilder sb = new StringBuilder();
-        sequence.accept((index, style, codePoint) -> {
-            sb.appendCodePoint(codePoint);
-            return true;
-        });
-        return sb.toString();
     }
 
     private record LineSpec(Component text, Consumer<TextRenderer.Builder<?>> config) {

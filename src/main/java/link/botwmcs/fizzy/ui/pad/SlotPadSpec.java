@@ -11,6 +11,7 @@ public record SlotPadSpec(
         int colStart,
         int rowEnd,
         int colEnd,
+        boolean inner,
         List<ElementPainter> elements
 ) implements PadSpec {
     public SlotPadSpec {
@@ -58,6 +59,15 @@ public record SlotPadSpec(
         int padTop = slotArea.y() + (rowStart - 1) * UiUnit.SLOT_PX;
         int padWidth = widthSlots() * UiUnit.SLOT_PX;
         int padHeight = heightSlots() * UiUnit.SLOT_PX;
+        if (inner) {
+            int inset = UiUnit.SLOT_PAD_INNER_INSET_PX;
+            int insetX = Math.min(inset, padWidth / 2);
+            int insetY = Math.min(inset, padHeight / 2);
+            padLeft += insetX;
+            padTop += insetY;
+            padWidth -= insetX * 2;
+            padHeight -= insetY * 2;
+        }
         return new PadBounds(padLeft, padTop, padWidth, padHeight);
     }
 }

@@ -22,8 +22,10 @@ import link.botwmcs.fizzy.ui.element.button.TransparentButtonElement;
 import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
+import link.botwmcs.fizzy.ui.element.component.SimpleChartsElement;
 import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
 import link.botwmcs.fizzy.ui.element.funstuff.vector.ProgressElement;
+import link.botwmcs.fizzy.ui.element.funstuff.vector.SimpleDraggableElement;
 import link.botwmcs.fizzy.ui.element.icon.IconElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
@@ -224,6 +226,11 @@ public class GuiCommand {
                 .color(WidgetAbstractButton.WidgetColor.VANILLA)
                 .direction(WidgetAbstractButton.ArrowDirection.RIGHT).build();
 
+        var progressBar = ProgressElement.builder()
+                .progress(0.68f)
+                .color(ProgressElement.Color.YELLOW)
+                .autoNotches(true)
+                .build();
 
         FizzyGuiBuilder builder = FizzyGuiBuilder.start()
                 .sizeSlots(pageRows)
@@ -252,6 +259,9 @@ public class GuiCommand {
                 .element(widget0).done()
                 .padByPx(UiUnit.SLOT_PX * 9 - UiUnit.SLOT_PX / 2 - 3, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
                 .element(widget1).done()
+                .pad(4, 5, 4, 8).inner()
+                .element(progressBar)
+                .done()
                 .below(belowBtn);
 
         builder.splitByPx(UiUnit.SLOT_PX * 3 - 1, 0, UiUnit.SLOT_PX * 4, SplitType.VERTICAL);
@@ -260,14 +270,66 @@ public class GuiCommand {
     }
 
     private static FizzyGuiBuilder buildPage2(Minecraft mc, int rows, int pageRows, FizzyBackgroundElement elementBg) {
-        var mapBg = new MapBackgroundElement();
-        var mapSlots = new SlotElement();
-        var progress = ProgressElement.builder()
-                .progress(0.68f)
-                .color(ProgressElement.Color.YELLOW)
-                .autoNotches(true)
-                .minNotchSegmentWidthPx(4)
+        var map = new MapBackgroundElement();
+        var mapBg = new FizzyBackgroundElement(BgType.BARRIER);
+
+        var denseCharts = SimpleChartsElement.builder(content -> {
+            content.grid(13, 2)
+                    .cell(1, 1, 1, 2)
+                    .inner()
+                    .element(FizzyComponentElement.builder()
+                            .addText(Component.literal("Charts in Draggable"))
+                            .align(TextRenderer.Align.CENTER)
+                            .shadow(true)
+                            .color(0xFFFFFF)
+                            .build())
+                    .done();
+
+            for (int i = 0; i < 12; i++) {
+                int index = i + 1;
+                ColoredAbstractButton.Color leftColor = switch (index % 4) {
+                    case 1 -> ColoredAbstractButton.Color.BLUE;
+                    case 2 -> ColoredAbstractButton.Color.RED;
+                    case 3 -> ColoredAbstractButton.Color.LIME;
+                    default -> ColoredAbstractButton.Color.YELLOW;
+                };
+                ColoredAbstractButton.Color rightColor = switch ((index + 2) % 4) {
+                    case 1 -> ColoredAbstractButton.Color.BLUE;
+                    case 2 -> ColoredAbstractButton.Color.RED;
+                    case 3 -> ColoredAbstractButton.Color.LIME;
+                    default -> ColoredAbstractButton.Color.YELLOW;
+                };
+
+                content.cell(index + 1, 1)
+                        .inner()
+                        .element(ColoredButtonElement.builder(Component.literal("L" + index), btn -> {
+                            if (mc.player != null) {
+                                mc.player.sendSystemMessage(Component.literal("Charts left #" + index));
+                            }
+                        }).color(leftColor).build())
+                        .done()
+                        .cell(index + 1, 2)
+                        .inner()
+                        .element(ColoredButtonElement.builder(Component.literal("R" + index), btn -> {
+                            if (mc.player != null) {
+                                mc.player.sendSystemMessage(Component.literal("Charts right #" + index));
+                            }
+                        }).color(rightColor).build())
+                        .done();
+            }
+        }).build();
+
+        SimpleDraggableElement.ContentSpec draggedPad = SimpleDraggableElement.contentBuilder()
+                .pad(1, 1, 16, 4)
+                .inner()
+                .element(denseCharts)
+                .done()
                 .build();
+
+        var draggableList = SimpleDraggableElement.builder(draggedPad)
+                .wheelStepPx(UiUnit.SLOT_PX)
+                .build();
+
         var page2Below = new DoubleButtonBelow(
                 Component.literal("Close"),
                 btn -> mc.setScreen(null),
@@ -279,18 +341,19 @@ public class GuiCommand {
                 .sizeSlots(pageRows)
                 .padByFrame()
                 .element(elementBg).done()
-                .pad(1, 1, 3, 3)
+                .pad(1, 1, 4, 4)
                 .element(mapBg)
                 .done()
-                .pad(2, 5, 2, 5)
-                .element(progress)
+                .pad(1, 1, 4,4).inner()
+                .element(map)
                 .done()
-                .pad(4,1,4,3)
-                .element(mapSlots)
+                .pad(1, 5, 4, 9).inner()
+//                .element(new SlotElement())
+                .element(draggableList)
                 .done()
                 .below(page2Below);
 
-        builder.splitByPx(UiUnit.SLOT_PX * 3 - 1, 0, UiUnit.SLOT_PX * 4, SplitType.VERTICAL);
+        builder.splitByPx(UiUnit.SLOT_PX * 4 - 1, 0, UiUnit.SLOT_PX * 4, SplitType.VERTICAL);
 
         return builder;
     }

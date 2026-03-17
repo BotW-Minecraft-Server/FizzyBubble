@@ -1,8 +1,8 @@
 package link.botwmcs.fizzy.client.elements.iconbutton;
 
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.WidgetSprites;
@@ -46,15 +46,20 @@ public abstract class LangSelectAbstractButton extends AbstractButton {
         gg.setColor(1f, 1f, 1f, 1f);
 
         // 文本：居中 + 悬停下沉 1px
-        Minecraft mc = Minecraft.getInstance();
-        Font font = mc.font;
-        int textW = font.width(getMessage());
-        int tx = x + (w - textW) / 2;
-        int ty = y + (h - 8) / 2 + (this.isHoveredOrFocused() ? 1 : 0);
-
         int rgb = this.active ? 0xFFFFFF : 0x9A9A9A;
-        int argb = ((int)(this.alpha * 255) << 24) | rgb;
-        gg.drawString(font, getMessage(), tx, ty, argb, true);
+        int argb = FizzyGuiUtils.withAlpha(rgb, this.alpha);
+        FizzyGuiUtils.drawCenteredLabel(
+                gg,
+                Minecraft.getInstance().font,
+                this.getMessage(),
+                x,
+                y,
+                w,
+                h,
+                argb,
+                true,
+                this.isHoveredOrFocused() ? 1 : 0
+        );
     }
 
     /** Narration 更新：保持原版格式 */

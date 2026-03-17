@@ -1,13 +1,13 @@
 package link.botwmcs.fizzy.ui.element.component;
 
 import link.botwmcs.fizzy.client.util.TextRenderer;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,7 +149,7 @@ public final class FizzyComponentElement implements AnimatableElement {
             }
             float lineScale = Math.max(0.01f, configured.getTextScale());
             int wrapWidth = resolveWrapWidth(widthPx, lineScale);
-            List<Component> parts = wrap ? splitLine(font, spec.text, wrapWidth) : List.of(spec.text);
+            List<Component> parts = wrap ? FizzyGuiUtils.splitLine(font, spec.text, wrapWidth) : List.of(spec.text);
             for (Component part : parts) {
                 TextRenderer renderer = configured.copyForText(part).buildRenderer();
                 float scale = Math.max(0.01f, renderer.textScale());
@@ -178,27 +178,6 @@ public final class FizzyComponentElement implements AnimatableElement {
         float safeScale = Math.max(0.01f, scale);
         int wrapWidth = (int) Math.floor(widthPx / safeScale);
         return Math.max(1, wrapWidth);
-    }
-
-    private static List<Component> splitLine(Font font, Component text, int wrapWidth) {
-        if (wrapWidth <= 0) {
-            return List.of();
-        }
-        List<FormattedCharSequence> parts = font.split(text, wrapWidth);
-        List<Component> out = new ArrayList<>(parts.size());
-        for (FormattedCharSequence part : parts) {
-            out.add(Component.literal(toPlainString(part)));
-        }
-        return out;
-    }
-
-    private static String toPlainString(FormattedCharSequence sequence) {
-        StringBuilder sb = new StringBuilder();
-        sequence.accept((index, style, codePoint) -> {
-            sb.appendCodePoint(codePoint);
-            return true;
-        });
-        return sb.toString();
     }
 
     private record LineSpec(Component text, Consumer<TextRenderer.Builder<?>> config) {

@@ -1,20 +1,15 @@
 package link.botwmcs.fizzy.ui.element.background;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import link.botwmcs.fizzy.Fizzy;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class FizzyBackgroundElement implements AnimatableElement {
     private final BgType type;
@@ -56,14 +51,8 @@ public final class FizzyBackgroundElement implements AnimatableElement {
         return ElementType.IMAGE;
     }
 
-    private record TextureSize(int w, int h) {
-        static final TextureSize FALLBACK = new TextureSize(16, 16);
-    }
-
-    private static final Map<ResourceLocation, TextureSize> SIZE_CACHE = new ConcurrentHashMap<>();
-
     private static void tile(GuiGraphics g, ResourceLocation tex, int x, int y, int w, int h) {
-        TextureSize size = SIZE_CACHE.computeIfAbsent(tex, FizzyBackgroundElement::resolveTextureSize);
+        FizzyGuiUtils.TextureSize size = FizzyGuiUtils.textureSize(tex);
         int yy = y, remH = h;
         int tileW = Math.max(1, size.w());
         int tileH = Math.max(1, size.h());
@@ -78,31 +67,6 @@ public final class FizzyBackgroundElement implements AnimatableElement {
             }
             yy += dh;
             remH -= dh;
-        }
-    }
-
-    private static TextureSize resolveTextureSize(ResourceLocation tex) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc == null) {
-            return TextureSize.FALLBACK;
-        }
-        try {
-            var resourceOpt = mc.getResourceManager().getResource(tex);
-            if (resourceOpt.isEmpty()) {
-                return TextureSize.FALLBACK;
-            }
-
-            Resource resource = resourceOpt.get();
-            try (InputStream stream = resource.open(); NativeImage image = NativeImage.read(stream)) {
-                int width = image.getWidth();
-                int height = image.getHeight();
-                if (width <= 0 || height <= 0) {
-                    return TextureSize.FALLBACK;
-                }
-                return new TextureSize(width, height);
-            }
-        } catch (IOException e) {
-            return TextureSize.FALLBACK;
         }
     }
 }

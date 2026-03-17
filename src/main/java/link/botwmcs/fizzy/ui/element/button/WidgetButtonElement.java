@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.ui.element.button;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetButton;
+import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.gui.GuiGraphics;
@@ -73,13 +74,7 @@ public class WidgetButtonElement implements ElementPainter {
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        if (this.button == null) {
-            return;
-        }
-        this.button.setX(leftPx);
-        this.button.setY(topPx);
-        this.button.setWidth(widthPx);
-        this.button.setHeight(heightPx);
+        FizzyGuiUtils.syncWidgetBounds(this.button, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override

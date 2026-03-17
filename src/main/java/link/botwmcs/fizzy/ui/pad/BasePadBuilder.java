@@ -20,6 +20,14 @@ public abstract class BasePadBuilder<T extends BasePadBuilder<T>> {
         return self();
     }
 
+    public T elements(ElementPainter... elements) {
+        Objects.requireNonNull(elements, "elements");
+        for (ElementPainter element : elements) {
+            this.elements.add(Objects.requireNonNull(element, "element"));
+        }
+        return self();
+    }
+
     protected abstract T self();
 
     public FizzyGuiBuilder done() {
