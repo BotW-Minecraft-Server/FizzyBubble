@@ -28,7 +28,7 @@ public final class PixelPadBuilder extends BasePadBuilder<PixelPadBuilder> {
     }
 
     @Override
-    public PadSpec toSpec() {
+    public PadSpec toSpec(PadBuildContext context) {
         return new PixelPadSpec(left, top, width, height, elements);
     }
 }

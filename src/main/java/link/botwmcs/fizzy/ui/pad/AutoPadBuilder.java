@@ -2,14 +2,13 @@ package link.botwmcs.fizzy.ui.pad;
 
 import link.botwmcs.fizzy.ui.core.FizzyGuiBuilder;
 
-public final class SlotPadBuilder extends BasePadBuilder<SlotPadBuilder> {
+public final class AutoPadBuilder extends BasePadBuilder<AutoPadBuilder> {
     public final int rowStart;
     public final int colStart;
     public final int rowEnd;
     public final int colEnd;
-    private boolean inner;
 
-    public SlotPadBuilder(FizzyGuiBuilder parent, int rowStart, int colStart, int rowEnd, int colEnd) {
+    public AutoPadBuilder(FizzyGuiBuilder parent, int rowStart, int colStart, int rowEnd, int colEnd) {
         super(parent);
         this.rowStart = rowStart;
         this.colStart = colStart;
@@ -18,17 +17,12 @@ public final class SlotPadBuilder extends BasePadBuilder<SlotPadBuilder> {
     }
 
     @Override
-    protected SlotPadBuilder self() {
-        return this;
-    }
-
-    public SlotPadBuilder inner() {
-        this.inner = true;
+    protected AutoPadBuilder self() {
         return this;
     }
 
     @Override
     public PadSpec toSpec(PadBuildContext context) {
-        return new SlotPadSpec(rowStart, colStart, rowEnd, colEnd, inner, elements);
+        return AutoPadSpec.of(rowStart, colStart, rowEnd, colEnd, context, elements);
     }
 }

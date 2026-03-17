@@ -43,20 +43,15 @@ public final class FizzyGuiBuilder {
     private FizzyGuiBuilder splitPainter(SplitPainter painter) { this.splitPainter = Objects.requireNonNull(splitPainter, "splitPainter"); return this; }
 
     public SlotPadBuilder pad(int rowStart, int colStart, int rowEnd, int colEnd) {
-        if (rowStart < 1) {
-            throw new IllegalArgumentException("rowStart must be >= 1");
-        }
-        if (colStart < 1) {
-            throw new IllegalArgumentException("colStart must be >= 1");
-        }
-        if (rowEnd < rowStart) {
-            throw new IllegalArgumentException("rowEnd must be >= rowStart");
-        }
-        if (colEnd < colStart) {
-            throw new IllegalArgumentException("colEnd must be >= colStart");
-        }
-
+        validateSlotRange(rowStart, colStart, rowEnd, colEnd);
         SlotPadBuilder builder = new SlotPadBuilder(this, rowStart, colStart, rowEnd, colEnd);
+        pads.add(builder);
+        return builder;
+    }
+
+    public AutoPadBuilder padAuto(int rowStart, int colStart, int rowEnd, int colEnd) {
+        validateSlotRange(rowStart, colStart, rowEnd, colEnd);
+        AutoPadBuilder builder = new AutoPadBuilder(this, rowStart, colStart, rowEnd, colEnd);
         pads.add(builder);
         return builder;
     }
@@ -93,20 +88,6 @@ public final class FizzyGuiBuilder {
         BgPainter effectiveBg = (bg != null) ? bg : new FizzyBg(BgType.STONE);
         BehindPainter effectiveBehind = behind;
 
-        // Pads
-        List<PadSpec> padSpecs = new ArrayList<>(pads.size());
-        for (BasePadBuilder<?> pad : pads) {
-            if (pad instanceof SlotPadBuilder slotPad) {
-                if (slotPad.rowEnd > rows) {
-                    throw new IllegalStateException("Pad rowEnd exceeds configured rows");
-                }
-                if (slotPad.colEnd > cols) {
-                    throw new IllegalStateException("Pad colEnd exceeds configured cols");
-                }
-            }
-            padSpecs.add(pad.toSpec());
-        }
-
         // Splits
         List<SplitSpec> splitSpecs = new ArrayList<>(splits.size());
         for (SplitSpec split : splits) {
@@ -123,6 +104,35 @@ public final class FizzyGuiBuilder {
         SplitPainter effectiveSplitPainter = this.splitPainter;
         if (effectiveSplitPainter == null && !splitSpecs.isEmpty()) {
             effectiveSplitPainter = new FizzySplit();
+        }
+
+        PadBuildContext padBuildContext = new PadBuildContext(
+                rows,
+                cols,
+                splitSpecs,
+                effectiveSplitPainter != null ? effectiveSplitPainter.metrics() : null
+        );
+
+        // Pads
+        List<PadSpec> padSpecs = new ArrayList<>(pads.size());
+        for (BasePadBuilder<?> pad : pads) {
+            if (pad instanceof SlotPadBuilder slotPad) {
+                if (slotPad.rowEnd > rows) {
+                    throw new IllegalStateException("Pad rowEnd exceeds configured rows");
+                }
+                if (slotPad.colEnd > cols) {
+                    throw new IllegalStateException("Pad colEnd exceeds configured cols");
+                }
+            }
+            if (pad instanceof AutoPadBuilder autoPad) {
+                if (autoPad.rowEnd > rows) {
+                    throw new IllegalStateException("Auto pad rowEnd exceeds configured rows");
+                }
+                if (autoPad.colEnd > cols) {
+                    throw new IllegalStateException("Auto pad colEnd exceeds configured cols");
+                }
+            }
+            padSpecs.add(pad.toSpec(padBuildContext));
         }
 
         // Size calculations
@@ -142,6 +152,21 @@ public final class FizzyGuiBuilder {
 
         // Final return
         return new FizzyGui(spec, frame, effectiveBg, effectiveBehind, overrideW, overrideH, padSpecs, effectiveSplitPainter, splitSpecs, below);
+    }
+
+    private static void validateSlotRange(int rowStart, int colStart, int rowEnd, int colEnd) {
+        if (rowStart < 1) {
+            throw new IllegalArgumentException("rowStart must be >= 1");
+        }
+        if (colStart < 1) {
+            throw new IllegalArgumentException("colStart must be >= 1");
+        }
+        if (rowEnd < rowStart) {
+            throw new IllegalArgumentException("rowEnd must be >= rowStart");
+        }
+        if (colEnd < colStart) {
+            throw new IllegalArgumentException("colEnd must be >= colStart");
+        }
     }
 
 }

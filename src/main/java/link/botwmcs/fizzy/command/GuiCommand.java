@@ -90,8 +90,8 @@ public class GuiCommand {
         var warningIcon = IconElement.builder(
                         ResourceLocation.fromNamespaceAndPath("fizzy", "textures/gui/components/icon/warning.png")
                 )
-                .stretchToFit()
-                .allowUpscale()
+                .stretchToFit(false)
+                .allowUpscale(false)
                 .build();
 
         var motiveText = FizzyComponentElement.builder()
@@ -123,7 +123,7 @@ public class GuiCommand {
                 .sizeSlots(MOTIVE_ROWS)
                 .behind(new BlurBehind())
                 .frame(painter)
-                .pad(1, 1, 3, 2).inner()
+                .pad(1, 2, 1, 2)
                 .element(warningIcon)
                 .done()
                 .pad(1, 3, 3, 9).inner()
@@ -307,7 +307,7 @@ public class GuiCommand {
 
         FizzyGuiBuilder builder = FizzyGuiBuilder.start()
                 .sizeSlots(pageRows)
-                .padByFrame()
+                .pad(1,1,4,9).inner()
                 .element(elementBg).done()
                 .pad(1, 1, 1, 3)
                 .element(button0).done()
@@ -412,15 +412,15 @@ public class GuiCommand {
 
         FizzyGuiBuilder builder = FizzyGuiBuilder.start()
                 .sizeSlots(pageRows)
-                .padByFrame()
+                .pad(1,1,4,9).inner()
                 .element(elementBg).done()
-                .pad(1, 1, 4, 4)
+                .padAuto(1, 1, 4, 4)
                 .element(mapBg)
                 .done()
-                .pad(1, 1, 4,4).inner()
+                .padAuto(1, 1, 4,4)
                 .element(map)
                 .done()
-                .pad(1, 5, 4, 9).inner()
+                .padAuto(1, 5, 4, 9)
 //                .element(new SlotElement())
                 .element(draggableList)
                 .done()

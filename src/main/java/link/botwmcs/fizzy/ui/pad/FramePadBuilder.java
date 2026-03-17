@@ -13,7 +13,7 @@ public final class FramePadBuilder extends BasePadBuilder<FramePadBuilder> {
     }
 
     @Override
-    public PadSpec toSpec() {
+    public PadSpec toSpec(PadBuildContext context) {
         return new FramePadSpec(elements);
     }
 }

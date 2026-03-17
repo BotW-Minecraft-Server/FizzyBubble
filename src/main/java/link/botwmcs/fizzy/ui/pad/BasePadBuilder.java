@@ -34,5 +34,5 @@ public abstract class BasePadBuilder<T extends BasePadBuilder<T>> {
         return parent;
     }
 
-    public abstract PadSpec toSpec();
+    public abstract PadSpec toSpec(PadBuildContext context);
 }

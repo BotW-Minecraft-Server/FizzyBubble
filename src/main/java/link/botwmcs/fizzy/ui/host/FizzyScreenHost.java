@@ -105,6 +105,9 @@ public class FizzyScreenHost extends Screen {
             bg.paint(g, frame);
         }
 
+        // Draw frame before elements so elements stay on top.
+        frame.paint(g, left, top, widthPx, heightPx, true, hasBelow);
+
         // 绘制各个pad内的元素
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
@@ -121,8 +124,6 @@ public class FizzyScreenHost extends Screen {
                 gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), dt);
             }
         }
-
-        frame.paint(g, left, top, widthPx, heightPx, true, hasBelow);
 
         // 绘制分割线
         SplitPainter splitPainter = gui.splitPainter();

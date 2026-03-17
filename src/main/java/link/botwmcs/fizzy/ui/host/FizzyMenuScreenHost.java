@@ -109,6 +109,10 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
             bg.paint(g, frame);
         }
 
+        drawPlayerInventoryBackground(g);
+        // Draw frame before elements so elements stay on top.
+        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
+
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
             for (var element : pad.elements()) {
@@ -122,9 +126,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
                 gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), partialTick);
             }
         }
-
-        drawPlayerInventoryBackground(g);
-        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
 
         SplitPainter splitPainter = gui.splitPainter();
         if (slotArea != null && splitPainter != null) {
