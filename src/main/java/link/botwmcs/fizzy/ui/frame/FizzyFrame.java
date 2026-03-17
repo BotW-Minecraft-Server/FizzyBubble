@@ -7,6 +7,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 public class FizzyFrame implements FramePainter {
+    private static final ResourceLocation DEFAULT_PANEL_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png");
+    private static final ResourceLocation DEFAULT_DARK_PANEL_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default_dark.png");
+
     private final ResourceLocation tex;
     private final FrameMetrics m;
     private final int panelWidthPx;  // 面板显示宽度（通常等于纹理宽）
@@ -20,7 +25,11 @@ public class FizzyFrame implements FramePainter {
     }
 
     public FizzyFrame(Component title) {
-        this(ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png"), FizzyFrameMetrics.ofDefault256x256(), title);
+        this(DEFAULT_PANEL_TEXTURE, FizzyFrameMetrics.ofDefault256x256(), title);
+    }
+
+    public FizzyFrame(Component title, boolean dark) {
+        this(DEFAULT_PANEL_TEXTURE, FizzyFrameMetrics.ofDefault256x256(), FizzyFrameMetrics.ofDefault256x256().panelW(), title, dark);
     }
 
     public FizzyFrame(ResourceLocation tex, FrameMetrics metrics, Component title) {
@@ -111,7 +120,7 @@ public class FizzyFrame implements FramePainter {
     private void blit(GuiGraphics g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
 //        g.blit(/*texture*/ null, 0,0,0,0,0,0,0,0); // 占位避免导入顺序警告
         // 正式调用（1.21.1 MojMaps 常用签名）：
-        g.blit(this.tex, x, y, u, v, w, h, texW, texH);
+        g.blit(this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex, x, y, u, v, w, h, texW, texH);
     }
 
     /** 供宿主用来计算最终面板高度（避免魔法数字） */

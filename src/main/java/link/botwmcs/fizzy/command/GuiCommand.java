@@ -29,6 +29,7 @@ import link.botwmcs.fizzy.ui.element.funstuff.vector.SimpleDraggableElement;
 import link.botwmcs.fizzy.ui.element.icon.IconElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
+import link.botwmcs.fizzy.ui.frame.MotiveFrame;
 import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
 import link.botwmcs.fizzy.ui.split.SplitType;
 import net.minecraft.client.Minecraft;
@@ -43,6 +44,7 @@ import java.util.Map;
 
 public class GuiCommand {
     private static final int DEFAULT_ROWS = 4;
+    private static final int MOTIVE_ROWS = 4;
     private static final int PAGE_ONE = 1;
     private static final int PAGE_TWO = 2;
 
@@ -54,6 +56,9 @@ public class GuiCommand {
                         )
                         .then(Commands.literal("menu")
                                 .executes(ctx -> openTestMenu(ctx.getSource()))
+                        )
+                        .then(Commands.literal("motive")
+                                .executes(ctx -> openMotiveMenu())
                         )
         );
     }
@@ -74,11 +79,36 @@ public class GuiCommand {
         return openPanelPage(rows, PAGE_ONE);
     }
 
+    private static int openMotiveMenu() {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null) return 0;
+
+        var painter = new MotiveFrame(Component.literal("Motive"));
+        int widthPx = painter.panelWidthPx();
+        int heightPx = painter.computeHeightPx(MOTIVE_ROWS, true);
+
+        FizzyGui gui = FizzyGuiBuilder.start()
+                .host(HostType.SCREEN)
+                .sizeSlots(MOTIVE_ROWS)
+                .behind(new BlurBehind())
+                .frame(painter)
+                .overrideSizePx(widthPx, heightPx)
+                .build();
+
+        mc.tell(() -> mc.setScreen(new FizzyScreenHost(gui) {
+            @Override
+            public Component getTitle() {
+                return Component.literal("Motive");
+            }
+        }));
+        return 1;
+    }
+
     private static int openPanelPage(int rows, int page) {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return 0;
 
-        var painter = new FizzyFrame(Component.literal("Test Panel"));
+        var painter = new FizzyFrame(Component.literal("Test Panel"), true);
         var behind = new VanillaBehind();
         var elementBg = new FizzyBackgroundElement(BgType.STONE);
 
