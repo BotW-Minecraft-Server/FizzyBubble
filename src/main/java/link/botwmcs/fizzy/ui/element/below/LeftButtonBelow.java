@@ -5,6 +5,10 @@ import link.botwmcs.fizzy.client.elements.ColoredButton;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutAlign;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutDsl;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutModifier;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutTreePainter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -16,12 +20,14 @@ import java.util.function.Consumer;
 public final class LeftButtonBelow implements ElementPainter {
     private static final int BUTTON_WIDTH = 54;
     private static final int BUTTON_HEIGHT = 13;
-    private static final int OFFSET_X = 26;
+    private static final int LEADING_SPACE = 26;
 
     private final ColoredButtonElement button;
+    private final LayoutTreePainter layout;
 
     public LeftButtonBelow(Component message, ColoredButton.OnPress onPress) {
-        this(message, onPress, builder -> {});
+        this(message, onPress, builder -> {
+        });
     }
 
     public LeftButtonBelow(Component message, ColoredButton.OnPress onPress, Consumer<ColoredButtonElement.Builder> customizer) {
@@ -32,10 +38,12 @@ public final class LeftButtonBelow implements ElementPainter {
                 .color(ColoredAbstractButton.Color.ORANGE);
         customizer.accept(builder);
         this.button = builder.build();
+        this.layout = buildLayout(button);
     }
 
     public LeftButtonBelow(ColoredButtonElement element) {
         this.button = Objects.requireNonNull(element, "element");
+        this.layout = buildLayout(button);
     }
 
     public ColoredButtonElement button() {
@@ -44,12 +52,12 @@ public final class LeftButtonBelow implements ElementPainter {
 
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
-        button.init(context, leftPx + OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT);
+        layout.init(context, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        button.render(g, leftPx + OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
+    public void render(GuiGraphics graphics, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+        layout.render(graphics, leftPx, topPx, widthPx, heightPx, partialTick);
     }
 
     @Override
@@ -62,4 +70,19 @@ public final class LeftButtonBelow implements ElementPainter {
         return button.widgets();
     }
 
+    private static LayoutTreePainter buildLayout(ColoredButtonElement button) {
+        LayoutModifier buttonModifier = LayoutDsl.modifier()
+                .sizePx(BUTTON_WIDTH, BUTTON_HEIGHT)
+                .grow(0.0f);
+        LayoutModifier fillModifier = LayoutDsl.modifier()
+                .fillWidth()
+                .fillHeight()
+                .grow(1.0f);
+
+        return LayoutDsl.painter(LayoutDsl.row(LayoutDsl.modifier().fillWidth().fillHeight(), 0, LayoutAlign.START, row -> {
+            row.spacer(LayoutDsl.modifier().widthPx(LEADING_SPACE).fillHeight().grow(0.0f));
+            row.element(button, buttonModifier);
+            row.spacer(fillModifier);
+        }));
+    }
 }

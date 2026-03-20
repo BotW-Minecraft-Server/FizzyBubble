@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.api.IOverlayContent;
 import link.botwmcs.fizzy.client.util.animate.LerpedFloat;
+import link.botwmcs.fizzy.ui.kernel.overlay.OverlayRenderable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -12,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-public class CreateHudOverlay {
+public class CreateHudOverlay implements OverlayRenderable {
     // ==== 面板资源 & 几何 ====
     private static final ResourceLocation BG = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/components/hud/create_style.png"); // 需提供一张226x118的贴图或改尺寸
     private static final int GUI_W = 226, GUI_H = 118;
@@ -103,6 +104,12 @@ public class CreateHudOverlay {
         return this;
     }
 
+    @Override
+    public void assignAnchor(Anchor anchor) {
+        setAnchor(anchor);
+    }
+
+    @Override
     public Anchor getAnchor() { return anchor; }
 
 
@@ -144,24 +151,30 @@ public class CreateHudOverlay {
     }
 
     /** 请求隐藏（淡出）；等 alpha 到 0 后自动停止渲染 */
+    @Override
     public void hide() {
         this.targetVisible = false;
         this.alpha.chase(0.0, 0.25, LerpedFloat.Chaser.EXP);
         this.textAlpha.chase(0.0, 0.35, LerpedFloat.Chaser.EXP);
     }
 
+    @Override
     public boolean isActive() { return active; }
 
     /** 由布局器设置最终目标位置（像素，未乘缩放） */
+    @Override
     public void setTargetPos(int x, int y) {
         this.targetX = x;
         this.targetY = y;
     }
 
+    @Override
     public int getWidthPx()  { return (int) (GUI_W * uiScale); }
+    @Override
     public int getHeightPx() { return (int) (GUI_H * uiScale); }
 
     // ========== 更新 & 渲染 ==========
+    @Override
     public void render(GuiGraphics g, float pt) {
         if (!active) return;
         boolean important = content != null && content.isImportant();
@@ -174,9 +187,11 @@ public class CreateHudOverlay {
         alpha.tickChaser();
         textAlpha.tickChaser();
 
-        float a = Mth.clamp(alpha.getValue(pt), 0f, 1f);
+        float a = Mth.clamp(alpha.getValue(), 0f, 1f);
         if (!targetVisible && a <= 0.01f) {
             // 完成淡出 → 不再渲染
+            alpha.startWithValue(0.0f);
+            textAlpha.startWithValue(0.0f);
             active = false;
             return;
         }
@@ -193,8 +208,10 @@ public class CreateHudOverlay {
         // 标题 & 时间
         String timeStr = formatTickTime(Minecraft.getInstance().level.getDayTime());
         int ttlColor = withAlpha(0xFF4F4F4F, a);
-        g.drawString(font, title, TITLE_X, TITLE_Y, ttlColor, false);
-        g.drawString(font, timeStr, GUI_W - TIME_PAD_X - font.width(timeStr), TITLE_Y, ttlColor, false);
+        if ((ttlColor >>> 24) != 0) {
+            g.drawString(font, title, TITLE_X, TITLE_Y, ttlColor, false);
+            g.drawString(font, timeStr, GUI_W - TIME_PAD_X - font.width(timeStr), TITLE_Y, ttlColor, false);
+        }
 
         // 滚动文字（调高裁剪窗口，避免吃字）
         int scLeft   = (int) (xPos.getValue(pt) + SLIDE_AREA_X * uiScale);
@@ -209,10 +226,12 @@ public class CreateHudOverlay {
         g.pose().scale(scale, scale, scale);
 
         tickMarquee(2f * Minecraft.getInstance().getTimer().getGameTimeDeltaTicks());
-        int txtColor = withAlpha(0xFFFF9900, a * Mth.clamp(textAlpha.getValue(pt), 0f, 1f));
+        int txtColor = withAlpha(0xFFFF9900, a * Mth.clamp(textAlpha.getValue(), 0f, 1f));
         int drawX = (int) ((SLIDE_AREA_X + slidingOffset) / (1f / TEXT_SCALE)); // 等价于 /0.75f
         int drawY = (int) ((SLIDE_AREA_Y) / (1f / TEXT_SCALE));
-        g.drawString(font, slidingText, drawX, drawY, txtColor, false);
+        if ((txtColor >>> 24) != 0) {
+            g.drawString(font, slidingText, drawX, drawY, txtColor, false);
+        }
 
         g.pose().popPose();
         g.disableScissor();
@@ -279,7 +298,8 @@ public class CreateHudOverlay {
         g.pose().popPose();
     }
 
-    void dispose() {
+    @Override
+    public void dispose() {
         if (content != null) content.onClose();
     }
 

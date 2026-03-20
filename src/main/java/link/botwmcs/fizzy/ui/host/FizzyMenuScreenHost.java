@@ -8,6 +8,7 @@ import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
@@ -34,6 +35,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     private static final int PLAYER_INV_FIRST_SLOT_INDEX_FROM_END = 36;
     private static final int HOTBAR_FIRST_SLOT_INDEX_FROM_END = 9;
     private final FizzyGui gui;
+    private UiRuntime runtime;
 
     public FizzyMenuScreenHost(T menu, Inventory inv, Component title, FizzyGui gui) {
         super(menu, inv, title);
@@ -45,6 +47,9 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         this.imageWidth = gui.widthPx();
         this.imageHeight = gui.heightPx();
         super.init();
+        if (runtime == null || runtime.isClosed()) {
+            runtime = UiRuntime.createForCurrentThread();
+        }
 
         int totalH = this.imageHeight + PLAYER_INV_SECTION_H;
         this.leftPos = (this.width - this.imageWidth) / 2;
@@ -90,6 +95,9 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     @Override
     protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
+        if (runtime != null) {
+            runtime.frameTick();
+        }
         // Ensure blit color state stays valid even if another renderer changed it.
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
@@ -135,6 +143,15 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         }
 
 //        renderCustomMenuBackground(g, partialTick, mouseX, mouseY);
+    }
+
+    @Override
+    public void removed() {
+        if (runtime != null) {
+            runtime.close();
+            runtime = null;
+        }
+        super.removed();
     }
 
     @Override

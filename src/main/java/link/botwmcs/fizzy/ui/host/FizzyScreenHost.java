@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
@@ -22,6 +23,7 @@ import java.util.List;
 
 public class FizzyScreenHost extends Screen {
     private final FizzyGui gui;
+    private UiRuntime runtime;
     private int left, top;
 
     public FizzyScreenHost(FizzyGui gui) {
@@ -32,6 +34,9 @@ public class FizzyScreenHost extends Screen {
     @Override
     protected void init() {
         super.init(); // 虽然不是必需，但更稳
+        if (runtime == null || runtime.isClosed()) {
+            runtime = UiRuntime.createForCurrentThread();
+        }
         recalcCenter();
 //        int w = gui.widthPx(), h = gui.heightPx();
 //        this.left = (this.width - w) / 2;
@@ -83,6 +88,9 @@ public class FizzyScreenHost extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float dt) {
 //        super.render(g, mx, my, dt);
+        if (runtime != null) {
+            runtime.frameTick();
+        }
         // 初始化frame
         FramePainter frame = gui.frame();
         int widthPx = gui.widthPx();
@@ -138,6 +146,15 @@ public class FizzyScreenHost extends Screen {
             renderable.render(g, mx, my, dt);
         }
 //         super.render(g, mx, my, dt);
+    }
+
+    @Override
+    public void removed() {
+        if (runtime != null) {
+            runtime.close();
+            runtime = null;
+        }
+        super.removed();
     }
 
     private class ScreenInitContext implements ElementPainter.InitContext {

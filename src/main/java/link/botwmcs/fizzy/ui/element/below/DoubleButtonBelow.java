@@ -5,6 +5,10 @@ import link.botwmcs.fizzy.client.elements.ColoredButton;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutAlign;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutDsl;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutModifier;
+import link.botwmcs.fizzy.ui.kernel.layout.LayoutTreePainter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -17,11 +21,12 @@ import java.util.function.Consumer;
 public final class DoubleButtonBelow implements ElementPainter {
     private static final int BUTTON_WIDTH = 54;
     private static final int BUTTON_HEIGHT = 13;
-    private static final int LEFT_OFFSET_X = 26;
-    private static final int RIGHT_OFFSET_X = 98;
+    private static final int LEADING_SPACE = 26;
+    private static final int BETWEEN_SPACE = 18;
 
     private final ColoredButtonElement leftButton;
     private final ColoredButtonElement rightButton;
+    private final LayoutTreePainter layout;
 
     public DoubleButtonBelow(Component leftMessage, ColoredButton.OnPress leftPress,
                              Component rightMessage, ColoredButton.OnPress rightPress) {
@@ -48,11 +53,13 @@ public final class DoubleButtonBelow implements ElementPainter {
                 .color(ColoredAbstractButton.Color.BLUE);
         rightCustomizer.accept(rightBuilder);
         this.rightButton = rightBuilder.build();
+        this.layout = buildLayout(this.leftButton, this.rightButton);
     }
 
     public DoubleButtonBelow(ColoredButtonElement leftButton, ColoredButtonElement rightButton) {
         this.leftButton = Objects.requireNonNull(leftButton, "leftButton");
         this.rightButton = Objects.requireNonNull(rightButton, "rightButton");
+        this.layout = buildLayout(this.leftButton, this.rightButton);
     }
 
     public ColoredButtonElement leftButton() {
@@ -65,14 +72,12 @@ public final class DoubleButtonBelow implements ElementPainter {
 
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
-        leftButton.init(context, leftPx + LEFT_OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT);
-        rightButton.init(context, leftPx + RIGHT_OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT);
+        layout.init(context, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
-        leftButton.render(g, leftPx + LEFT_OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
-        rightButton.render(g, leftPx + RIGHT_OFFSET_X, topPx, BUTTON_WIDTH, BUTTON_HEIGHT, partialTick);
+        layout.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
     }
 
     @Override
@@ -86,5 +91,23 @@ public final class DoubleButtonBelow implements ElementPainter {
         out.addAll(leftButton.widgets());
         out.addAll(rightButton.widgets());
         return out;
+    }
+
+    private static LayoutTreePainter buildLayout(ColoredButtonElement leftButton, ColoredButtonElement rightButton) {
+        LayoutModifier buttonModifier = LayoutDsl.modifier()
+                .sizePx(BUTTON_WIDTH, BUTTON_HEIGHT)
+                .grow(0.0f);
+        LayoutModifier fillModifier = LayoutDsl.modifier()
+                .fillWidth()
+                .fillHeight()
+                .grow(1.0f);
+
+        return LayoutDsl.painter(LayoutDsl.row(LayoutDsl.modifier().fillWidth().fillHeight(), 0, LayoutAlign.START, row -> {
+            row.spacer(LayoutDsl.modifier().widthPx(LEADING_SPACE).fillHeight().grow(0.0f));
+            row.element(leftButton, buttonModifier);
+            row.spacer(LayoutDsl.modifier().widthPx(BETWEEN_SPACE).fillHeight().grow(0.0f));
+            row.element(rightButton, buttonModifier);
+            row.spacer(fillModifier);
+        }));
     }
 }

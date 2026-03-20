@@ -2,6 +2,8 @@ package link.botwmcs.fizzy;
 
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.overlay.Anchor;
+import link.botwmcs.fizzy.client.overlay.ModalManager;
+import link.botwmcs.fizzy.client.overlay.NotificationManager;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.menu.FizzyMenus;
 import link.botwmcs.fizzy.menu.FizzyTestMenuScreen;
@@ -48,11 +50,13 @@ public class FizzyClient {
     @SubscribeEvent
     static void onRenderGuiPost(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        float pt = mc.getTimer().getGameTimeDeltaTicks();
+        float pt = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         int sw = mc.getWindow().getGuiScaledWidth();
         int sh = mc.getWindow().getGuiScaledHeight();
 
         OverlayManager.renderAll(event.getGuiGraphics(), sw, sh, pt, Anchor.TOP_LEFT);
+        NotificationManager.renderAll(event.getGuiGraphics(), sw, sh, pt);
+        ModalManager.renderAll(event.getGuiGraphics(), sw, sh, pt);
         AnnounceMessageManager.render(event.getGuiGraphics(), sw, sh, pt);
     }
 }

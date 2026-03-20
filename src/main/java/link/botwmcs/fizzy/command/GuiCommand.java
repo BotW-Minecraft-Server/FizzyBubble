@@ -3,6 +3,8 @@ package link.botwmcs.fizzy.command;
 import com.mojang.brigadier.CommandDispatcher;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
+import link.botwmcs.fizzy.client.overlay.ModalManager;
+import link.botwmcs.fizzy.client.overlay.NotificationManager;
 import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.menu.FizzyTestMenu;
 import link.botwmcs.fizzy.ui.background.BgType;
@@ -31,6 +33,7 @@ import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.frame.MotiveFrame;
 import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
+import link.botwmcs.fizzy.ui.kernel.notification.NotificationLevel;
 import link.botwmcs.fizzy.ui.split.SplitType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -106,14 +109,32 @@ public class GuiCommand {
 
         var confirmButton = ColoredButtonElement.builder(
                         Component.literal("Confirm"),
-                        btn -> mc.player.sendSystemMessage(Component.literal("Motive: confirm clicked (placeholder)."))
+                        btn -> {
+                            if (mc.player != null) {
+                                mc.player.sendSystemMessage(Component.literal("Motive: confirm clicked (placeholder)."));
+                            }
+                            NotificationManager.show(
+                                    Component.literal("Motive"),
+                                    Component.literal("Confirm clicked"),
+                                    NotificationLevel.SUCCESS,
+                                    60
+                            );
+                        }
                 )
                 .color(ColoredAbstractButton.Color.LIME)
                 .build();
 
         var exitButton = ColoredButtonElement.builder(
                         Component.literal("Exit"),
-                        btn -> mc.setScreen(null)
+                        btn -> {
+                            NotificationManager.show(
+                                    Component.literal("Motive"),
+                                    Component.literal("Panel closed"),
+                                    NotificationLevel.INFO,
+                                    50
+                            );
+                            mc.setScreen(null);
+                        }
                 )
                 .color(ColoredAbstractButton.Color.RED)
                 .build();
@@ -269,15 +290,26 @@ public class GuiCommand {
             boolean open = !appleBlocker.isOpen();
             appleBlocker.setOpen(open);
             mc.player.sendSystemMessage(Component.literal(open ? "Blocker opened!" : "Blocker closed!"));
+            NotificationManager.show(
+                    Component.literal("Blocker"),
+                    Component.literal(open ? "State: open" : "State: closed"),
+                    open ? NotificationLevel.SUCCESS : NotificationLevel.WARNING,
+                    50
+            );
         }).color(ColoredAbstractButton.Color.BLUE).build();
         var button1 = ColoredButtonElement.builder(Component.literal("Button 1"), btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 1 clicked!"));
         }).color(ColoredAbstractButton.Color.RED).build();
         var button2 = ColoredButtonElement.builder(Component.literal("Button 2"), btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 2 clicked!"));
+            ModalManager.show(
+                    Component.literal("Fizzy Modal"),
+                    Component.literal("This is the new modal kernel layer.")
+            );
         }).color(ColoredAbstractButton.Color.LIME).build();
         var button3 = ColoredButtonElement.builder(Component.literal("Button 3"), btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
+            ModalManager.hideAll();
         }).color(ColoredAbstractButton.Color.YELLOW).build();
 
         var belowBtn = new DoubleButtonBelow(
