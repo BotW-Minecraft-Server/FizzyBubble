@@ -33,7 +33,8 @@ public final class CenterButtonBelow implements ElementPainter {
         Objects.requireNonNull(message, "message");
         Objects.requireNonNull(onPress, "onPress");
         Objects.requireNonNull(customizer, "customizer");
-        ColoredButtonElement.Builder builder = ColoredButtonElement.builder(message, onPress)
+        ColoredButtonElement.Builder builder = ColoredButtonElement.builder(onPress)
+                .text(message)
                 .color(ColoredAbstractButton.Color.ORANGE);
         customizer.accept(builder);
         this.button = builder.build();

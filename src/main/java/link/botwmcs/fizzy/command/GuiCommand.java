@@ -28,6 +28,7 @@ import link.botwmcs.fizzy.ui.element.component.SimpleChartsElement;
 import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
 import link.botwmcs.fizzy.ui.element.funstuff.vector.ProgressElement;
 import link.botwmcs.fizzy.ui.element.funstuff.vector.SimpleDraggableElement;
+import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
 import link.botwmcs.fizzy.ui.element.icon.IconElement;
 import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
@@ -107,35 +108,33 @@ public class GuiCommand {
                 .lineSpacing(1.0f)
                 .build();
 
-        var confirmButton = ColoredButtonElement.builder(
-                        Component.literal("Confirm"),
-                        btn -> {
-                            if (mc.player != null) {
-                                mc.player.sendSystemMessage(Component.literal("Motive: confirm clicked (placeholder)."));
-                            }
-                            NotificationManager.show(
-                                    Component.literal("Motive"),
-                                    Component.literal("Confirm clicked"),
-                                    NotificationLevel.SUCCESS,
-                                    60
-                            );
-                        }
-                )
+        var confirmButton = ColoredButtonElement.builder(btn -> {
+                    if (mc.player != null) {
+                        mc.player.sendSystemMessage(Component.literal("Motive: confirm clicked (placeholder)."));
+                    }
+                    NotificationManager.show(
+                            Component.literal("Motive"),
+                            Component.literal("Confirm clicked"),
+                            NotificationLevel.SUCCESS,
+                            60
+                    );
+                })
+                .text(Component.literal("Confirm"))
+                .icon(FizzyIcon.SETTINGS_9X8)
                 .color(ColoredAbstractButton.Color.LIME)
                 .build();
 
-        var exitButton = ColoredButtonElement.builder(
-                        Component.literal("Exit"),
-                        btn -> {
-                            NotificationManager.show(
-                                    Component.literal("Motive"),
-                                    Component.literal("Panel closed"),
-                                    NotificationLevel.INFO,
-                                    50
-                            );
-                            mc.setScreen(null);
-                        }
-                )
+        var exitButton = ColoredButtonElement.builder(btn -> {
+                    NotificationManager.show(
+                            Component.literal("Motive"),
+                            Component.literal("Panel closed"),
+                            NotificationLevel.INFO,
+                            50
+                    );
+                    mc.setScreen(null);
+                })
+                .text(Component.literal("Exit"))
+                .icon(FizzyIcon.TRASH)
                 .color(ColoredAbstractButton.Color.RED)
                 .build();
 
@@ -286,7 +285,7 @@ public class GuiCommand {
                 .t2r(Map.of("Ofcourse you can RAINBOW", TextRenderer.RainbowConfig.of().rainbowStatic(true)))
                 .build();
 
-        var button0 = ColoredButtonElement.builder(Component.literal("Button 0"), btn -> {
+        var button0 = ColoredButtonElement.builder(btn -> {
             boolean open = !appleBlocker.isOpen();
             appleBlocker.setOpen(open);
             mc.player.sendSystemMessage(Component.literal(open ? "Blocker opened!" : "Blocker closed!"));
@@ -296,21 +295,21 @@ public class GuiCommand {
                     open ? NotificationLevel.SUCCESS : NotificationLevel.WARNING,
                     50
             );
-        }).color(ColoredAbstractButton.Color.BLUE).build();
-        var button1 = ColoredButtonElement.builder(Component.literal("Button 1"), btn -> {
+        }).text(Component.literal("Button 0")).color(ColoredAbstractButton.Color.BLUE).build();
+        var button1 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 1 clicked!"));
-        }).color(ColoredAbstractButton.Color.RED).build();
-        var button2 = ColoredButtonElement.builder(Component.literal("Button 2"), btn -> {
+        }).text(Component.literal("Button 1")).color(ColoredAbstractButton.Color.RED).build();
+        var button2 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 2 clicked!"));
             ModalManager.show(
                     Component.literal("Fizzy Modal"),
                     Component.literal("This is the new modal kernel layer.")
             );
-        }).color(ColoredAbstractButton.Color.LIME).build();
-        var button3 = ColoredButtonElement.builder(Component.literal("Button 3"), btn -> {
+        }).text(Component.literal("Button 2")).color(ColoredAbstractButton.Color.LIME).build();
+        var button3 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
             ModalManager.hideAll();
-        }).color(ColoredAbstractButton.Color.YELLOW).build();
+        }).text(Component.literal("Button 3")).color(ColoredAbstractButton.Color.YELLOW).build();
 
         var belowBtn = new DoubleButtonBelow(
                 Component.literal("Exit"),
@@ -407,19 +406,19 @@ public class GuiCommand {
 
                 content.cell(index + 1, 1)
                         .inner()
-                        .element(ColoredButtonElement.builder(Component.literal("L" + index), btn -> {
+                        .element(ColoredButtonElement.builder(btn -> {
                             if (mc.player != null) {
                                 mc.player.sendSystemMessage(Component.literal("Charts left #" + index));
                             }
-                        }).color(leftColor).build())
+                        }).text(Component.literal("L" + index)).color(leftColor).build())
                         .done()
                         .cell(index + 1, 2)
                         .inner()
-                        .element(ColoredButtonElement.builder(Component.literal("R" + index), btn -> {
+                        .element(ColoredButtonElement.builder(btn -> {
                             if (mc.player != null) {
                                 mc.player.sendSystemMessage(Component.literal("Charts right #" + index));
                             }
-                        }).color(rightColor).build())
+                        }).text(Component.literal("R" + index)).color(rightColor).build())
                         .done();
             }
         }).build();

@@ -44,12 +44,14 @@ public final class DoubleButtonBelow implements ElementPainter {
         Objects.requireNonNull(leftCustomizer, "leftCustomizer");
         Objects.requireNonNull(rightCustomizer, "rightCustomizer");
 
-        ColoredButtonElement.Builder leftBuilder = ColoredButtonElement.builder(leftMessage, leftPress)
+        ColoredButtonElement.Builder leftBuilder = ColoredButtonElement.builder(leftPress)
+                .text(leftMessage)
                 .color(ColoredAbstractButton.Color.ORANGE);
         leftCustomizer.accept(leftBuilder);
         this.leftButton = leftBuilder.build();
 
-        ColoredButtonElement.Builder rightBuilder = ColoredButtonElement.builder(rightMessage, rightPress)
+        ColoredButtonElement.Builder rightBuilder = ColoredButtonElement.builder(rightPress)
+                .text(rightMessage)
                 .color(ColoredAbstractButton.Color.BLUE);
         rightCustomizer.accept(rightBuilder);
         this.rightButton = rightBuilder.build();

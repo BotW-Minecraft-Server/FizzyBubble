@@ -34,7 +34,8 @@ public final class RightButtonBelow implements ElementPainter {
         Objects.requireNonNull(message, "message");
         Objects.requireNonNull(onPress, "onPress");
         Objects.requireNonNull(customizer, "customizer");
-        ColoredButtonElement.Builder builder = ColoredButtonElement.builder(message, onPress)
+        ColoredButtonElement.Builder builder = ColoredButtonElement.builder(onPress)
+                .text(message)
                 .color(ColoredAbstractButton.Color.BLUE);
         customizer.accept(builder);
         this.button = builder.build();

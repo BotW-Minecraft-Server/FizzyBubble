@@ -370,6 +370,60 @@ public final class FizzyGuiUtils {
     }
 
     /**
+     * Ellipsizes text to fit the given width using the current Minecraft font.
+     */
+    public static Component ellipsizeText(Component source, int maxWidthPx) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) {
+            return source;
+        }
+        return ellipsizeText(mc.font, source, maxWidthPx);
+    }
+
+    /**
+     * Ellipsizes text to fit the given width using the provided font.
+     */
+    public static Component ellipsizeText(Font font, Component source, int maxWidthPx) {
+        if (maxWidthPx <= 0) {
+            return Component.empty();
+        }
+        if (font == null || source == null) {
+            return Component.empty();
+        }
+        String raw = source.getString();
+        if (raw.isEmpty()) {
+            return source;
+        }
+        if (font.width(raw) <= maxWidthPx) {
+            return source;
+        }
+
+        String ellipsis = "...";
+        int ellipsisWidth = font.width(ellipsis);
+        if (ellipsisWidth >= maxWidthPx) {
+            int dotWidth = Math.max(1, font.width("."));
+            int dotCount = Math.max(1, Math.min(3, maxWidthPx / dotWidth));
+            return Component.literal(".".repeat(dotCount));
+        }
+
+        int cpCount = raw.codePointCount(0, raw.length());
+        int bestEnd = 0;
+        for (int i = 1; i <= cpCount; i++) {
+            int end = raw.offsetByCodePoints(0, i);
+            String candidate = raw.substring(0, end) + ellipsis;
+            if (font.width(candidate) > maxWidthPx) {
+                break;
+            }
+            bestEnd = end;
+        }
+
+        if (bestEnd <= 0) {
+            return Component.literal(ellipsis);
+        }
+        return Component.literal(raw.substring(0, bestEnd) + ellipsis);
+    }
+
+    /**
      * Converts a formatted character sequence to plain UTF-16 text.
      */
     public static String toPlainString(FormattedCharSequence sequence) {

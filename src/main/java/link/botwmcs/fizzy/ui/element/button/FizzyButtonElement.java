@@ -2,12 +2,17 @@ package link.botwmcs.fizzy.ui.element.button;
 
 import link.botwmcs.fizzy.client.elements.FizzyButton;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
+import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
+import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
@@ -16,49 +21,91 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class FizzyButtonElement implements ElementPainter {
-    private final Component message;
-    private final FizzyButton.OnPress onPress;
-    private final @Nullable Tooltip tooltip;
-    private final Consumer<FizzyButton.Builder> builderCustomizer;
-    private final Consumer<FizzyButton> buttonConsumer;
-    private final @Nullable SoundEvent pressSound;
+    private static final int DEFAULT_ICON_SIZE_PX = 12;
+    private static final int DEFAULT_CONTENT_GAP_PX = 4;
+    private static final int DEFAULT_CONTENT_PADDING_LEFT_PX = 6;
+    private static final int DEFAULT_CONTENT_PADDING_RIGHT_PX = 6;
 
-    private FizzyButton button;
+    private final FizzyButton.OnPress onPress;
+
+    private @Nullable Tooltip tooltip;
+    private @Nullable SoundEvent pressSound;
+    private Component narrationMessage;
+
+    private @Nullable Component textComponent;
+    private @Nullable FizzyComponentElement customTextElement;
+    private Consumer<FizzyComponentElement.Builder> textCustomizer;
+
+    private @Nullable ResourceLocation iconTexture;
+    private boolean iconStretchToFit;
+    private boolean iconAllowUpscale;
+
+    private int iconSizePx;
+    private int contentGapPx;
+    private int contentPaddingLeftPx;
+    private int contentPaddingRightPx;
+    private ContentLayout contentLayout;
+    private IconVerticalAlign iconVerticalAlign;
+
+    private @Nullable FizzyComponentElement generatedTextElement;
+    private boolean generatedTextDirty = true;
+    private int generatedTextWidthPx = Integer.MIN_VALUE;
+    private String generatedSourceText = "";
+    private String generatedDisplayText = "";
+
+    private @Nullable FizzyButton button;
+    private @Nullable ContentOverlayWidget contentOverlay;
 
     private FizzyButtonElement(Builder builder) {
-        this.message = builder.message;
         this.onPress = builder.onPress;
         this.tooltip = builder.tooltip;
-        this.builderCustomizer = builder.builderCustomizer;
-        this.buttonConsumer = builder.buttonConsumer;
         this.pressSound = builder.pressSound;
+        this.narrationMessage = builder.narrationMessage;
+        this.textComponent = builder.textComponent;
+        this.customTextElement = builder.customTextElement;
+        this.textCustomizer = builder.textCustomizer;
+        this.iconTexture = builder.iconTexture;
+        this.iconStretchToFit = builder.iconStretchToFit;
+        this.iconAllowUpscale = builder.iconAllowUpscale;
+        this.iconSizePx = builder.iconSizePx;
+        this.contentGapPx = builder.contentGapPx;
+        this.contentPaddingLeftPx = builder.contentPaddingLeftPx;
+        this.contentPaddingRightPx = builder.contentPaddingRightPx;
+        this.contentLayout = builder.contentLayout;
+        this.iconVerticalAlign = builder.iconVerticalAlign;
     }
 
-    public static Builder builder(Component message, FizzyButton.OnPress onPress) {
-        return new Builder(message, onPress);
+    public static Builder builder(FizzyButton.OnPress onPress) {
+        return new Builder(onPress);
     }
 
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
         this.button = null;
-        FizzyButton.Builder builder = FizzyButton.builder(this.message, this.onPress);
-        this.builderCustomizer.accept(builder);
+        this.contentOverlay = null;
+
+        FizzyButton.Builder builder = FizzyButton.builder(Component.empty(), this.onPress);
+        builder.createNarration(defaultMessage -> this.narrationMessage.copy());
         builder.bounds(leftPx, topPx, widthPx, heightPx);
         if (this.tooltip != null) {
             builder.tooltip(this.tooltip);
         }
+
         FizzyButton built = builder.build();
-        if (this.pressSound != null) {
-            built.setPressSound(this.pressSound);
-        }
         this.button = built;
-        this.buttonConsumer.accept(built);
         context.addRenderableWidget(built);
+
+        ContentOverlayWidget overlay = new ContentOverlayWidget(leftPx, topPx, widthPx, heightPx);
+        this.contentOverlay = overlay;
+        context.addRenderableWidget(overlay);
+
+        syncButtonState();
     }
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.button, leftPx, topPx, widthPx, heightPx);
+        FizzyGuiUtils.syncWidgetBounds(this.contentOverlay, leftPx, topPx, widthPx, heightPx);
     }
 
     @Override
@@ -68,7 +115,10 @@ public final class FizzyButtonElement implements ElementPainter {
 
     @Override
     public List<AbstractWidget> widgets() {
-        return this.button == null ? List.of() : List.of(this.button);
+        if (this.button == null || this.contentOverlay == null) {
+            return List.of();
+        }
+        return List.of(this.button, this.contentOverlay);
     }
 
     @Nullable
@@ -76,16 +126,290 @@ public final class FizzyButtonElement implements ElementPainter {
         return this.button;
     }
 
+    public FizzyButtonElement setText(Component text) {
+        Component safe = Objects.requireNonNull(text, "text");
+        this.textComponent = safe;
+        this.customTextElement = null;
+        this.narrationMessage = safe;
+        this.generatedTextDirty = true;
+        this.generatedTextWidthPx = Integer.MIN_VALUE;
+        return this;
+    }
+
+    public FizzyButtonElement setText(FizzyComponentElement textElement) {
+        this.customTextElement = Objects.requireNonNull(textElement, "textElement");
+        this.generatedTextElement = null;
+        this.generatedTextDirty = false;
+        this.generatedTextWidthPx = Integer.MIN_VALUE;
+        return this;
+    }
+
+    public FizzyButtonElement setTextConfig(Consumer<FizzyComponentElement.Builder> customizer) {
+        Objects.requireNonNull(customizer, "customizer");
+        this.textCustomizer = this.textCustomizer.andThen(customizer);
+        this.generatedTextDirty = true;
+        this.generatedTextWidthPx = Integer.MIN_VALUE;
+        return this;
+    }
+
+    public FizzyButtonElement setIcon(@Nullable ResourceLocation texture) {
+        this.iconTexture = texture;
+        return this;
+    }
+
+    public FizzyButtonElement setIcon(@Nullable FizzyIcon icon) {
+        this.iconTexture = icon == null ? null : icon.texture();
+        return this;
+    }
+
+    public FizzyButtonElement clearIcon() {
+        return setIcon((ResourceLocation) null);
+    }
+
+    public FizzyButtonElement setLayout(ContentLayout layout) {
+        this.contentLayout = Objects.requireNonNull(layout, "layout");
+        return this;
+    }
+
+    public FizzyButtonElement setIconAlign(IconVerticalAlign align) {
+        this.iconVerticalAlign = Objects.requireNonNull(align, "align");
+        return this;
+    }
+
+    public FizzyButtonElement setIconFit(boolean stretchToFit, boolean allowUpscale) {
+        this.iconStretchToFit = stretchToFit;
+        this.iconAllowUpscale = allowUpscale;
+        return this;
+    }
+
+    public FizzyButtonElement setIconSizePx(int iconSizePx) {
+        if (iconSizePx <= 0) {
+            throw new IllegalArgumentException("iconSizePx must be > 0");
+        }
+        this.iconSizePx = iconSizePx;
+        return this;
+    }
+
+    public FizzyButtonElement setContentGapPx(int contentGapPx) {
+        if (contentGapPx < 0) {
+            throw new IllegalArgumentException("contentGapPx must be >= 0");
+        }
+        this.contentGapPx = contentGapPx;
+        return this;
+    }
+
+    public FizzyButtonElement setContentPaddingPx(int leftPx, int rightPx) {
+        if (leftPx < 0 || rightPx < 0) {
+            throw new IllegalArgumentException("content padding must be >= 0");
+        }
+        this.contentPaddingLeftPx = leftPx;
+        this.contentPaddingRightPx = rightPx;
+        return this;
+    }
+
+    public FizzyButtonElement setTooltip(@Nullable Tooltip tooltip) {
+        this.tooltip = tooltip;
+        if (this.button != null) {
+            this.button.setTooltip(tooltip);
+        }
+        return this;
+    }
+
+    public FizzyButtonElement setTooltip(Component component) {
+        return setTooltip(Tooltip.create(Objects.requireNonNull(component, "component")));
+    }
+
+    public FizzyButtonElement setPressSound(@Nullable SoundEvent sound) {
+        this.pressSound = sound;
+        if (this.button != null) {
+            this.button.setPressSound(sound);
+        }
+        return this;
+    }
+
+    public FizzyButtonElement setNarration(Component narrationMessage) {
+        this.narrationMessage = Objects.requireNonNull(narrationMessage, "narrationMessage");
+        return this;
+    }
+
+    private void syncButtonState() {
+        if (this.button == null) {
+            return;
+        }
+        this.button.setMessage(Component.empty());
+        this.button.setTooltip(this.tooltip);
+        this.button.setPressSound(this.pressSound);
+    }
+
+    private void renderCompositeContent(GuiGraphics g, float partialTick) {
+        if (this.button == null) {
+            return;
+        }
+
+        int left = this.button.getX();
+        int top = this.button.getY();
+        int width = this.button.getWidth();
+        int height = this.button.getHeight();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        int contentLeft = left + Math.max(0, this.contentPaddingLeftPx);
+        int contentRight = left + width - Math.max(0, this.contentPaddingRightPx);
+        if (contentRight <= contentLeft) {
+            return;
+        }
+        int contentWidth = contentRight - contentLeft;
+
+        boolean hasIcon = this.iconTexture != null;
+        boolean hasText = this.customTextElement != null || this.textComponent != null;
+        if (!hasIcon && !hasText) {
+            return;
+        }
+
+        int iconBoxWidth = hasIcon ? Math.min(Math.max(1, this.iconSizePx), contentWidth) : 0;
+        int gap = hasIcon && hasText ? Math.max(0, this.contentGapPx) : 0;
+        if (iconBoxWidth + gap > contentWidth) {
+            iconBoxWidth = Math.min(iconBoxWidth, contentWidth);
+            gap = Math.max(0, contentWidth - iconBoxWidth);
+        }
+        int textWidth = Math.max(0, contentWidth - iconBoxWidth - gap);
+
+        int textLeft;
+        int iconLeft;
+        if (this.contentLayout == ContentLayout.ICON_LEFT_TEXT_RIGHT) {
+            iconLeft = contentLeft;
+            textLeft = hasIcon ? contentLeft + iconBoxWidth + gap : contentLeft;
+        } else {
+            textLeft = contentLeft;
+            iconLeft = contentRight - iconBoxWidth;
+        }
+
+        int yOffset = this.button.isHoveredOrFocused() ? 1 : 0;
+        int textTop = top + yOffset;
+        int textHeight = Math.max(0, height - yOffset);
+
+        if (hasText && textWidth > 0) {
+            resolveTextElement(textWidth).render(g, textLeft, textTop, textWidth, textHeight, partialTick);
+        }
+
+        if (hasIcon && iconBoxWidth > 0) {
+            int availableHeight = Math.max(0, height - yOffset);
+            int iconHeight = Math.min(Math.max(1, this.iconSizePx), availableHeight);
+            int iconTop = switch (this.iconVerticalAlign) {
+                case TOP -> top + yOffset;
+                case BOTTOM -> top + yOffset + availableHeight - iconHeight;
+                case CENTER -> top + yOffset + (availableHeight - iconHeight) / 2;
+            };
+            float alpha = this.button.active ? 1.0f : 0.5f;
+            FizzyGuiUtils.drawTextureFit(
+                    g,
+                    this.iconTexture,
+                    iconLeft,
+                    iconTop,
+                    iconBoxWidth,
+                    iconHeight,
+                    this.iconStretchToFit,
+                    this.iconAllowUpscale,
+                    alpha
+            );
+        }
+    }
+
+    private FizzyComponentElement resolveTextElement(int textWidthPx) {
+        if (this.customTextElement != null) {
+            return this.customTextElement;
+        }
+        Component sourceText = this.textComponent != null ? this.textComponent : Component.empty();
+        Component displayText = FizzyGuiUtils.ellipsizeText(sourceText, textWidthPx);
+        String sourceRaw = sourceText.getString();
+        String displayRaw = displayText.getString();
+        if (this.generatedTextElement == null
+                || this.generatedTextDirty
+                || this.generatedTextWidthPx != textWidthPx
+                || !this.generatedSourceText.equals(sourceRaw)
+                || !this.generatedDisplayText.equals(displayRaw)) {
+            FizzyComponentElement.Builder builder = FizzyComponentElement.builder()
+                    .addText(displayText)
+                    .wrap(false)
+                    .align(TextRenderer.Align.LEFT)
+                    .shadow(true);
+            this.textCustomizer.accept(builder);
+            this.generatedTextElement = builder.build();
+            this.generatedTextDirty = false;
+            this.generatedTextWidthPx = textWidthPx;
+            this.generatedSourceText = sourceRaw;
+            this.generatedDisplayText = displayRaw;
+        }
+        return this.generatedTextElement;
+    }
+
+    private final class ContentOverlayWidget extends AbstractWidget {
+        private ContentOverlayWidget(int x, int y, int width, int height) {
+            super(x, y, width, height, Component.empty());
+            this.active = false;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+            renderCompositeContent(g, partialTick);
+        }
+
+        @Override
+        protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return false;
+        }
+
+        @Override
+        public boolean mouseReleased(double mouseX, double mouseY, int button) {
+            return false;
+        }
+
+        @Override
+        public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+            return false;
+        }
+
+        @Override
+        public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+            return false;
+        }
+    }
+
+    public enum ContentLayout {
+        TEXT_LEFT_ICON_RIGHT,
+        ICON_LEFT_TEXT_RIGHT
+    }
+
+    public enum IconVerticalAlign {
+        TOP,
+        CENTER,
+        BOTTOM
+    }
+
     public static final class Builder {
-        private final Component message;
         private final FizzyButton.OnPress onPress;
         private @Nullable Tooltip tooltip;
-        private Consumer<FizzyButton.Builder> builderCustomizer = builder -> {};
-        private Consumer<FizzyButton> buttonConsumer = button -> {};
         private @Nullable SoundEvent pressSound;
+        private Component narrationMessage = Component.empty();
+        private @Nullable Component textComponent = Component.empty();
+        private @Nullable FizzyComponentElement customTextElement;
+        private Consumer<FizzyComponentElement.Builder> textCustomizer = builder -> {};
+        private @Nullable ResourceLocation iconTexture;
+        private boolean iconStretchToFit;
+        private boolean iconAllowUpscale;
+        private int iconSizePx = DEFAULT_ICON_SIZE_PX;
+        private int contentGapPx = DEFAULT_CONTENT_GAP_PX;
+        private int contentPaddingLeftPx = DEFAULT_CONTENT_PADDING_LEFT_PX;
+        private int contentPaddingRightPx = DEFAULT_CONTENT_PADDING_RIGHT_PX;
+        private ContentLayout contentLayout = ContentLayout.TEXT_LEFT_ICON_RIGHT;
+        private IconVerticalAlign iconVerticalAlign = IconVerticalAlign.CENTER;
 
-        private Builder(Component message, FizzyButton.OnPress onPress) {
-            this.message = Objects.requireNonNull(message, "message");
+        private Builder(FizzyButton.OnPress onPress) {
             this.onPress = Objects.requireNonNull(onPress, "onPress");
         }
 
@@ -95,23 +419,94 @@ public final class FizzyButtonElement implements ElementPainter {
         }
 
         public Builder tooltip(Component component) {
-            return this.tooltip(Tooltip.create(component));
+            return this.tooltip(Tooltip.create(Objects.requireNonNull(component, "component")));
         }
 
-        public Builder pressSound(SoundEvent sound) {
-            this.pressSound = Objects.requireNonNull(sound, "sound");
+        public Builder pressSound(@Nullable SoundEvent sound) {
+            this.pressSound = sound;
             return this;
         }
 
-        public Builder customize(Consumer<FizzyButton.Builder> customizer) {
+        public Builder narration(Component narrationMessage) {
+            this.narrationMessage = Objects.requireNonNull(narrationMessage, "narrationMessage");
+            return this;
+        }
+
+        public Builder text(Component text) {
+            Component safe = Objects.requireNonNull(text, "text");
+            this.textComponent = safe;
+            this.customTextElement = null;
+            this.narrationMessage = safe;
+            return this;
+        }
+
+        public Builder text(FizzyComponentElement textElement) {
+            this.customTextElement = Objects.requireNonNull(textElement, "textElement");
+            return this;
+        }
+
+        public Builder textConfig(Consumer<FizzyComponentElement.Builder> customizer) {
             Objects.requireNonNull(customizer, "customizer");
-            this.builderCustomizer = this.builderCustomizer.andThen(customizer);
+            this.textCustomizer = this.textCustomizer.andThen(customizer);
             return this;
         }
 
-        public Builder applyToButton(Consumer<FizzyButton> consumer) {
-            Objects.requireNonNull(consumer, "consumer");
-            this.buttonConsumer = this.buttonConsumer.andThen(consumer);
+        public Builder icon(ResourceLocation texture) {
+            this.iconTexture = Objects.requireNonNull(texture, "texture");
+            return this;
+        }
+
+        public Builder icon(FizzyIcon icon) {
+            this.iconTexture = Objects.requireNonNull(icon, "icon").texture();
+            return this;
+        }
+
+        public Builder icon(ResourceLocation texture, boolean stretchToFit, boolean allowUpscale) {
+            this.iconTexture = Objects.requireNonNull(texture, "texture");
+            this.iconStretchToFit = stretchToFit;
+            this.iconAllowUpscale = allowUpscale;
+            return this;
+        }
+
+        public Builder icon(FizzyIcon icon, boolean stretchToFit, boolean allowUpscale) {
+            this.iconTexture = Objects.requireNonNull(icon, "icon").texture();
+            this.iconStretchToFit = stretchToFit;
+            this.iconAllowUpscale = allowUpscale;
+            return this;
+        }
+
+        public Builder iconSizePx(int iconSizePx) {
+            if (iconSizePx <= 0) {
+                throw new IllegalArgumentException("iconSizePx must be > 0");
+            }
+            this.iconSizePx = iconSizePx;
+            return this;
+        }
+
+        public Builder contentGapPx(int contentGapPx) {
+            if (contentGapPx < 0) {
+                throw new IllegalArgumentException("contentGapPx must be >= 0");
+            }
+            this.contentGapPx = contentGapPx;
+            return this;
+        }
+
+        public Builder contentPaddingPx(int leftPx, int rightPx) {
+            if (leftPx < 0 || rightPx < 0) {
+                throw new IllegalArgumentException("content padding must be >= 0");
+            }
+            this.contentPaddingLeftPx = leftPx;
+            this.contentPaddingRightPx = rightPx;
+            return this;
+        }
+
+        public Builder layout(ContentLayout layout) {
+            this.contentLayout = Objects.requireNonNull(layout, "layout");
+            return this;
+        }
+
+        public Builder iconAlign(IconVerticalAlign align) {
+            this.iconVerticalAlign = Objects.requireNonNull(align, "align");
             return this;
         }
 

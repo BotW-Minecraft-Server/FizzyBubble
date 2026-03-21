@@ -76,6 +76,10 @@ public abstract class ColoredAbstractButton extends AbstractButton {
         this.sprites = getSprites(color);
     }
 
+    public void setColor(Color color) {
+        this.sprites = getSprites(color);
+    }
+
     @Override
     protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         var sprite = sprites.get(this.isActive(), this.isHoveredOrFocused());

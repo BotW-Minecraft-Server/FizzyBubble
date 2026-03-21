@@ -7,6 +7,7 @@ import java.util.Objects;
 
 final class LayoutLeafNode extends LayoutNode {
     private final ElementPainter element;
+    private LayoutMountContext mountedContext;
     private boolean initialized;
 
     LayoutLeafNode(ElementPainter element, LayoutModifier modifier) {
@@ -29,6 +30,10 @@ final class LayoutLeafNode extends LayoutNode {
     }
 
     private void ensureInit(LayoutMountContext context, LayoutRect bounds) {
+        if (mountedContext != context) {
+            mountedContext = context;
+            initialized = false;
+        }
         if (initialized) {
             return;
         }
