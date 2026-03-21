@@ -19,6 +19,8 @@ public final class FizzyComponentElement implements AnimatableElement {
     private final TextRenderer.Builder<?> baseBuilder;
     private final List<LineSpec> lineSpecs;
     private final boolean wrap;
+    private final boolean autoEllipsis;
+    private final boolean centerEllipsis;
     private final TextRenderer.Align align;
     private final float lineSpacing;
 
@@ -29,6 +31,8 @@ public final class FizzyComponentElement implements AnimatableElement {
         this.baseBuilder = builder.baseBuilder.copyForText(Component.empty());
         this.lineSpecs = List.copyOf(builder.lines);
         this.wrap = builder.wrap;
+        this.autoEllipsis = builder.autoEllipsis;
+        this.centerEllipsis = builder.centerEllipsis;
         this.align = builder.align;
         this.lineSpacing = builder.lineSpacing;
     }
@@ -117,8 +121,30 @@ public final class FizzyComponentElement implements AnimatableElement {
         return ElementType.COMPONENT;
     }
 
+    public TextRenderer.Align alignMode() {
+        return this.align;
+    }
+
+    public float textScale() {
+        return Math.max(0.01f, this.baseBuilder.getTextScale());
+    }
+
+    public Component plainText() {
+        if (lineSpecs.isEmpty()) {
+            return Component.empty();
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lineSpecs.size(); i++) {
+            if (i > 0) {
+                sb.append('\n');
+            }
+            sb.append(lineSpecs.get(i).text().getString());
+        }
+        return Component.literal(sb.toString());
+    }
+
     private LineLayout ensureLayout(Font font, int widthPx) {
-        if (!wrap) {
+        if (!wrap && !autoEllipsis) {
             if (cachedLayout == null) {
                 cachedLayout = buildLayout(font, Integer.MAX_VALUE);
             }
@@ -149,7 +175,8 @@ public final class FizzyComponentElement implements AnimatableElement {
             }
             float lineScale = Math.max(0.01f, configured.getTextScale());
             int wrapWidth = resolveWrapWidth(widthPx, lineScale);
-            List<Component> parts = wrap ? FizzyGuiUtils.splitLine(font, spec.text, wrapWidth) : List.of(spec.text);
+            Component lineText = applyEllipsisIfNeeded(font, spec.text, widthPx, lineScale);
+            List<Component> parts = wrap ? FizzyGuiUtils.splitLine(font, spec.text, wrapWidth) : List.of(lineText);
             for (Component part : parts) {
                 TextRenderer renderer = configured.copyForText(part).buildRenderer();
                 float scale = Math.max(0.01f, renderer.textScale());
@@ -175,9 +202,25 @@ public final class FizzyComponentElement implements AnimatableElement {
         if (!wrap) {
             return Integer.MAX_VALUE;
         }
+        return resolveWidthInFontUnits(widthPx, scale);
+    }
+
+    private int resolveWidthInFontUnits(int widthPx, float scale) {
         float safeScale = Math.max(0.01f, scale);
         int wrapWidth = (int) Math.floor(widthPx / safeScale);
         return Math.max(1, wrapWidth);
+    }
+
+    private Component applyEllipsisIfNeeded(Font font, Component text, int widthPx, float scale) {
+        if (wrap || !autoEllipsis) {
+            return text;
+        }
+        int maxWidth = resolveWidthInFontUnits(widthPx, scale);
+        return switch (align) {
+            case RIGHT -> FizzyGuiUtils.ellipsizeTextLeft(font, text, maxWidth);
+            case CENTER -> centerEllipsis ? FizzyGuiUtils.ellipsizeText(font, text, maxWidth) : text;
+            case LEFT -> FizzyGuiUtils.ellipsizeText(font, text, maxWidth);
+        };
     }
 
     private record LineSpec(Component text, Consumer<TextRenderer.Builder<?>> config) {
@@ -190,6 +233,8 @@ public final class FizzyComponentElement implements AnimatableElement {
         private final TextRenderer.Builder<?> baseBuilder = TextRenderer.builder(Component.empty());
         private final List<LineSpec> lines = new ArrayList<>();
         private boolean wrap = true;
+        private boolean autoEllipsis;
+        private boolean centerEllipsis;
         private TextRenderer.Align align = TextRenderer.Align.LEFT;
         private float lineSpacing = 0.0f;
 
@@ -223,6 +268,24 @@ public final class FizzyComponentElement implements AnimatableElement {
         public Builder wrap(boolean wrap) {
             this.wrap = wrap;
             return this;
+        }
+
+        public Builder autoEllipsis(boolean autoEllipsis) {
+            this.autoEllipsis = autoEllipsis;
+            return this;
+        }
+
+        public Builder autoEllipsis() {
+            return autoEllipsis(true);
+        }
+
+        public Builder centerEllipsis(boolean centerEllipsis) {
+            this.centerEllipsis = centerEllipsis;
+            return this;
+        }
+
+        public Builder centerEllipsis() {
+            return centerEllipsis(true);
         }
 
         public Builder align(TextRenderer.Align align) {

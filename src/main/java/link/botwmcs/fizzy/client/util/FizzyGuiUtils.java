@@ -424,6 +424,60 @@ public final class FizzyGuiUtils {
     }
 
     /**
+     * Ellipsizes text from the left side (...suffix) using the current Minecraft font.
+     */
+    public static Component ellipsizeTextLeft(Component source, int maxWidthPx) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) {
+            return source;
+        }
+        return ellipsizeTextLeft(mc.font, source, maxWidthPx);
+    }
+
+    /**
+     * Ellipsizes text from the left side (...suffix) using the provided font.
+     */
+    public static Component ellipsizeTextLeft(Font font, Component source, int maxWidthPx) {
+        if (maxWidthPx <= 0) {
+            return Component.empty();
+        }
+        if (font == null || source == null) {
+            return Component.empty();
+        }
+        String raw = source.getString();
+        if (raw.isEmpty()) {
+            return source;
+        }
+        if (font.width(raw) <= maxWidthPx) {
+            return source;
+        }
+
+        String ellipsis = "...";
+        int ellipsisWidth = font.width(ellipsis);
+        if (ellipsisWidth >= maxWidthPx) {
+            int dotWidth = Math.max(1, font.width("."));
+            int dotCount = Math.max(1, Math.min(3, maxWidthPx / dotWidth));
+            return Component.literal(".".repeat(dotCount));
+        }
+
+        int cpCount = raw.codePointCount(0, raw.length());
+        int bestStart = raw.length();
+        for (int i = cpCount - 1; i >= 0; i--) {
+            int start = raw.offsetByCodePoints(0, i);
+            String candidate = ellipsis + raw.substring(start);
+            if (font.width(candidate) > maxWidthPx) {
+                break;
+            }
+            bestStart = start;
+        }
+
+        if (bestStart >= raw.length()) {
+            return Component.literal(ellipsis);
+        }
+        return Component.literal(ellipsis + raw.substring(bestStart));
+    }
+
+    /**
      * Converts a formatted character sequence to plain UTF-16 text.
      */
     public static String toPlainString(FormattedCharSequence sequence) {

@@ -8,6 +8,7 @@ import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -298,8 +299,9 @@ public final class ColoredButtonElement implements ElementPainter {
             iconLeft = contentRight - iconBoxWidth;
         }
 
-        int textTop = top;
-        int textHeight = Math.max(0, height);
+        DrawArea textArea = resolveTextArea(top, height);
+        int textTop = textArea.top();
+        int textHeight = textArea.height();
 
         if (hasText && textWidth > 0) {
             resolveTextElement(textWidth).render(g, textLeft, textTop, textWidth, textHeight, partialTick);
@@ -328,6 +330,27 @@ public final class ColoredButtonElement implements ElementPainter {
         }
     }
 
+    private DrawArea resolveTextArea(int top, int height) {
+        int safeHeight = Math.max(0, height);
+        if (this.customTextElement == null) {
+            return new DrawArea(top, safeHeight);
+        }
+        if (this.customTextElement.alignMode() == TextRenderer.Align.CENTER) {
+            return new DrawArea(top, safeHeight);
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || safeHeight <= 0) {
+            return new DrawArea(top, safeHeight);
+        }
+        float scale = this.customTextElement.textScale();
+        float lineHeightPx = mc.font.lineHeight * Math.max(0.01f, scale);
+        int drawHeight = Math.max(1, Math.min(Math.round(lineHeightPx), safeHeight));
+        int offset = Math.round((safeHeight - lineHeightPx) * 0.5f);
+        int maxOffset = Math.max(0, safeHeight - drawHeight);
+        offset = Math.max(0, Math.min(offset, maxOffset));
+        return new DrawArea(top + offset, drawHeight);
+    }
+
     private FizzyComponentElement resolveTextElement(int textWidthPx) {
         if (this.customTextElement != null) {
             return this.customTextElement;
@@ -354,6 +377,9 @@ public final class ColoredButtonElement implements ElementPainter {
             this.generatedDisplayText = displayRaw;
         }
         return this.generatedTextElement;
+    }
+
+    private record DrawArea(int top, int height) {
     }
 
     private final class ContentOverlayWidget extends AbstractWidget {

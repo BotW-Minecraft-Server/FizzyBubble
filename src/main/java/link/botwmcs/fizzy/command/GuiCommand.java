@@ -296,9 +296,17 @@ public class GuiCommand {
                     50
             );
         }).text(Component.literal("Button 0")).color(ColoredAbstractButton.Color.BLUE).build();
+        var button1Text = FizzyComponentElement.builder()
+                .addText(Component.literal("Button 1 Very Long Rainbow Text For Ellipsis Demo"))
+                .wrap(false)
+                .shadow(true)
+                .autoEllipsis()
+                .align(TextRenderer.Align.LEFT)
+                .rainbow()
+                .build();
         var button1 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 1 clicked!"));
-        }).text(Component.literal("Button 1")).color(ColoredAbstractButton.Color.RED).build();
+        }).text(button1Text).icon(FizzyIcon.BELL).color(ColoredAbstractButton.Color.RED).build();
         var button2 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 2 clicked!"));
             ModalManager.show(
