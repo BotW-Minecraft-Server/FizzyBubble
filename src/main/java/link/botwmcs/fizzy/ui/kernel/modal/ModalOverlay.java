@@ -40,6 +40,22 @@ public final class ModalOverlay implements OverlayRenderable {
     }
 
     @Override
+    public boolean hitTest(double mouseX, double mouseY) {
+        if (viewportWidth <= 0 || viewportHeight <= 0) {
+            return false;
+        }
+        return mouseX >= targetX
+                && mouseX < targetX + viewportWidth
+                && mouseY >= targetY
+                && mouseY < targetY + viewportHeight;
+    }
+
+    @Override
+    public boolean blocksInputBelow(double mouseX, double mouseY) {
+        return hitTest(mouseX, mouseY);
+    }
+
+    @Override
     public boolean isActive() {
         return active;
     }

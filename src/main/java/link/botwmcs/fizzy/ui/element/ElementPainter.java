@@ -11,13 +11,8 @@ public interface ElementPainter {
     default void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {}
     void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick);
     default ElementType type() { return ElementType.CUSTOM; }
-    default UiRenderLayer layer() {
-        return renderLayer() == ElementRenderLayer.OVERLAY_TOP
-                ? UiRenderLayer.overlay(0)
-                : UiRenderLayer.elements(0);
-    }
+    default UiRenderLayer layer() { return UiRenderLayer.elements(0); }
     default int zIndex() { return 0; }
-    default ElementRenderLayer renderLayer() { return ElementRenderLayer.NORMAL; }
     default boolean suppressesTooltips() { return false; }
     default List<AbstractWidget> widgets() { return List.of(); }
 //    default ElementPainter animated(ElementAnimation... animations) {

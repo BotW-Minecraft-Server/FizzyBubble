@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.ui.element.component;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.client.util.Gwen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -129,24 +130,29 @@ public final class SimpleChartsElement implements ElementPainter {
 
         for (int i = 0; i < this.resolvedCells.size(); i++) {
             CellRenderSpec cell = this.resolvedCells.get(i);
+            int cellIndex = i;
             LocalBounds bounds = cell.bounds();
             if (bounds.width() <= 0 || bounds.height() <= 0) {
                 continue;
             }
 
-            g.enableScissor(bounds.left(), bounds.top(), bounds.right(), bounds.bottom());
-            try {
-                for (ElementPainter element : cell.cellSpec().elements()) {
-                    element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), partialTick);
-                }
-                if (i < this.widgetsByCell.size()) {
-                    for (AbstractWidget widget : this.widgetsByCell.get(i)) {
-                        widget.render(g, mouseX, mouseY, partialTick);
+            Gwen.withScissor(
+                    g,
+                    bounds.left(),
+                    bounds.top(),
+                    bounds.right(),
+                    bounds.bottom(),
+                    () -> {
+                        for (ElementPainter element : cell.cellSpec().elements()) {
+                            element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), partialTick);
+                        }
+                        if (cellIndex < this.widgetsByCell.size()) {
+                            for (AbstractWidget widget : this.widgetsByCell.get(cellIndex)) {
+                                widget.render(g, mouseX, mouseY, partialTick);
+                            }
+                        }
                     }
-                }
-            } finally {
-                g.disableScissor();
-            }
+            );
         }
     }
 

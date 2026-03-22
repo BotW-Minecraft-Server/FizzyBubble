@@ -1,8 +1,8 @@
 package link.botwmcs.fizzy.ui.element.animate;
 
+import link.botwmcs.fizzy.client.util.AnimationClock;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -14,7 +14,7 @@ import java.util.Objects;
 public final class AnimatedElement implements ElementPainter {
     private final ElementPainter delegate;
     private final List<ElementAnimation> animations;
-    private long lastUpdateMs;
+    private final AnimationClock animationClock = new AnimationClock();
     private float ageSeconds;
     private float ageTicks;
 
@@ -104,22 +104,11 @@ public final class AnimatedElement implements ElementPainter {
     }
 
     private FrameTime updateTime() {
-        long now = Util.getMillis();
-        if (lastUpdateMs == 0L) {
-            lastUpdateMs = now;
-            return FrameTime.ZERO;
-        }
-
         Minecraft mc = Minecraft.getInstance();
         boolean paused = mc != null && mc.isPaused();
-
-        float deltaSeconds = (now - lastUpdateMs) / 1000.0f;
-        lastUpdateMs = now;
-        if (deltaSeconds < 0f) {
-            deltaSeconds = 0f;
-        }
-
-        float deltaTicks = deltaSeconds * 20.0f;
+        AnimationClock.TickDelta delta = animationClock.tick(paused);
+        float deltaSeconds = delta.seconds();
+        float deltaTicks = delta.ticks();
         ageSeconds += deltaSeconds;
         ageTicks += deltaTicks;
         return new FrameTime(deltaSeconds, deltaTicks, paused);

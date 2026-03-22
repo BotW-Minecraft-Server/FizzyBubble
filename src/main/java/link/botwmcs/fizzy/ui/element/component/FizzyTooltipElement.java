@@ -2,6 +2,7 @@ package link.botwmcs.fizzy.ui.element.component;
 
 import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
+import link.botwmcs.fizzy.client.util.TooltipVisibilityCoordinator;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
@@ -23,7 +24,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class FizzyTooltipElement implements ElementPainter {
-    private static int globalSuppressionDepth = 0;
     private static final TooltipColors DEFAULT_COLORS = new TooltipColors(
             -267386864,
             -267386864,
@@ -81,17 +81,15 @@ public final class FizzyTooltipElement implements ElementPainter {
     }
 
     public static void pushGlobalSuppression() {
-        globalSuppressionDepth++;
+        TooltipVisibilityCoordinator.pushSuppression();
     }
 
     public static void popGlobalSuppression() {
-        if (globalSuppressionDepth > 0) {
-            globalSuppressionDepth--;
-        }
+        TooltipVisibilityCoordinator.popSuppression();
     }
 
     public static boolean isGloballySuppressed() {
-        return globalSuppressionDepth > 0;
+        return TooltipVisibilityCoordinator.isSuppressed();
     }
 
     public static boolean isTooltipWidget(AbstractWidget widget) {

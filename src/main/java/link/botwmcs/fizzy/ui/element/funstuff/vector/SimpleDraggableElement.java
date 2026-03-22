@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.ui.element.funstuff.vector;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.client.util.Gwen;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -158,24 +159,28 @@ public final class SimpleDraggableElement implements ElementPainter {
             return;
         }
 
-        g.enableScissor(viewportLeft, viewportTop, viewportLeft + viewportWidth, viewportTop + viewportHeight);
-        try {
-            int scrollOffset = scrollOffsetInt();
-            for (ContentPadSpec pad : contentSpec.pads()) {
-                LocalBounds bounds = pad.bounds();
-                int elementLeft = viewportLeft + bounds.left();
-                int elementTop = viewportTop + bounds.top() - scrollOffset;
-                for (ElementPainter element : pad.elements()) {
-                    element.render(g, elementLeft, elementTop, bounds.width(), bounds.height(), partialTick);
-                }
-            }
+        Gwen.withScissor(
+                g,
+                viewportLeft,
+                viewportTop,
+                viewportLeft + viewportWidth,
+                viewportTop + viewportHeight,
+                () -> {
+                    int scrollOffset = scrollOffsetInt();
+                    for (ContentPadSpec pad : contentSpec.pads()) {
+                        LocalBounds bounds = pad.bounds();
+                        int elementLeft = viewportLeft + bounds.left();
+                        int elementTop = viewportTop + bounds.top() - scrollOffset;
+                        for (ElementPainter element : pad.elements()) {
+                            element.render(g, elementLeft, elementTop, bounds.width(), bounds.height(), partialTick);
+                        }
+                    }
 
-            for (AbstractWidget widget : childWidgets) {
-                widget.render(g, mouseX, mouseY, partialTick);
-            }
-        } finally {
-            g.disableScissor();
-        }
+                    for (AbstractWidget widget : childWidgets) {
+                        widget.render(g, mouseX, mouseY, partialTick);
+                    }
+                }
+        );
 
         if (showScrollbar) {
             drawScrollbar(g, mouseX, mouseY);

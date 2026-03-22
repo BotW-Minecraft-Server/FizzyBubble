@@ -17,6 +17,7 @@ public final class OverlayLayerStack {
 
     private final Map<OverlayLayerKey, List<OverlayRenderable>> layers = new EnumMap<>(OverlayLayerKey.class);
     private final Map<OverlayLayerKey, OverlayLayoutConfig> layoutConfigs = new EnumMap<>(OverlayLayerKey.class);
+    private final Map<OverlayLayerKey, List<OverlayRenderable>> renderedByLayer = new EnumMap<>(OverlayLayerKey.class);
     private final OverlayFocusState focusState = new OverlayFocusState();
     private final OverlayCaptureState captureState = new OverlayCaptureState();
 
@@ -24,6 +25,7 @@ public final class OverlayLayerStack {
         for (OverlayLayerKey key : OverlayLayerKey.values()) {
             layers.put(key, new ArrayList<>());
             layoutConfigs.put(key, new OverlayLayoutConfig());
+            renderedByLayer.put(key, List.of());
         }
     }
 
@@ -87,6 +89,7 @@ public final class OverlayLayerStack {
             renderable.dispose();
         }
         list.clear();
+        renderedByLayer.put(layer, List.of());
         releaseDeadRefs();
     }
 
@@ -146,11 +149,18 @@ public final class OverlayLayerStack {
     ) {
         List<OverlayRenderable> ordered = activeRenderables(layer);
         if (ordered.isEmpty()) {
+            rememberRendered(layer, List.of());
             releaseDeadRefs();
             return;
         }
         applyBeforeLayout(ordered, screenWidth, screenHeight);
-        renderOrderedLayer(graphics, screenWidth, screenHeight, partialTick, layer, ordered, anchor, forceAnchor);
+        if (layer.usesManualLayout()) {
+            renderManualLayer(graphics, partialTick, ordered);
+            focusState.promoteTop(ordered);
+        } else {
+            renderOrderedLayer(graphics, screenWidth, screenHeight, partialTick, layer, ordered, anchor, forceAnchor);
+        }
+        rememberRendered(layer, ordered);
         releaseDeadRefs();
     }
 
@@ -163,11 +173,18 @@ public final class OverlayLayerStack {
     ) {
         List<OverlayRenderable> ordered = activeRenderables(layer);
         if (ordered.isEmpty()) {
+            rememberRendered(layer, List.of());
             releaseDeadRefs();
             return;
         }
         applyBeforeLayout(ordered, screenWidth, screenHeight);
-        renderLayerPerAnchorGroups(graphics, screenWidth, screenHeight, partialTick, layer, ordered);
+        if (layer.usesManualLayout()) {
+            renderManualLayer(graphics, partialTick, ordered);
+            focusState.promoteTop(ordered);
+        } else {
+            renderLayerPerAnchorGroups(graphics, screenWidth, screenHeight, partialTick, layer, ordered);
+        }
+        rememberRendered(layer, ordered);
         releaseDeadRefs();
     }
 
@@ -180,11 +197,19 @@ public final class OverlayLayerStack {
     ) {
         List<OverlayRenderable> ordered = activeRenderables(layer);
         if (ordered.isEmpty()) {
+            rememberRendered(layer, List.of());
             return;
         }
         applyBeforeLayout(ordered, screenWidth, screenHeight);
+        if (layer.usesManualLayout()) {
+            renderManualLayer(graphics, partialTick, ordered);
+            focusState.promoteTop(ordered);
+            rememberRendered(layer, ordered);
+            return;
+        }
         if (layer.usesPerAnchorLayout()) {
             renderLayerPerAnchorGroups(graphics, screenWidth, screenHeight, partialTick, layer, ordered);
+            rememberRendered(layer, ordered);
             return;
         }
         renderOrderedLayer(
@@ -197,6 +222,7 @@ public final class OverlayLayerStack {
                 layer.defaultAnchor(),
                 layer.forceAnchorIntoInstance()
         );
+        rememberRendered(layer, ordered);
     }
 
     private void renderLayerPerAnchorGroups(
@@ -255,10 +281,138 @@ public final class OverlayLayerStack {
         focusState.promoteTop(ordered);
     }
 
+    private static void renderManualLayer(GuiGraphics graphics, float partialTick, List<OverlayRenderable> ordered) {
+        for (OverlayRenderable renderable : ordered) {
+            renderable.render(graphics, partialTick);
+        }
+    }
+
     private static void applyBeforeLayout(List<OverlayRenderable> renderables, int screenWidth, int screenHeight) {
         for (OverlayRenderable renderable : renderables) {
             renderable.beforeLayout(screenWidth, screenHeight);
         }
+    }
+
+    private void rememberRendered(OverlayLayerKey layer, List<OverlayRenderable> ordered) {
+        renderedByLayer.put(layer, List.copyOf(ordered));
+    }
+
+    public void mouseMoved(double mouseX, double mouseY) {
+        releaseDeadRefs();
+        for (OverlayRenderable renderable : topDownRenderables()) {
+            if (!renderable.hitTest(mouseX, mouseY)) {
+                continue;
+            }
+            renderable.mouseMoved(mouseX, mouseY);
+            return;
+        }
+    }
+
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        releaseDeadRefs();
+        for (OverlayRenderable renderable : topDownRenderables()) {
+            boolean hit = renderable.hitTest(mouseX, mouseY);
+            if (hit) {
+                renderable.mouseMoved(mouseX, mouseY);
+            }
+            boolean handled = renderable.mouseClicked(mouseX, mouseY, button);
+            if (handled) {
+                focusState.focus(renderable);
+                if (renderable.wantsPointerCapture(button)) {
+                    captureState.capture(renderable, button);
+                }
+                return true;
+            }
+            if (hit && renderable.blocksInputBelow(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        releaseDeadRefs();
+        OverlayRenderable captured = captureState.pointerOwner();
+        if (captured != null && captured.isActive()) {
+            boolean handled = captured.mouseReleased(mouseX, mouseY, button);
+            if (button == captureState.pointerButton()) {
+                captureState.release();
+            }
+            if (handled || captured.blocksInputBelow(mouseX, mouseY)) {
+                return true;
+            }
+        } else if (captured != null) {
+            captureState.release();
+        }
+
+        for (OverlayRenderable renderable : topDownRenderables()) {
+            boolean hit = renderable.hitTest(mouseX, mouseY);
+            boolean handled = renderable.mouseReleased(mouseX, mouseY, button);
+            if (handled) {
+                return true;
+            }
+            if (hit && renderable.blocksInputBelow(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        releaseDeadRefs();
+        OverlayRenderable captured = captureState.pointerOwner();
+        if (captured != null && captured.isActive()) {
+            boolean handled = captured.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+            return handled || captured.blocksInputBelow(mouseX, mouseY);
+        } else if (captured != null) {
+            captureState.release();
+        }
+
+        for (OverlayRenderable renderable : topDownRenderables()) {
+            boolean hit = renderable.hitTest(mouseX, mouseY);
+            boolean handled = renderable.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+            if (handled) {
+                return true;
+            }
+            if (hit && renderable.blocksInputBelow(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        releaseDeadRefs();
+        for (OverlayRenderable renderable : topDownRenderables()) {
+            boolean hit = renderable.hitTest(mouseX, mouseY);
+            if (!hit) {
+                continue;
+            }
+            boolean handled = renderable.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+            if (handled || renderable.blocksInputBelow(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<OverlayRenderable> topDownRenderables() {
+        List<OverlayRenderable> out = new ArrayList<>();
+        for (int layerIndex = ORDERED_LAYERS.size() - 1; layerIndex >= 0; layerIndex--) {
+            OverlayLayerKey key = ORDERED_LAYERS.get(layerIndex);
+            List<OverlayRenderable> rendered = renderedByLayer.get(key);
+            if (rendered == null || rendered.isEmpty()) {
+                continue;
+            }
+            for (int i = rendered.size() - 1; i >= 0; i--) {
+                OverlayRenderable renderable = rendered.get(i);
+                if (!renderable.isActive()) {
+                    continue;
+                }
+                out.add(renderable);
+            }
+        }
+        return out;
     }
 
     private List<OverlayRenderable> activeRenderables(OverlayLayerKey layer) {

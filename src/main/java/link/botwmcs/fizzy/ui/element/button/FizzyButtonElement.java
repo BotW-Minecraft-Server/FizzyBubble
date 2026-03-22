@@ -2,6 +2,7 @@ package link.botwmcs.fizzy.ui.element.button;
 
 import link.botwmcs.fizzy.client.elements.FizzyButton;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
+import link.botwmcs.fizzy.client.util.FizzyTooltipWidgetUtil;
 import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
@@ -280,23 +281,11 @@ public final class FizzyButtonElement implements ElementPainter {
     }
 
     private static void hideCustomTooltip(@Nullable FizzyTooltipElement tooltipElement) {
-        if (tooltipElement == null) {
-            return;
-        }
-        for (AbstractWidget widget : tooltipElement.widgets()) {
-            widget.visible = false;
-            widget.active = false;
-        }
+        FizzyTooltipWidgetUtil.hide(tooltipElement);
     }
 
     private static void showCustomTooltip(@Nullable FizzyTooltipElement tooltipElement) {
-        if (tooltipElement == null) {
-            return;
-        }
-        for (AbstractWidget widget : tooltipElement.widgets()) {
-            widget.visible = true;
-            widget.active = false;
-        }
+        FizzyTooltipWidgetUtil.show(tooltipElement);
     }
 
     private void renderCompositeContent(GuiGraphics g, int mouseX, int mouseY, float partialTick) {

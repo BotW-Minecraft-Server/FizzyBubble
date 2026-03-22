@@ -1,9 +1,9 @@
 package link.botwmcs.fizzy.ui.element.funstuff.vector;
 
 import link.botwmcs.fizzy.ui.element.ElementPainter;
-import link.botwmcs.fizzy.ui.element.ElementRenderLayer;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
+import link.botwmcs.fizzy.client.util.Gwen;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -118,11 +118,6 @@ public final class ContextMenuElement implements ElementPainter {
     @Override
     public ElementType type() {
         return ElementType.CUSTOM;
-    }
-
-    @Override
-    public ElementRenderLayer renderLayer() {
-        return ElementRenderLayer.OVERLAY_TOP;
     }
 
     @Override
@@ -627,17 +622,23 @@ public final class ContextMenuElement implements ElementPainter {
 
         g.pose().pushPose();
         g.pose().translate(0.0f, 0.0f, POPUP_DEPTH_STEP_Z * depth);
-        g.enableScissor(clipRect.left(), clipRect.top(), clipRect.right(), clipRect.bottom());
         try {
-            drawPanel(g, popup.x(), popup.y(), popup.width(), popup.height());
-            for (int i = 0; i < popup.rows().size(); i++) {
-                RowRuntime row = popup.rows().get(i);
-                boolean hovered = popup.hoveredRowIndex() == i;
-                renderRow(g, row, hovered, mouseX, mouseY, partialTick);
-            }
-            g.flush();
+            Gwen.withScissor(
+                    g,
+                    clipRect.left(),
+                    clipRect.top(),
+                    clipRect.right(),
+                    clipRect.bottom(),
+                    () -> {
+                        drawPanel(g, popup.x(), popup.y(), popup.width(), popup.height());
+                        for (int i = 0; i < popup.rows().size(); i++) {
+                            RowRuntime row = popup.rows().get(i);
+                            boolean hovered = popup.hoveredRowIndex() == i;
+                            renderRow(g, row, hovered, mouseX, mouseY, partialTick);
+                        }
+                    }
+            );
         } finally {
-            g.disableScissor();
             g.pose().popPose();
         }
 
@@ -714,16 +715,7 @@ public final class ContextMenuElement implements ElementPainter {
     }
 
     private static void clipRender(GuiGraphics g, int left, int top, int right, int bottom, Runnable renderTask) {
-        if (right <= left || bottom <= top) {
-            return;
-        }
-        g.enableScissor(left, top, right, bottom);
-        try {
-            renderTask.run();
-            g.flush();
-        } finally {
-            g.disableScissor();
-        }
+        Gwen.withScissor(g, left, top, right, bottom, renderTask);
     }
 
     private void drawSubmenuArrow(GuiGraphics g, RowRuntime row, boolean enabled) {

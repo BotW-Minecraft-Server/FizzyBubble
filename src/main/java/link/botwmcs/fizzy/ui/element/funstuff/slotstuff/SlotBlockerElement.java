@@ -2,10 +2,9 @@ package link.botwmcs.fizzy.ui.element.funstuff.slotstuff;
 
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
-import link.botwmcs.fizzy.ui.host.FizzyMenuScreenHost;
-import link.botwmcs.fizzy.ui.host.FizzyScreenHost;
+import link.botwmcs.fizzy.client.util.AnimationClock;
+import link.botwmcs.fizzy.client.util.BlockingElementSupport;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -15,7 +14,6 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,9 +24,9 @@ public final class SlotBlockerElement implements ElementPainter {
 
     private boolean openTarget;
     private float openProgress;
-    private long lastUpdateMs;
+    private final AnimationClock animationClock = new AnimationClock();
 
-    private final Map<AbstractWidget, Boolean> storedActive = new IdentityHashMap<>();
+    private final Map<AbstractWidget, Boolean> storedActive = BlockingElementSupport.newWidgetStateMap();
     private BlockerWidget widget;
 
     public SlotBlockerElement() {
@@ -70,13 +68,8 @@ public final class SlotBlockerElement implements ElementPainter {
     }
 
     private void tickAnimation() {
-        long now = Util.getMillis();
-        if (lastUpdateMs == 0L) {
-            lastUpdateMs = now;
-            return;
-        }
-        float dt = (now - lastUpdateMs) / 1000.0f;
-        lastUpdateMs = now;
+        AnimationClock.TickDelta delta = animationClock.tick(Minecraft.getInstance().isPaused());
+        float dt = delta.seconds();
         float target = openTarget ? 1.0f : 0.0f;
         if (openProgress < target) {
             openProgress = Math.min(target, openProgress + ANIM_SPEED * dt);
@@ -178,34 +171,17 @@ public final class SlotBlockerElement implements ElementPainter {
 
     private void updateUnderlyingButtons() {
         if (openTarget) {
-            FizzyGuiUtils.restoreWidgetStates(storedActive);
+            BlockingElementSupport.restoreWidgets(storedActive);
             return;
         }
 
         int cx = widget.getX() + widget.getWidth() / 2;
         int cy = widget.getY() + widget.getHeight() / 2;
-        List<ElementPainter> elements = elementsAtPx(cx, cy);
+        List<ElementPainter> elements = BlockingElementSupport.elementsAtCurrentScreenPx(cx, cy);
         if (elements.isEmpty()) {
             return;
         }
-
-        for (ElementPainter element : elements) {
-            if (element == this || element.type() != ElementType.BUTTON) {
-                continue;
-            }
-            FizzyGuiUtils.disableWidgets(element.widgets(), storedActive);
-        }
-    }
-
-    private List<ElementPainter> elementsAtPx(int x, int y) {
-        var screen = Minecraft.getInstance().screen;
-        if (screen instanceof FizzyScreenHost host) {
-            return host.elementsAtPx(x, y);
-        }
-        if (screen instanceof FizzyMenuScreenHost<?> host) {
-            return host.elementsAtPx(x, y);
-        }
-        return List.of();
+        BlockingElementSupport.disableUnderlyingWidgets(elements, this, storedActive);
     }
 
     private static void blitClipped(GuiGraphics g,

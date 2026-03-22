@@ -14,6 +14,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -34,6 +35,7 @@ public class FizzyClient {
         // Some client setup code
         Fizzy.LOGGER.info("HELLO FROM CLIENT SETUP");
         Fizzy.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+        AnnounceMessageManager.ensureRegistered();
         if (EnvDetector.isLTSX()) {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
@@ -52,6 +54,38 @@ public class FizzyClient {
         int sh = mc.getWindow().getGuiScaledHeight();
 
         OverlayManager.renderAllLayers(event.getGuiGraphics(), sw, sh, pt);
-        AnnounceMessageManager.render(event.getGuiGraphics(), sw, sh, pt);
+    }
+
+    @SubscribeEvent
+    static void onScreenRenderPost(ScreenEvent.Render.Post event) {
+        OverlayManager.onMouseMoved(event.getMouseX(), event.getMouseY());
+    }
+
+    @SubscribeEvent
+    static void onScreenMousePressed(ScreenEvent.MouseButtonPressed.Pre event) {
+        if (OverlayManager.onMouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    static void onScreenMouseReleased(ScreenEvent.MouseButtonReleased.Pre event) {
+        if (OverlayManager.onMouseReleased(event.getMouseX(), event.getMouseY(), event.getButton())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    static void onScreenMouseDragged(ScreenEvent.MouseDragged.Pre event) {
+        if (OverlayManager.onMouseDragged(event.getMouseX(), event.getMouseY(), event.getMouseButton(), event.getDragX(), event.getDragY())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    static void onScreenMouseScrolled(ScreenEvent.MouseScrolled.Pre event) {
+        if (OverlayManager.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDeltaX(), event.getScrollDeltaY())) {
+            event.setCanceled(true);
+        }
     }
 }

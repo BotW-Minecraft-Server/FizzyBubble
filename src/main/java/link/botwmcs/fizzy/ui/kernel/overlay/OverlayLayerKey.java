@@ -6,6 +6,7 @@ public enum OverlayLayerKey {
     HUD(100, LayoutMode.FIXED_ANCHOR, Anchor.TOP_LEFT, true),
     NOTIFICATION(200, LayoutMode.PER_INSTANCE_ANCHOR, Anchor.TOP_RIGHT, false),
     MODAL(300, LayoutMode.FIXED_ANCHOR, Anchor.TOP_LEFT, true),
+    ANNOUNCE(900, LayoutMode.MANUAL, Anchor.TOP_LEFT, false),
     DEBUG(1000, LayoutMode.PER_INSTANCE_ANCHOR, Anchor.TOP_LEFT, false);
 
     private final int priority;
@@ -40,8 +41,13 @@ public enum OverlayLayerKey {
         return layoutMode == LayoutMode.PER_INSTANCE_ANCHOR;
     }
 
+    public boolean usesManualLayout() {
+        return layoutMode == LayoutMode.MANUAL;
+    }
+
     public enum LayoutMode {
         FIXED_ANCHOR,
-        PER_INSTANCE_ANCHOR
+        PER_INSTANCE_ANCHOR,
+        MANUAL
     }
 }
