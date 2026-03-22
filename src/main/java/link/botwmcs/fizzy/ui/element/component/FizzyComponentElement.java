@@ -235,7 +235,7 @@ public final class FizzyComponentElement implements AnimatableElement {
         private boolean wrap = true;
         private boolean autoEllipsis;
         private boolean centerEllipsis;
-        private TextRenderer.Align align = TextRenderer.Align.LEFT;
+        private TextRenderer.Align align = TextRenderer.Align.CENTER;
         private float lineSpacing = 0.0f;
 
         public Builder addText(Component text) {

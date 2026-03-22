@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
 import link.botwmcs.fizzy.client.overlay.ModalManager;
@@ -18,10 +19,7 @@ import link.botwmcs.fizzy.ui.element.animate.vector.ScaleAnimation;
 import link.botwmcs.fizzy.ui.element.background.FizzyBackgroundElement;
 import link.botwmcs.fizzy.ui.element.background.MapBackgroundElement;
 import link.botwmcs.fizzy.ui.element.below.DoubleButtonBelow;
-import link.botwmcs.fizzy.ui.element.button.ColoredButtonElement;
-import link.botwmcs.fizzy.ui.element.button.IconButtonElement;
-import link.botwmcs.fizzy.ui.element.button.TransparentButtonElement;
-import link.botwmcs.fizzy.ui.element.button.WidgetButtonElement;
+import link.botwmcs.fizzy.ui.element.button.*;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.element.component.SimpleChartsElement;
@@ -284,8 +282,8 @@ public class GuiCommand {
                 .tooltipColors(0xB31B1F2A, 0xB312161F, 0xB36FC2FF, 0xB3408FD4)
                 .t2r(Map.of("Ofcourse you can RAINBOW", TextRenderer.RainbowConfig.of().rainbowStatic(true)))
                 .build();
-
-        var button0 = ColoredButtonElement.builder(btn -> {
+        var btn0_fzComp = FizzyComponentElement.builder().addText(Component.literal("Fizzy!")).build();
+        var button0 = FizzyButtonElement.builder(btn -> {
             boolean open = !appleBlocker.isOpen();
             appleBlocker.setOpen(open);
             mc.player.sendSystemMessage(Component.literal(open ? "Blocker opened!" : "Blocker closed!"));
@@ -295,7 +293,7 @@ public class GuiCommand {
                     open ? NotificationLevel.SUCCESS : NotificationLevel.WARNING,
                     50
             );
-        }).text(Component.literal("Button 0")).color(ColoredAbstractButton.Color.BLUE).build();
+        }).text(btn0_fzComp).build();
         var button1Text = FizzyComponentElement.builder()
                 .addText(Component.literal("Button 1 Very Long Rainbow Text For Ellipsis Demo"))
                 .wrap(false)
@@ -317,7 +315,7 @@ public class GuiCommand {
         var button3 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
             ModalManager.hideAll();
-        }).text(Component.literal("Button 3")).color(ColoredAbstractButton.Color.YELLOW).build();
+        }).text(FizzyComponentElement.builder().addText("Butt").shadow(true).align(TextRenderer.Align.CENTER).build()).color(ColoredAbstractButton.Color.YELLOW).build();
 
         var belowBtn = new DoubleButtonBelow(
                 Component.literal("Exit"),

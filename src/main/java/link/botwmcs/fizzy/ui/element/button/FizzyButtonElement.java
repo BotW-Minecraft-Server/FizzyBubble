@@ -7,6 +7,7 @@ import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -241,7 +242,7 @@ public final class FizzyButtonElement implements ElementPainter {
         this.button.setPressSound(this.pressSound);
     }
 
-    private void renderCompositeContent(GuiGraphics g, float partialTick) {
+    private void renderCompositeContent(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         if (this.button == null) {
             return;
         }
@@ -285,16 +286,19 @@ public final class FizzyButtonElement implements ElementPainter {
             iconLeft = contentRight - iconBoxWidth;
         }
 
-        int yOffset = this.button.isHoveredOrFocused() ? 1 : 0;
-        int textTop = top + yOffset;
-        int textHeight = Math.max(0, height - yOffset);
+        boolean visualPressed = this.button.isFocused() || this.button.isMouseOver(mouseX, mouseY);
+        int yOffset = visualPressed ? 1 : 0;
+        int textBaseTop = top + yOffset;
+        int textBaseHeight = Math.max(0, height);
 
         if (hasText && textWidth > 0) {
-            resolveTextElement(textWidth).render(g, textLeft, textTop, textWidth, textHeight, partialTick);
+            FizzyComponentElement textElement = resolveTextElement(textWidth);
+            DrawArea textArea = resolveTextArea(textElement, textBaseTop, textBaseHeight);
+            textElement.render(g, textLeft, textArea.top(), textWidth, textArea.height(), partialTick);
         }
 
         if (hasIcon && iconBoxWidth > 0) {
-            int availableHeight = Math.max(0, height - yOffset);
+            int availableHeight = Math.max(0, height);
             int iconHeight = Math.min(Math.max(1, this.iconSizePx), availableHeight);
             int iconTop = switch (this.iconVerticalAlign) {
                 case TOP -> top + yOffset;
@@ -314,6 +318,23 @@ public final class FizzyButtonElement implements ElementPainter {
                     alpha
             );
         }
+    }
+
+    private DrawArea resolveTextArea(FizzyComponentElement textElement, int top, int height) {
+        int safeHeight = Math.max(0, height);
+        if (textElement.alignMode() == TextRenderer.Align.CENTER) {
+            return new DrawArea(top, safeHeight);
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || safeHeight <= 0) {
+            return new DrawArea(top, safeHeight);
+        }
+        float lineHeightPx = mc.font.lineHeight * Math.max(0.01f, textElement.textScale());
+        int drawHeight = Math.max(1, Math.min(Math.round(lineHeightPx), safeHeight));
+        int offset = Math.round((safeHeight - lineHeightPx) * 0.5f);
+        int maxOffset = Math.max(0, safeHeight - drawHeight);
+        offset = Math.max(0, Math.min(offset, maxOffset));
+        return new DrawArea(top + offset, drawHeight);
     }
 
     private FizzyComponentElement resolveTextElement(int textWidthPx) {
@@ -344,6 +365,9 @@ public final class FizzyButtonElement implements ElementPainter {
         return this.generatedTextElement;
     }
 
+    private record DrawArea(int top, int height) {
+    }
+
     private final class ContentOverlayWidget extends AbstractWidget {
         private ContentOverlayWidget(int x, int y, int width, int height) {
             super(x, y, width, height, Component.empty());
@@ -352,7 +376,7 @@ public final class FizzyButtonElement implements ElementPainter {
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-            renderCompositeContent(g, partialTick);
+            renderCompositeContent(g, mouseX, mouseY, partialTick);
         }
 
         @Override
