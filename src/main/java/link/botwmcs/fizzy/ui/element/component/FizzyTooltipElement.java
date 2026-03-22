@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 
 public final class FizzyTooltipElement implements ElementPainter {
     private static final int TOOLTIP_Z = 400;
+    private static int globalSuppressionDepth = 0;
     private static final TooltipColors DEFAULT_COLORS = new TooltipColors(
             -267386864,
             -267386864,
@@ -79,6 +80,20 @@ public final class FizzyTooltipElement implements ElementPainter {
         return new Builder();
     }
 
+    public static void pushGlobalSuppression() {
+        globalSuppressionDepth++;
+    }
+
+    public static void popGlobalSuppression() {
+        if (globalSuppressionDepth > 0) {
+            globalSuppressionDepth--;
+        }
+    }
+
+    public static boolean isGloballySuppressed() {
+        return globalSuppressionDepth > 0;
+    }
+
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
         this.widget = new TooltipWidget(leftPx, topPx, widthPx, heightPx);
@@ -109,7 +124,7 @@ public final class FizzyTooltipElement implements ElementPainter {
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-            if (!this.visible || !isPointInside(mouseX, mouseY)) {
+            if (isGloballySuppressed() || !this.visible || !isPointInside(mouseX, mouseY)) {
                 return;
             }
             renderTooltip(g, mouseX, mouseY, partialTick);

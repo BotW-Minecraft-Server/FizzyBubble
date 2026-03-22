@@ -25,6 +25,7 @@ import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.element.component.SimpleChartsElement;
 import link.botwmcs.fizzy.ui.element.funstuff.slotstuff.SlotBlockerElement;
+import link.botwmcs.fizzy.ui.element.funstuff.vector.ContextMenuElement;
 import link.botwmcs.fizzy.ui.element.funstuff.vector.ProgressElement;
 import link.botwmcs.fizzy.ui.element.funstuff.vector.SimpleDraggableElement;
 import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
@@ -217,17 +218,86 @@ public class GuiCommand {
                 )
                 .build();
 
-        var transparentBtn = TransparentButtonElement.builder(
-                Component.empty(),
-                btn -> mc.player.sendSystemMessage(Component.literal("Transparent clicked!"))
-                )
-                .build();
-
         var nuggetIcon = IconElement.builder(
                 ResourceLocation.withDefaultNamespace("textures/item/gold_nugget.png")
                 )
                 .build()
                 .animated(ScaleAnimation.pulse(1.0f, 0.2f, 0.1f));
+
+        var fceContextItem = FizzyComponentElement.builder()
+                .addText(Component.literal("FCE Item"))
+                .align(TextRenderer.Align.LEFT)
+                .shadow(true)
+                .rainbow(0.02f, '6', 'e', 'a')
+                .build();
+
+        var fceSubmenuItem = FizzyComponentElement.builder()
+                .addText(Component.literal("FCE Sub Item"))
+                .align(TextRenderer.Align.LEFT)
+                .shadow(true)
+                .color(0xE6EEF7)
+                .build();
+
+        var embeddedFceRow = FizzyComponentElement.builder()
+                .addText(Component.literal("Embedded FCE Row"))
+                .align(TextRenderer.Align.LEFT)
+                .shadow(true)
+                .color(0xFFE0C870)
+                .build();
+
+        var embeddedIconRow = IconElement.builder(
+                ResourceLocation.withDefaultNamespace("textures/item/gold_nugget.png")
+        ).build();
+
+        var nuggetContextMenu = ContextMenuElement.builder()
+                .minMenuWidthPx(116)
+                .baseRowHeightPx(18)
+                .item(Component.literal("Say hello"), () -> {
+                    if (mc.player != null) {
+                        mc.player.sendSystemMessage(Component.literal("Context menu says hello."));
+                    }
+                })
+                .item(fceContextItem, () -> NotificationManager.show(
+                        Component.literal("Context Menu"),
+                        Component.literal("FCE item clicked"),
+                        NotificationLevel.INFO,
+                        50
+                ))
+                .separator()
+                .submenu(Component.literal("Utilities"), sub -> sub
+                        .item(Component.literal("Open modal"), () -> ModalManager.show(
+                                Component.literal("Context Menu"),
+                                Component.literal("Opened from submenu")
+                        ))
+                        .item(Component.literal("Send notify"), () -> NotificationManager.show(
+                                Component.literal("Submenu"),
+                                Component.literal("Notification fired"),
+                                NotificationLevel.SUCCESS,
+                                50
+                        ))
+                        .separator()
+                        .item(fceSubmenuItem, () -> {
+                            if (mc.player != null) {
+                                mc.player.sendSystemMessage(Component.literal("FCE submenu option clicked."));
+                            }
+                        })
+                        .submenu(Component.literal("More"), more -> more
+                                .item(Component.literal("Ping"), () -> {
+                                    if (mc.player != null) {
+                                        mc.player.sendSystemMessage(Component.literal("Nested submenu ping."));
+                                    }
+                                })
+                                .item(Component.literal("Close screen"), () -> mc.setScreen(null))
+                        )
+                )
+                .separator()
+                .element(embeddedFceRow)
+                .element(embeddedIconRow, () -> {
+                    if (mc.player != null) {
+                        mc.player.sendSystemMessage(Component.literal("Embedded icon row clicked."));
+                    }
+                })
+                .build();
 
         var headerText = FizzyComponentElement.builder()
 //                .addText(Component.literal("How about 2nd text"))
@@ -364,7 +434,7 @@ public class GuiCommand {
                 .element(appleBlocker).done()
                 .pad(2, 6,2,6)
                 .element(nuggetIcon)
-                .element(transparentBtn)
+                .element(nuggetContextMenu)
                 .element(tooltip1).done()
                 .padByPx(UiUnit.SLOT_PX * 4 - UiUnit.SLOT_PX / 2, UiUnit.SLOT_PX * 3 + 1, UiUnit.SLOT_PX, UiUnit.SLOT_PX)
                 .element(widget0).done()
