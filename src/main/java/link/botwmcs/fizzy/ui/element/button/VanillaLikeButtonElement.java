@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.ui.element.button;
 
-import link.botwmcs.fizzy.client.elements.FizzyButton;
+import link.botwmcs.fizzy.client.elements.VanillaLikeAbstractButton;
+import link.botwmcs.fizzy.client.elements.VanillaLikeButton;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
@@ -22,14 +23,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public final class FizzyButtonElement implements ElementPainter {
+public final class VanillaLikeButtonElement implements ElementPainter {
     private static final int DEFAULT_ICON_SIZE_PX = 12;
     private static final int DEFAULT_CONTENT_GAP_PX = 4;
     private static final int DEFAULT_CONTENT_PADDING_LEFT_PX = 6;
     private static final int DEFAULT_CONTENT_PADDING_RIGHT_PX = 6;
 
-    private final FizzyButton.OnPress onPress;
+    private final VanillaLikeButton.OnPress onPress;
 
+    private VanillaLikeAbstractButton.ColorTheme color;
     private @Nullable Tooltip tooltip;
     private @Nullable FizzyTooltipElement customTooltipElement;
     private @Nullable SoundEvent pressSound;
@@ -56,12 +58,13 @@ public final class FizzyButtonElement implements ElementPainter {
     private String generatedSourceText = "";
     private String generatedDisplayText = "";
 
-    private @Nullable FizzyButton button;
+    private @Nullable VanillaLikeButton button;
     private @Nullable ContentOverlayWidget contentOverlay;
     private @Nullable InitContext initContext;
 
-    private FizzyButtonElement(Builder builder) {
+    private VanillaLikeButtonElement(Builder builder) {
         this.onPress = builder.onPress;
+        this.color = builder.color;
         this.tooltip = builder.tooltip;
         this.customTooltipElement = builder.customTooltipElement;
         this.pressSound = builder.pressSound;
@@ -80,7 +83,7 @@ public final class FizzyButtonElement implements ElementPainter {
         this.iconVerticalAlign = builder.iconVerticalAlign;
     }
 
-    public static Builder builder(FizzyButton.OnPress onPress) {
+    public static Builder builder(VanillaLikeButton.OnPress onPress) {
         return new Builder(onPress);
     }
 
@@ -90,14 +93,15 @@ public final class FizzyButtonElement implements ElementPainter {
         this.contentOverlay = null;
         this.initContext = context;
 
-        FizzyButton.Builder builder = FizzyButton.builder(Component.empty(), this.onPress);
+        VanillaLikeButton.Builder builder = VanillaLikeButton.builder(Component.empty(), this.onPress);
         builder.createNarration(defaultMessage -> this.narrationMessage.copy());
         builder.bounds(leftPx, topPx, widthPx, heightPx);
+        builder.colorTheme(this.color);
         if (this.tooltip != null) {
             builder.tooltip(this.tooltip);
         }
 
-        FizzyButton built = builder.build();
+        VanillaLikeButton built = builder.build();
         this.button = built;
         context.addRenderableWidget(built);
 
@@ -132,11 +136,11 @@ public final class FizzyButtonElement implements ElementPainter {
     }
 
     @Nullable
-    public FizzyButton button() {
+    public VanillaLikeButton button() {
         return this.button;
     }
 
-    public FizzyButtonElement setText(Component text) {
+    public VanillaLikeButtonElement setText(Component text) {
         Component safe = Objects.requireNonNull(text, "text");
         this.textComponent = safe;
         this.customTextElement = null;
@@ -146,7 +150,7 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setText(FizzyComponentElement textElement) {
+    public VanillaLikeButtonElement setText(FizzyComponentElement textElement) {
         this.customTextElement = Objects.requireNonNull(textElement, "textElement");
         this.generatedTextElement = null;
         this.generatedTextDirty = false;
@@ -154,7 +158,7 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setTextConfig(Consumer<FizzyComponentElement.Builder> customizer) {
+    public VanillaLikeButtonElement setTextConfig(Consumer<FizzyComponentElement.Builder> customizer) {
         Objects.requireNonNull(customizer, "customizer");
         this.textCustomizer = this.textCustomizer.andThen(customizer);
         this.generatedTextDirty = true;
@@ -162,37 +166,37 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setIcon(@Nullable ResourceLocation texture) {
+    public VanillaLikeButtonElement setIcon(@Nullable ResourceLocation texture) {
         this.iconTexture = texture;
         return this;
     }
 
-    public FizzyButtonElement setIcon(@Nullable FizzyIcon icon) {
+    public VanillaLikeButtonElement setIcon(@Nullable FizzyIcon icon) {
         this.iconTexture = icon == null ? null : icon.texture();
         return this;
     }
 
-    public FizzyButtonElement clearIcon() {
+    public VanillaLikeButtonElement clearIcon() {
         return setIcon((ResourceLocation) null);
     }
 
-    public FizzyButtonElement setLayout(ContentLayout layout) {
+    public VanillaLikeButtonElement setLayout(ContentLayout layout) {
         this.contentLayout = Objects.requireNonNull(layout, "layout");
         return this;
     }
 
-    public FizzyButtonElement setIconAlign(IconVerticalAlign align) {
+    public VanillaLikeButtonElement setIconAlign(IconVerticalAlign align) {
         this.iconVerticalAlign = Objects.requireNonNull(align, "align");
         return this;
     }
 
-    public FizzyButtonElement setIconFit(boolean stretchToFit, boolean allowUpscale) {
+    public VanillaLikeButtonElement setIconFit(boolean stretchToFit, boolean allowUpscale) {
         this.iconStretchToFit = stretchToFit;
         this.iconAllowUpscale = allowUpscale;
         return this;
     }
 
-    public FizzyButtonElement setIconSizePx(int iconSizePx) {
+    public VanillaLikeButtonElement setIconSizePx(int iconSizePx) {
         if (iconSizePx <= 0) {
             throw new IllegalArgumentException("iconSizePx must be > 0");
         }
@@ -200,7 +204,7 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setContentGapPx(int contentGapPx) {
+    public VanillaLikeButtonElement setContentGapPx(int contentGapPx) {
         if (contentGapPx < 0) {
             throw new IllegalArgumentException("contentGapPx must be >= 0");
         }
@@ -208,7 +212,7 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setContentPaddingPx(int leftPx, int rightPx) {
+    public VanillaLikeButtonElement setContentPaddingPx(int leftPx, int rightPx) {
         if (leftPx < 0 || rightPx < 0) {
             throw new IllegalArgumentException("content padding must be >= 0");
         }
@@ -217,7 +221,7 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setTooltip(@Nullable Tooltip tooltip) {
+    public VanillaLikeButtonElement setTooltip(@Nullable Tooltip tooltip) {
         hideCustomTooltip(this.customTooltipElement);
         this.customTooltipElement = null;
         this.tooltip = tooltip;
@@ -227,11 +231,11 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setTooltip(Component component) {
+    public VanillaLikeButtonElement setTooltip(Component component) {
         return setTooltip(Tooltip.create(Objects.requireNonNull(component, "component")));
     }
 
-    public FizzyButtonElement setTooltip(FizzyTooltipElement tooltipElement) {
+    public VanillaLikeButtonElement setTooltip(FizzyTooltipElement tooltipElement) {
         FizzyTooltipElement safe = Objects.requireNonNull(tooltipElement, "tooltipElement");
         if (this.customTooltipElement != safe) {
             hideCustomTooltip(this.customTooltipElement);
@@ -245,7 +249,7 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setPressSound(@Nullable SoundEvent sound) {
+    public VanillaLikeButtonElement setPressSound(@Nullable SoundEvent sound) {
         this.pressSound = sound;
         if (this.button != null) {
             this.button.setPressSound(sound);
@@ -253,7 +257,19 @@ public final class FizzyButtonElement implements ElementPainter {
         return this;
     }
 
-    public FizzyButtonElement setNarration(Component narrationMessage) {
+    public VanillaLikeButtonElement setColor(VanillaLikeAbstractButton.ColorTheme color) {
+        this.color = Objects.requireNonNull(color, "color");
+        if (this.button != null) {
+            this.button.setColorTheme(color);
+        }
+        return this;
+    }
+
+    public VanillaLikeButtonElement setColorTheme(VanillaLikeAbstractButton.ColorTheme color) {
+        return this.setColor(color);
+    }
+
+    public VanillaLikeButtonElement setNarration(Component narrationMessage) {
         this.narrationMessage = Objects.requireNonNull(narrationMessage, "narrationMessage");
         return this;
     }
@@ -265,6 +281,7 @@ public final class FizzyButtonElement implements ElementPainter {
         this.button.setMessage(Component.empty());
         this.button.setTooltip(this.tooltip);
         this.button.setPressSound(this.pressSound);
+        this.button.setColorTheme(this.color);
         if (this.customTooltipElement != null) {
             this.button.setTooltip(null);
         }
@@ -299,7 +316,7 @@ public final class FizzyButtonElement implements ElementPainter {
         }
     }
 
-    private void renderCompositeContent(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    private void renderCompositeContent(GuiGraphics g, float partialTick) {
         if (this.button == null) {
             return;
         }
@@ -343,24 +360,21 @@ public final class FizzyButtonElement implements ElementPainter {
             iconLeft = contentRight - iconBoxWidth;
         }
 
-        boolean visualPressed = this.button.isFocused() || this.button.isMouseOver(mouseX, mouseY);
-        int yOffset = visualPressed ? 1 : 0;
-        int textBaseTop = top + yOffset;
-        int textBaseHeight = Math.max(0, height);
+        DrawArea textArea = resolveTextArea(top, height);
+        int textTop = textArea.top();
+        int textHeight = textArea.height();
 
         if (hasText && textWidth > 0) {
-            FizzyComponentElement textElement = resolveTextElement(textWidth);
-            DrawArea textArea = resolveTextArea(textElement, textBaseTop, textBaseHeight);
-            textElement.render(g, textLeft, textArea.top(), textWidth, textArea.height(), partialTick);
+            resolveTextElement(textWidth).render(g, textLeft, textTop, textWidth, textHeight, partialTick);
         }
 
         if (hasIcon && iconBoxWidth > 0) {
             int availableHeight = Math.max(0, height);
             int iconHeight = Math.min(Math.max(1, this.iconSizePx), availableHeight);
             int iconTop = switch (this.iconVerticalAlign) {
-                case TOP -> top + yOffset;
-                case BOTTOM -> top + yOffset + availableHeight - iconHeight;
-                case CENTER -> top + yOffset + (availableHeight - iconHeight) / 2;
+                case TOP -> top;
+                case BOTTOM -> top + availableHeight - iconHeight;
+                case CENTER -> top + (availableHeight - iconHeight) / 2;
             };
             float alpha = this.button.active ? 1.0f : 0.5f;
             FizzyGuiUtils.drawTextureFit(
@@ -377,16 +391,20 @@ public final class FizzyButtonElement implements ElementPainter {
         }
     }
 
-    private DrawArea resolveTextArea(FizzyComponentElement textElement, int top, int height) {
+    private DrawArea resolveTextArea(int top, int height) {
         int safeHeight = Math.max(0, height);
-        if (textElement.alignMode() == TextRenderer.Align.CENTER) {
+        if (this.customTextElement == null) {
+            return new DrawArea(top, safeHeight);
+        }
+        if (this.customTextElement.alignMode() == TextRenderer.Align.CENTER) {
             return new DrawArea(top, safeHeight);
         }
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || safeHeight <= 0) {
             return new DrawArea(top, safeHeight);
         }
-        float lineHeightPx = mc.font.lineHeight * Math.max(0.01f, textElement.textScale());
+        float scale = this.customTextElement.textScale();
+        float lineHeightPx = mc.font.lineHeight * Math.max(0.01f, scale);
         int drawHeight = Math.max(1, Math.min(Math.round(lineHeightPx), safeHeight));
         int offset = Math.round((safeHeight - lineHeightPx) * 0.5f);
         int maxOffset = Math.max(0, safeHeight - drawHeight);
@@ -410,7 +428,7 @@ public final class FizzyButtonElement implements ElementPainter {
             FizzyComponentElement.Builder builder = FizzyComponentElement.builder()
                     .addText(displayText)
                     .wrap(false)
-                    .align(TextRenderer.Align.LEFT)
+                    .align(TextRenderer.Align.CENTER)
                     .shadow(true);
             this.textCustomizer.accept(builder);
             this.generatedTextElement = builder.build();
@@ -433,7 +451,7 @@ public final class FizzyButtonElement implements ElementPainter {
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-            renderCompositeContent(g, mouseX, mouseY, partialTick);
+            renderCompositeContent(g, partialTick);
         }
 
         @Override
@@ -473,7 +491,8 @@ public final class FizzyButtonElement implements ElementPainter {
     }
 
     public static final class Builder {
-        private final FizzyButton.OnPress onPress;
+        private final VanillaLikeButton.OnPress onPress;
+        private VanillaLikeAbstractButton.ColorTheme color = VanillaLikeAbstractButton.ColorTheme.GRAY;
         private @Nullable Tooltip tooltip;
         private @Nullable FizzyTooltipElement customTooltipElement;
         private @Nullable SoundEvent pressSound;
@@ -491,8 +510,17 @@ public final class FizzyButtonElement implements ElementPainter {
         private ContentLayout contentLayout = ContentLayout.TEXT_LEFT_ICON_RIGHT;
         private IconVerticalAlign iconVerticalAlign = IconVerticalAlign.CENTER;
 
-        private Builder(FizzyButton.OnPress onPress) {
+        private Builder(VanillaLikeButton.OnPress onPress) {
             this.onPress = Objects.requireNonNull(onPress, "onPress");
+        }
+
+        public Builder color(VanillaLikeAbstractButton.ColorTheme color) {
+            this.color = Objects.requireNonNull(color, "color");
+            return this;
+        }
+
+        public Builder colorTheme(VanillaLikeAbstractButton.ColorTheme color) {
+            return this.color(color);
         }
 
         public Builder tooltip(@Nullable Tooltip tooltip) {
@@ -599,8 +627,8 @@ public final class FizzyButtonElement implements ElementPainter {
             return this;
         }
 
-        public FizzyButtonElement build() {
-            return new FizzyButtonElement(this);
+        public VanillaLikeButtonElement build() {
+            return new VanillaLikeButtonElement(this);
         }
     }
 }

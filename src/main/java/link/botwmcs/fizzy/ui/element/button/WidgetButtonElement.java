@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.client.elements.WidgetButton;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -26,6 +27,7 @@ public class WidgetButtonElement implements ElementPainter {
     private final WidgetAbstractButton.ArrowDirection direction;
     private final boolean stretchToFit;
     private final @Nullable Tooltip tooltip;
+    private final @Nullable FizzyTooltipElement customTooltipElement;
     private final Consumer<WidgetButton.Builder> builderCustomizer;
     private final Consumer<WidgetButton> buttonConsumer;
     private final @Nullable SoundEvent pressSound;
@@ -40,6 +42,7 @@ public class WidgetButtonElement implements ElementPainter {
         this.direction = builder.direction;
         this.stretchToFit = builder.stretchToFit;
         this.tooltip = builder.tooltip;
+        this.customTooltipElement = builder.customTooltipElement;
         this.builderCustomizer = builder.builderCustomizer;
         this.buttonConsumer = builder.buttonConsumer;
         this.pressSound = builder.pressSound;
@@ -69,12 +72,22 @@ public class WidgetButtonElement implements ElementPainter {
         this.button = built;
         this.buttonConsumer.accept(built);
         context.addRenderableWidget(built);
+        if (this.customTooltipElement != null) {
+            this.customTooltipElement.init(context, leftPx, topPx, widthPx, heightPx);
+            for (AbstractWidget widget : this.customTooltipElement.widgets()) {
+                widget.visible = true;
+                widget.active = false;
+            }
+        }
 
     }
 
     @Override
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.button, leftPx, topPx, widthPx, heightPx);
+        if (this.customTooltipElement != null) {
+            this.customTooltipElement.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
+        }
     }
 
     @Override
@@ -101,6 +114,7 @@ public class WidgetButtonElement implements ElementPainter {
         private WidgetAbstractButton.ArrowDirection direction = WidgetAbstractButton.ArrowDirection.LEFT;
         private boolean stretchToFit;
         private @Nullable Tooltip tooltip;
+        private @Nullable FizzyTooltipElement customTooltipElement;
         private Consumer<WidgetButton.Builder> builderCustomizer = builder -> {};
         private Consumer<WidgetButton> buttonConsumer = button -> {};
         private @Nullable SoundEvent pressSound;
@@ -136,11 +150,18 @@ public class WidgetButtonElement implements ElementPainter {
 
         public Builder tooltip(@Nullable Tooltip tooltip) {
             this.tooltip = tooltip;
+            this.customTooltipElement = null;
             return this;
         }
 
         public Builder tooltip(Component component) {
             return this.tooltip(Tooltip.create(component));
+        }
+
+        public Builder tooltip(FizzyTooltipElement tooltipElement) {
+            this.customTooltipElement = Objects.requireNonNull(tooltipElement, "tooltipElement");
+            this.tooltip = null;
+            return this;
         }
 
         public Builder pressSound(SoundEvent sound) {

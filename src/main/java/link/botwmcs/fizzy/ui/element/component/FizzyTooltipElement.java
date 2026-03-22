@@ -97,6 +97,11 @@ public final class FizzyTooltipElement implements ElementPainter {
         return ElementType.CUSTOM;
     }
 
+    @Override
+    public List<AbstractWidget> widgets() {
+        return this.widget == null ? List.of() : List.of(this.widget);
+    }
+
     private final class TooltipWidget extends AbstractWidget {
         private TooltipWidget(int x, int y, int width, int height) {
             super(x, y, width, height, Component.empty());

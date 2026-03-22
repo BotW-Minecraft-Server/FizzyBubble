@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.command;
 import com.mojang.brigadier.CommandDispatcher;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.elements.ColoredAbstractButton;
+import link.botwmcs.fizzy.client.elements.VanillaLikeAbstractButton;
 import link.botwmcs.fizzy.client.elements.WidgetAbstractButton;
 import link.botwmcs.fizzy.client.overlay.ModalManager;
 import link.botwmcs.fizzy.client.overlay.NotificationManager;
@@ -305,13 +306,13 @@ public class GuiCommand {
         var button1 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 1 clicked!"));
         }).text(button1Text).icon(FizzyIcon.BELL).color(ColoredAbstractButton.Color.RED).build();
-        var button2 = ColoredButtonElement.builder(btn -> {
+        var button2 = VanillaLikeButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 2 clicked!"));
             ModalManager.show(
                     Component.literal("Fizzy Modal"),
                     Component.literal("This is the new modal kernel layer.")
             );
-        }).text(Component.literal("Button 2")).color(ColoredAbstractButton.Color.LIME).build();
+        }).text(Component.literal("Button 2")).color(VanillaLikeAbstractButton.ColorTheme.GRAY).build();
         var button3 = ColoredButtonElement.builder(btn -> {
             mc.player.sendSystemMessage(Component.literal("Button 3 clicked!"));
             ModalManager.hideAll();

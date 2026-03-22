@@ -1,8 +1,9 @@
 package link.botwmcs.fizzy.client.gui;
 
 import link.botwmcs.fizzy.ImageServices;
-import link.botwmcs.fizzy.client.elements.FizzyButton;
 import link.botwmcs.fizzy.client.elements.StartButton;
+import link.botwmcs.fizzy.client.elements.VanillaLikeAbstractButton;
+import link.botwmcs.fizzy.client.elements.VanillaLikeButton;
 import link.botwmcs.fizzy.client.elements.iconbutton.AccessibilityButton;
 import link.botwmcs.fizzy.client.elements.iconbutton.LangSelectButton;
 import link.botwmcs.fizzy.client.util.ScreenshotManager;
@@ -51,7 +52,7 @@ public class FizzyTitleScreen extends Screen {
     private long fadeInStart;
     private final LogoRenderer logoRenderer;
 
-    private FizzyButton likeBtn;
+    private VanillaLikeButton likeBtn;
 
     // 用 Unicode 心形符号做“空心/实心”
     private static final Component HEART_EMPTY = Component.literal("♡"); // 未点赞
@@ -117,19 +118,21 @@ public class FizzyTitleScreen extends Screen {
         Tooltip emptyTip = Tooltip.create(Component.empty());
 
         // ---- Settings（原版设置）----
-        var settingsBtn = FizzyButton.builder(Component.translatable("menu.options"), btn ->
+        var settingsBtn = VanillaLikeButton.builder(Component.translatable("menu.options"), btn ->
                         // mc.setScreen(new OptionsScreen(this, mc.options))
                 mc.setScreen(new OptionsScreen(this, mc.options))
                 ).bounds(rightX, settingsY, buttonWidth, 20)
                 .tooltip(emptyTip)
+                .colorTheme(VanillaLikeAbstractButton.ColorTheme.GRAY)
                 .build();
         this.addRenderableWidget(settingsBtn);
 
         // ---- Quit（退出游戏）----
-        var quitBtn = FizzyButton.builder(Component.translatable("menu.quit"), btn ->
+        var quitBtn = VanillaLikeButton.builder(Component.translatable("menu.quit"), btn ->
                         mc.stop()
                 ).bounds(rightX, quitY, buttonWidth, 20)
                 .tooltip(emptyTip)
+                .colorTheme(VanillaLikeAbstractButton.ColorTheme.GRAY)
                 .build();
         this.addRenderableWidget(quitBtn);
 
@@ -158,10 +161,12 @@ public class FizzyTitleScreen extends Screen {
                 Constructor<?> ctor = modsScreenCls.getConstructor(Screen.class);
                 Screen modsScreen = (Screen) ctor.newInstance(this);
 
-                var modBtn = (FizzyButton) this.addRenderableWidget(
-                        FizzyButton.builder(Component.literal("M"), btn ->
+                var modBtn = (VanillaLikeButton) this.addRenderableWidget(
+                        VanillaLikeButton.builder(Component.literal("M"), btn ->
                                 mc.setScreen(modsScreen)
-                        ).bounds(paddingLeft, accessibilityBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+                        ).bounds(paddingLeft, accessibilityBtn.getY() - buttonSpacing2 - 20, 20, 20)
+                                .colorTheme(VanillaLikeAbstractButton.ColorTheme.GRAY)
+                                .build()
                 );
                 flexableY = modBtn.getY();
             } catch (Throwable t) {
@@ -170,22 +175,28 @@ public class FizzyTitleScreen extends Screen {
 
         }
 
-        var nextScreenshotBtn = (FizzyButton) this.addRenderableWidget(
-                FizzyButton.builder(Component.literal("→"), btn -> {
+        var nextScreenshotBtn = (VanillaLikeButton) this.addRenderableWidget(
+                VanillaLikeButton.builder(Component.literal("→"), btn -> {
                     ScreenshotManager.INSTANCE.next();
-                }).bounds(paddingLeft, flexableY - buttonSpacing2 - 20, 20, 20).build()
+                }).bounds(paddingLeft, flexableY - buttonSpacing2 - 20, 20, 20)
+                        .colorTheme(VanillaLikeAbstractButton.ColorTheme.GRAY)
+                        .build()
         );
 
-        var previousScreenshotBtn = (FizzyButton) this.addRenderableWidget(
-                FizzyButton.builder(Component.literal("←"), btn -> {
+        var previousScreenshotBtn = (VanillaLikeButton) this.addRenderableWidget(
+                VanillaLikeButton.builder(Component.literal("←"), btn -> {
                     ScreenshotManager.INSTANCE.prev();
-                }).bounds(paddingLeft, nextScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+                }).bounds(paddingLeft, nextScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20)
+                        .colorTheme(VanillaLikeAbstractButton.ColorTheme.GRAY)
+                        .build()
         );
 
-        this.likeBtn = (FizzyButton) this.addRenderableWidget(
-                FizzyButton.builder(HEART_EMPTY, btn -> {
+        this.likeBtn = (VanillaLikeButton) this.addRenderableWidget(
+                VanillaLikeButton.builder(HEART_EMPTY, btn -> {
                     onClickLike();
-                }).bounds(paddingLeft, previousScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20).build()
+                }).bounds(paddingLeft, previousScreenshotBtn.getY() - buttonSpacing2 - 20, 20, 20)
+                        .colorTheme(VanillaLikeAbstractButton.ColorTheme.GRAY)
+                        .build()
         );
 
         updateLikeButtonState();

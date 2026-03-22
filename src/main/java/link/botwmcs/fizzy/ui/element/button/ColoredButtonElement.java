@@ -7,6 +7,7 @@ import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
+import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -32,6 +33,7 @@ public final class ColoredButtonElement implements ElementPainter {
 
     private ColoredAbstractButton.Color color;
     private @Nullable Tooltip tooltip;
+    private @Nullable FizzyTooltipElement customTooltipElement;
     private @Nullable SoundEvent pressSound;
     private Component narrationMessage;
 
@@ -58,11 +60,13 @@ public final class ColoredButtonElement implements ElementPainter {
 
     private @Nullable ColoredButton button;
     private @Nullable ContentOverlayWidget contentOverlay;
+    private @Nullable InitContext initContext;
 
     private ColoredButtonElement(Builder builder) {
         this.onPress = builder.onPress;
         this.color = builder.color;
         this.tooltip = builder.tooltip;
+        this.customTooltipElement = builder.customTooltipElement;
         this.pressSound = builder.pressSound;
         this.narrationMessage = builder.narrationMessage;
         this.textComponent = builder.textComponent;
@@ -87,6 +91,7 @@ public final class ColoredButtonElement implements ElementPainter {
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
         this.button = null;
         this.contentOverlay = null;
+        this.initContext = context;
 
         ColoredButton.Builder builder = ColoredButton.builder(Component.empty(), this.onPress);
         builder.createNarration(defaultMessage -> this.narrationMessage.copy());
@@ -103,6 +108,7 @@ public final class ColoredButtonElement implements ElementPainter {
         ContentOverlayWidget overlay = new ContentOverlayWidget(leftPx, topPx, widthPx, heightPx);
         this.contentOverlay = overlay;
         context.addRenderableWidget(overlay);
+        initCustomTooltipIfNeeded(leftPx, topPx, widthPx, heightPx);
 
         syncButtonState();
     }
@@ -111,6 +117,9 @@ public final class ColoredButtonElement implements ElementPainter {
     public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.button, leftPx, topPx, widthPx, heightPx);
         FizzyGuiUtils.syncWidgetBounds(this.contentOverlay, leftPx, topPx, widthPx, heightPx);
+        if (this.customTooltipElement != null) {
+            this.customTooltipElement.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
+        }
     }
 
     @Override
@@ -213,6 +222,8 @@ public final class ColoredButtonElement implements ElementPainter {
     }
 
     public ColoredButtonElement setTooltip(@Nullable Tooltip tooltip) {
+        hideCustomTooltip(this.customTooltipElement);
+        this.customTooltipElement = null;
         this.tooltip = tooltip;
         if (this.button != null) {
             this.button.setTooltip(tooltip);
@@ -222,6 +233,20 @@ public final class ColoredButtonElement implements ElementPainter {
 
     public ColoredButtonElement setTooltip(Component component) {
         return setTooltip(Tooltip.create(Objects.requireNonNull(component, "component")));
+    }
+
+    public ColoredButtonElement setTooltip(FizzyTooltipElement tooltipElement) {
+        FizzyTooltipElement safe = Objects.requireNonNull(tooltipElement, "tooltipElement");
+        if (this.customTooltipElement != safe) {
+            hideCustomTooltip(this.customTooltipElement);
+        }
+        this.customTooltipElement = safe;
+        this.tooltip = null;
+        if (this.button != null) {
+            this.button.setTooltip(null);
+            initCustomTooltipIfNeeded(this.button.getX(), this.button.getY(), this.button.getWidth(), this.button.getHeight());
+        }
+        return this;
     }
 
     public ColoredButtonElement setPressSound(@Nullable SoundEvent sound) {
@@ -253,6 +278,38 @@ public final class ColoredButtonElement implements ElementPainter {
         this.button.setTooltip(this.tooltip);
         this.button.setPressSound(this.pressSound);
         this.button.setColor(this.color);
+        if (this.customTooltipElement != null) {
+            this.button.setTooltip(null);
+        }
+    }
+
+    private void initCustomTooltipIfNeeded(int leftPx, int topPx, int widthPx, int heightPx) {
+        if (this.customTooltipElement == null || this.initContext == null) {
+            return;
+        }
+        hideCustomTooltip(this.customTooltipElement);
+        this.customTooltipElement.init(this.initContext, leftPx, topPx, widthPx, heightPx);
+        showCustomTooltip(this.customTooltipElement);
+    }
+
+    private static void hideCustomTooltip(@Nullable FizzyTooltipElement tooltipElement) {
+        if (tooltipElement == null) {
+            return;
+        }
+        for (AbstractWidget widget : tooltipElement.widgets()) {
+            widget.visible = false;
+            widget.active = false;
+        }
+    }
+
+    private static void showCustomTooltip(@Nullable FizzyTooltipElement tooltipElement) {
+        if (tooltipElement == null) {
+            return;
+        }
+        for (AbstractWidget widget : tooltipElement.widgets()) {
+            widget.visible = true;
+            widget.active = false;
+        }
     }
 
     private void renderCompositeContent(GuiGraphics g, float partialTick) {
@@ -433,6 +490,7 @@ public final class ColoredButtonElement implements ElementPainter {
         private final ColoredButton.OnPress onPress;
         private ColoredAbstractButton.Color color = ColoredAbstractButton.Color.BLUE;
         private @Nullable Tooltip tooltip;
+        private @Nullable FizzyTooltipElement customTooltipElement;
         private @Nullable SoundEvent pressSound;
         private Component narrationMessage = Component.empty();
         private @Nullable Component textComponent = Component.empty();
@@ -459,11 +517,18 @@ public final class ColoredButtonElement implements ElementPainter {
 
         public Builder tooltip(@Nullable Tooltip tooltip) {
             this.tooltip = tooltip;
+            this.customTooltipElement = null;
             return this;
         }
 
         public Builder tooltip(Component component) {
             return this.tooltip(Tooltip.create(Objects.requireNonNull(component, "component")));
+        }
+
+        public Builder tooltip(FizzyTooltipElement tooltipElement) {
+            this.customTooltipElement = Objects.requireNonNull(tooltipElement, "tooltipElement");
+            this.tooltip = null;
+            return this;
         }
 
         public Builder pressSound(@Nullable SoundEvent sound) {
