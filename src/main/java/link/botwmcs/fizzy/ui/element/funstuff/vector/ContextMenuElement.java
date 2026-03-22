@@ -4,6 +4,7 @@ import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementRenderLayer;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -40,8 +41,8 @@ public final class ContextMenuElement implements ElementPainter {
     private static final int LABEL_COLOR = 0xFFE0E0E0;
     private static final int LABEL_DISABLED_COLOR = 0xFF777777;
     private static final int SEPARATOR_COLOR = 0xFF4D4D4D;
-    private static final float CME_LAYER_Z = 600.0f;
-    private static final float POPUP_DEPTH_STEP_Z = 128.0f;
+    private static final int SUBMENU_PARENT_OVERLAP_PX = 2;
+    private static final float POPUP_DEPTH_STEP_Z = 256.0f;
 
     private final MenuSpec rootMenu;
     private final int minMenuWidthPx;
@@ -110,13 +111,7 @@ public final class ContextMenuElement implements ElementPainter {
         }
 
         if (this.rootPopup != null) {
-            g.pose().pushPose();
-            g.pose().translate(0.0f, 0.0f, CME_LAYER_Z);
-            try {
-                renderMenus(g, Mth.floor(this.lastMouseX), Mth.floor(this.lastMouseY), partialTick);
-            } finally {
-                g.pose().popPose();
-            }
+            renderMenus(g, Mth.floor(this.lastMouseX), Mth.floor(this.lastMouseY), partialTick);
         }
     }
 
@@ -128,6 +123,16 @@ public final class ContextMenuElement implements ElementPainter {
     @Override
     public ElementRenderLayer renderLayer() {
         return ElementRenderLayer.OVERLAY_TOP;
+    }
+
+    @Override
+    public UiRenderLayer layer() {
+        return UiRenderLayer.overlay(300);
+    }
+
+    @Override
+    public int zIndex() {
+        return 200;
     }
 
     @Override
@@ -273,10 +278,10 @@ public final class ContextMenuElement implements ElementPainter {
         int leftAnchorX = parent.x() + BORDER_SIZE_PX;
 
         boolean openToRight = true;
-        int x = rightAnchorX;
+        int x = rightAnchorX - SUBMENU_PARENT_OVERLAP_PX;
         if (x + measure.widthPx() > screenW - SCREEN_MARGIN_PX) {
             openToRight = false;
-            x = leftAnchorX - measure.widthPx();
+            x = leftAnchorX - measure.widthPx() + SUBMENU_PARENT_OVERLAP_PX;
         }
         if (x < SCREEN_MARGIN_PX) {
             x = Mth.clamp(x, SCREEN_MARGIN_PX, Math.max(SCREEN_MARGIN_PX, screenW - measure.widthPx() - SCREEN_MARGIN_PX));
@@ -630,6 +635,7 @@ public final class ContextMenuElement implements ElementPainter {
                 boolean hovered = popup.hoveredRowIndex() == i;
                 renderRow(g, row, hovered, mouseX, mouseY, partialTick);
             }
+            g.flush();
         } finally {
             g.disableScissor();
             g.pose().popPose();
@@ -681,20 +687,42 @@ public final class ContextMenuElement implements ElementPainter {
         }
 
         if (row.entry() instanceof ElementEntrySpec elementEntry) {
-            elementEntry.element().render(
+            clipRender(
                     g,
                     row.contentLeft(),
                     row.contentTop(),
-                    row.contentWidth(),
-                    row.contentHeight(),
-                    partialTick
+                    row.contentRight(),
+                    row.contentTop() + row.contentHeight(),
+                    () -> {
+                        elementEntry.element().render(
+                                g,
+                                row.contentLeft(),
+                                row.contentTop(),
+                                row.contentWidth(),
+                                row.contentHeight(),
+                                partialTick
+                        );
+                        for (AbstractWidget widget : row.widgets()) {
+                            if (!widget.visible) {
+                                continue;
+                            }
+                            widget.render(g, mouseX, mouseY, partialTick);
+                        }
+                    }
             );
-            for (AbstractWidget widget : row.widgets()) {
-                if (!widget.visible) {
-                    continue;
-                }
-                widget.render(g, mouseX, mouseY, partialTick);
-            }
+        }
+    }
+
+    private static void clipRender(GuiGraphics g, int left, int top, int right, int bottom, Runnable renderTask) {
+        if (right <= left || bottom <= top) {
+            return;
+        }
+        g.enableScissor(left, top, right, bottom);
+        try {
+            renderTask.run();
+            g.flush();
+        } finally {
+            g.disableScissor();
         }
     }
 
@@ -1252,10 +1280,19 @@ public final class ContextMenuElement implements ElementPainter {
             if (widthPx <= 0 || heightPx <= 0) {
                 return;
             }
-            this.textElement.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
-            if (!enabled) {
-                g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x99000000);
-            }
+            clipRender(
+                    g,
+                    leftPx,
+                    topPx,
+                    leftPx + widthPx,
+                    topPx + heightPx,
+                    () -> {
+                        this.textElement.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
+                        if (!enabled) {
+                            g.fill(leftPx, topPx, leftPx + widthPx, topPx + heightPx, 0x99000000);
+                        }
+                    }
+            );
         }
     }
 

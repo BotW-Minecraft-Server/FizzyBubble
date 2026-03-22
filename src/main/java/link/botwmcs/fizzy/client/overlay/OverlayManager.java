@@ -49,6 +49,10 @@ public final class OverlayManager {
         STACK.renderHudPerAnchor(graphics, screenWidth, screenHeight, partialTick);
     }
 
+    public static void renderAllLayers(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
+        STACK.renderAllLayers(graphics, screenWidth, screenHeight, partialTick);
+    }
+
     public static void setLayout(int marginPx, int verticalGapPx, int horizontalGapPx, int maxColumns) {
         STACK.hudLayoutConfig().set(marginPx, verticalGapPx, horizontalGapPx, maxColumns);
     }

@@ -35,6 +35,11 @@ public final class ModalOverlay implements OverlayRenderable {
     }
 
     @Override
+    public void beforeLayout(int screenWidth, int screenHeight) {
+        setViewport(screenWidth, screenHeight);
+    }
+
+    @Override
     public boolean isActive() {
         return active;
     }

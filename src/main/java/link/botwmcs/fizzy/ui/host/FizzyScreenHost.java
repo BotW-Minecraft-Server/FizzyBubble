@@ -5,9 +5,11 @@ import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
-import link.botwmcs.fizzy.ui.element.ElementRenderLayer;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderTaskQueue;
 import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
@@ -19,14 +21,17 @@ import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class FizzyScreenHost extends Screen {
     private final FizzyGui gui;
+    private final List<ManagedWidget> managedWidgets = new ArrayList<>();
     private UiRuntime runtime;
-    private int left, top;
+    private int left;
+    private int top;
 
     public FizzyScreenHost(FizzyGui gui) {
         super(Component.empty());
@@ -35,33 +40,30 @@ public class FizzyScreenHost extends Screen {
 
     @Override
     protected void init() {
-        super.init(); // 虽然不是必需，但更稳
+        super.init();
         if (runtime == null || runtime.isClosed()) {
             runtime = UiRuntime.createForCurrentThread();
         }
         recalcCenter();
-//        int w = gui.widthPx(), h = gui.heightPx();
-//        this.left = (this.width - w) / 2;
-//        this.top  = (this.height - h) / 2;
         this.clearWidgets();
+        this.managedWidgets.clear();
         initElements();
     }
-
-
 
     @Override
     public void resize(Minecraft mc, int w, int h) {
         super.resize(mc, w, h);
         recalcCenter();
         this.clearWidgets();
+        this.managedWidgets.clear();
         initElements();
     }
 
     private void recalcCenter() {
         int gw = gui.widthPx();
         int gh = gui.heightPx();
-        this.left = (this.width  - gw) / 2;
-        this.top  = (this.height - gh) / 2;
+        this.left = (this.width - gw) / 2;
+        this.top = (this.height - gh) / 2;
     }
 
     private void initElements() {
@@ -75,25 +77,29 @@ public class FizzyScreenHost extends Screen {
         ScreenInitContext context = new ScreenInitContext();
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
-            for (var element : pad.elements()) {
-                element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height());
+            for (ElementPainter element : pad.elements()) {
+                context.runWithOwner(element, () ->
+                        element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height())
+                );
             }
         }
         if (hasBelow && gui.below() != null) {
             FramePainter.BelowArea belowArea = frame.currentBelowArea();
             if (belowArea != null) {
-                gui.below().init(context, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height());
+                ElementPainter below = gui.below();
+                context.runWithOwner(below, () ->
+                        below.init(context, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height())
+                );
             }
         }
     }
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float dt) {
-//        super.render(g, mx, my, dt);
         if (runtime != null) {
             runtime.frameTick();
         }
-        // 初始化frame
+
         FramePainter frame = gui.frame();
         int widthPx = gui.widthPx();
         int heightPx = gui.heightPx();
@@ -101,72 +107,54 @@ public class FizzyScreenHost extends Screen {
         frame.setLayout(left, top, widthPx, heightPx, true, hasBelow);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
-        // 绘制在frame后面的背景
+        List<ElementPlacement> placements = collectElementPlacements(frame, slotArea);
+        boolean suppressTooltips = shouldSuppressTooltips(placements);
+
+        UiRenderTaskQueue queue = new UiRenderTaskQueue();
         BehindPainter behind = gui.behind();
         if (behind != null) {
-            behind.paint(g, frame, dt);
-            // I think we don't need post this event...
-//            NeoForge.EVENT_BUS.post(new ScreenEvent.BackgroundRendered(this, g));
+            queue.add(UiRenderLayer.behind(0), () -> behind.paint(g, frame, dt));
         }
 
-        // 绘制背景
         BgPainter bg = gui.background();
         if (bg != null) {
-            bg.paint(g, frame);
+            queue.add(UiRenderLayer.background(0), () -> bg.paint(g, frame));
         }
 
-        // Draw frame before elements so elements stay on top.
-        frame.paint(g, left, top, widthPx, heightPx, true, hasBelow);
+        queue.add(UiRenderLayer.frame(0), () -> frame.paint(g, left, top, widthPx, heightPx, true, hasBelow));
 
-        // 绘制各个pad内的元素
-        for (PadSpec pad : gui.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
-            for (var element : pad.elements()) {
-                if (element.renderLayer() == ElementRenderLayer.OVERLAY_TOP) {
-                    continue;
-                }
-                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), dt);
-            }
+        for (ElementPlacement placement : placements) {
+            queue.add(placement.element().layer(), () -> renderElement(g, placement, dt));
         }
 
-        // 绘制frame
-//        frame.setLayout(left, top, widthPx, heightPx, true);
-        if (hasBelow && gui.below() != null) {
-            FramePainter.BelowArea belowArea = frame.currentBelowArea();
-            if (belowArea != null) {
-                if (gui.below().renderLayer() != ElementRenderLayer.OVERLAY_TOP) {
-                    gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), dt);
-                }
-            }
-        }
-
-        // 绘制分割线
         SplitPainter splitPainter = gui.splitPainter();
         if (slotArea != null && splitPainter != null) {
             for (SplitSpec split : gui.splits()) {
-                split.paint(g, splitPainter, slotArea);
+                queue.add(UiRenderLayer.split(0), () -> split.paint(g, splitPainter, slotArea));
             }
         }
 
-        // 绘制renderables
-        boolean suppressTooltips = shouldSuppressTooltips();
+        for (ManagedWidget widget : this.managedWidgets) {
+            queue.add(widget.layer(), () -> renderManagedWidget(g, widget, mx, my, dt));
+        }
+
+        for (Renderable renderable : this.renderables) {
+            queue.add(UiRenderLayer.widgets(Integer.MAX_VALUE), () -> renderable.render(g, mx, my, dt));
+        }
+
         if (suppressTooltips) {
             FizzyTooltipElement.pushGlobalSuppression();
         }
         try {
-            for (Renderable renderable : this.renderables) {
-                renderable.render(g, mx, my, dt);
-            }
+            queue.renderAll();
         } finally {
             if (suppressTooltips) {
                 FizzyTooltipElement.popGlobalSuppression();
             }
         }
-        renderOverlayTopElements(g, frame, slotArea, dt);
         if (suppressTooltips) {
             clearTooltipForNextRenderPass();
         }
-//         super.render(g, mx, my, dt);
     }
 
     @Override
@@ -210,14 +198,6 @@ public class FizzyScreenHost extends Screen {
         super.removed();
     }
 
-    private class ScreenInitContext implements ElementPainter.InitContext {
-        @Override
-        public <T extends AbstractWidget> T addRenderableWidget(T widget) {
-            return FizzyScreenHost.this.addRenderableWidget(widget);
-        }
-    }
-
-    /** 通过 slot 坐标(1-based)获取该区域内的元素列表 */
     public List<ElementPainter> elementsAtSlot(int row, int col) {
         FramePainter frame = gui.frame();
         boolean hasBelow = gui.hasBelow();
@@ -229,12 +209,9 @@ public class FizzyScreenHost extends Screen {
 
         int slotX = slotArea.x() + (col - 1) * UiUnit.SLOT_PX;
         int slotY = slotArea.y() + (row - 1) * UiUnit.SLOT_PX;
-        int slotW = UiUnit.SLOT_PX;
-        int slotH = UiUnit.SLOT_PX;
-        return elementsInRect(frame, slotArea, slotX, slotY, slotW, slotH);
+        return elementsInRect(frame, slotArea, slotX, slotY, UiUnit.SLOT_PX, UiUnit.SLOT_PX);
     }
 
-    /** 通过屏幕像素坐标获取该点覆盖的元素列表 */
     public List<ElementPainter> elementsAtPx(int x, int y) {
         FramePainter frame = gui.frame();
         boolean hasBelow = gui.hasBelow();
@@ -269,42 +246,106 @@ public class FizzyScreenHost extends Screen {
         return ar > bx && br > ax && ab > by && bb > ay;
     }
 
-    private void renderOverlayTopElements(GuiGraphics g, FramePainter frame, FramePainter.SlotArea slotArea, float partialTick) {
+    private List<ElementPlacement> collectElementPlacements(FramePainter frame, @Nullable FramePainter.SlotArea slotArea) {
+        List<ElementPlacement> out = new ArrayList<>();
+        int order = 0;
+
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
             for (ElementPainter element : pad.elements()) {
-                if (element.renderLayer() != ElementRenderLayer.OVERLAY_TOP) {
-                    continue;
-                }
-                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), partialTick);
+                out.add(new ElementPlacement(
+                        element,
+                        bounds.left(),
+                        bounds.top(),
+                        bounds.width(),
+                        bounds.height(),
+                        order++
+                ));
             }
         }
+
         if (gui.hasBelow() && gui.below() != null) {
             FramePainter.BelowArea belowArea = frame.currentBelowArea();
-            if (belowArea != null && gui.below().renderLayer() == ElementRenderLayer.OVERLAY_TOP) {
-                gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), partialTick);
+            if (belowArea != null) {
+                out.add(new ElementPlacement(
+                        gui.below(),
+                        belowArea.left(),
+                        belowArea.top(),
+                        belowArea.width(),
+                        belowArea.height(),
+                        order
+                ));
             }
+        }
+        return out;
+    }
+
+    private void renderElement(GuiGraphics g, ElementPlacement placement, float partialTick) {
+        ElementPainter element = placement.element();
+        g.pose().pushPose();
+        g.pose().translate(0.0f, 0.0f, element.zIndex());
+        try {
+            element.render(
+                    g,
+                    placement.left(),
+                    placement.top(),
+                    placement.width(),
+                    placement.height(),
+                    partialTick
+            );
+        } finally {
+            g.pose().popPose();
         }
     }
 
-    private List<AbstractWidget> overlayTopWidgets() {
-        List<AbstractWidget> out = new ArrayList<>();
-        for (PadSpec pad : gui.pads()) {
-            for (ElementPainter element : pad.elements()) {
-                if (element.renderLayer() != ElementRenderLayer.OVERLAY_TOP) {
-                    continue;
-                }
-                out.addAll(element.widgets());
+    private void renderManagedWidget(GuiGraphics g, ManagedWidget managedWidget, int mouseX, int mouseY, float partialTick) {
+        AbstractWidget widget = managedWidget.widget();
+        if (!widget.visible) {
+            return;
+        }
+        g.pose().pushPose();
+        g.pose().translate(0.0f, 0.0f, managedWidget.zIndex());
+        try {
+            widget.render(g, mouseX, mouseY, partialTick);
+        } finally {
+            g.pose().popPose();
+        }
+    }
+
+    private UiRenderLayer resolveWidgetLayer(@Nullable ElementPainter owner, AbstractWidget widget) {
+        if (FizzyTooltipElement.isTooltipWidget(widget)) {
+            return UiRenderLayer.tooltip(0);
+        }
+        if (owner != null) {
+            UiRenderLayer ownerLayer = owner.layer();
+            UiRenderPhase ownerPhase = ownerLayer.phase();
+            if (ownerPhase == UiRenderPhase.OVERLAY || ownerPhase == UiRenderPhase.TOOLTIP) {
+                return ownerLayer;
             }
         }
-        if (gui.hasBelow() && gui.below() != null && gui.below().renderLayer() == ElementRenderLayer.OVERLAY_TOP) {
-            out.addAll(gui.below().widgets());
+        return UiRenderLayer.widgets(0);
+    }
+
+    private int resolveWidgetZIndex(@Nullable ElementPainter owner, AbstractWidget widget) {
+        if (FizzyTooltipElement.isTooltipWidget(widget)) {
+            return FizzyTooltipElement.defaultTooltipZIndex();
+        }
+        return owner != null ? owner.zIndex() : 0;
+    }
+
+    private List<AbstractWidget> overlayWidgets() {
+        List<AbstractWidget> out = new ArrayList<>();
+        for (ManagedWidget widget : this.managedWidgets) {
+            if (widget.layer().phase() != UiRenderPhase.OVERLAY) {
+                continue;
+            }
+            out.add(widget.widget());
         }
         return out;
     }
 
     private boolean dispatchOverlayMouseClicked(double mouseX, double mouseY, int button) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
@@ -318,7 +359,7 @@ public class FizzyScreenHost extends Screen {
     }
 
     private boolean dispatchOverlayMouseReleased(double mouseX, double mouseY, int button) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible) {
@@ -332,7 +373,7 @@ public class FizzyScreenHost extends Screen {
     }
 
     private boolean dispatchOverlayMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
@@ -346,7 +387,7 @@ public class FizzyScreenHost extends Screen {
     }
 
     private boolean dispatchOverlayMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
@@ -359,15 +400,40 @@ public class FizzyScreenHost extends Screen {
         return false;
     }
 
-    private boolean shouldSuppressTooltips() {
-        for (PadSpec pad : gui.pads()) {
-            for (ElementPainter element : pad.elements()) {
-                if (element.suppressesTooltips()) {
-                    return true;
-                }
+    private boolean shouldSuppressTooltips(List<ElementPlacement> placements) {
+        for (ElementPlacement placement : placements) {
+            if (placement.element().suppressesTooltips()) {
+                return true;
             }
         }
-        return gui.hasBelow() && gui.below() != null && gui.below().suppressesTooltips();
+        return false;
     }
 
+    private class ScreenInitContext implements ElementPainter.InitContext {
+        private @Nullable ElementPainter currentOwner;
+
+        private void runWithOwner(ElementPainter owner, Runnable action) {
+            ElementPainter previous = this.currentOwner;
+            this.currentOwner = owner;
+            try {
+                action.run();
+            } finally {
+                this.currentOwner = previous;
+            }
+        }
+
+        @Override
+        public <T extends AbstractWidget> T addRenderableWidget(T widget) {
+            UiRenderLayer layer = resolveWidgetLayer(this.currentOwner, widget);
+            int zIndex = resolveWidgetZIndex(this.currentOwner, widget);
+            managedWidgets.add(new ManagedWidget(widget, layer, zIndex));
+            return FizzyScreenHost.this.addWidget(widget);
+        }
+    }
+
+    private record ManagedWidget(AbstractWidget widget, UiRenderLayer layer, int zIndex) {
+    }
+
+    private record ElementPlacement(ElementPainter element, int left, int top, int width, int height, int order) {
+    }
 }

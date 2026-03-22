@@ -52,7 +52,7 @@ public final class NotificationManager {
     }
 
     public static void renderAll(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
-        OverlayManager.stack().renderLayerPerAnchor(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.NOTIFICATION);
+        OverlayManager.stack().renderLayer(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.NOTIFICATION);
     }
 
     public static void setLayout(int marginPx, int verticalGapPx, int horizontalGapPx, int maxColumns) {

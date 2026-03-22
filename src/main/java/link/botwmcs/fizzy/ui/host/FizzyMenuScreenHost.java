@@ -7,9 +7,11 @@ import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.core.FizzyGui;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
-import link.botwmcs.fizzy.ui.element.ElementRenderLayer;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderTaskQueue;
 import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
@@ -23,6 +25,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +39,9 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     private static final int PLAYER_INV_SECTION_H = UiUnit.VANILLA_PLAYER_INV_HEIGHT - PLAYER_INV_TOP_TRIM;
     private static final int PLAYER_INV_FIRST_SLOT_INDEX_FROM_END = 36;
     private static final int HOTBAR_FIRST_SLOT_INDEX_FROM_END = 9;
+
     private final FizzyGui gui;
+    private final List<ManagedWidget> managedWidgets = new ArrayList<>();
     private UiRuntime runtime;
 
     public FizzyMenuScreenHost(T menu, Inventory inv, Component title, FizzyGui gui) {
@@ -57,6 +62,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         this.leftPos = (this.width - this.imageWidth) / 2;
         this.topPos = (this.height - totalH) / 2;
         this.clearWidgets();
+        this.managedWidgets.clear();
         initElements();
 
         this.titleLabelX = 8;
@@ -74,24 +80,26 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
         MenuInitContext context = new MenuInitContext();
         for (PadSpec pad : gui.pads()) {
-            for (var element : pad.elements()) {
-                PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
-                element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height());
+            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            for (ElementPainter element : pad.elements()) {
+                context.runWithOwner(element, () ->
+                        element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height())
+                );
             }
         }
         if (gui.hasBelow() && gui.below() != null) {
             FramePainter.BelowArea belowArea = frame.currentBelowArea();
             if (belowArea != null) {
-                gui.below().init(context, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height());
+                ElementPainter below = gui.below();
+                context.runWithOwner(below, () ->
+                        below.init(context, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height())
+                );
             }
         }
     }
 
     @Override
     public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        // Disable vanilla container dim/blur background.
-        // Menu background effects are controlled explicitly via BehindPainter.
-//        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         this.renderBg(g, partialTick, mouseX, mouseY);
     }
 
@@ -100,7 +108,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         if (runtime != null) {
             runtime.frameTick();
         }
-        // Ensure blit color state stays valid even if another renderer changed it.
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         FramePainter frame = gui.frame();
@@ -109,47 +116,38 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
+        List<ElementPlacement> placements = collectElementPlacements(frame, slotArea);
+        UiRenderTaskQueue queue = new UiRenderTaskQueue();
+
         BehindPainter behind = gui.behind();
         if (behind != null) {
-            behind.paint(g, frame, partialTick);
+            queue.add(UiRenderLayer.behind(0), () -> behind.paint(g, frame, partialTick));
         }
 
         BgPainter bg = gui.background();
         if (bg != null) {
-            bg.paint(g, frame);
+            queue.add(UiRenderLayer.background(0), () -> bg.paint(g, frame));
         }
 
-        drawPlayerInventoryBackground(g);
-        // Draw frame before elements so elements stay on top.
-        frame.paint(g, leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
+        queue.add(UiRenderLayer.background(100), () -> drawPlayerInventoryBackground(g));
+        queue.add(UiRenderLayer.frame(0), () -> frame.paint(g, leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand));
 
-        for (PadSpec pad : gui.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
-            for (var element : pad.elements()) {
-                if (element.renderLayer() == ElementRenderLayer.OVERLAY_TOP) {
-                    continue;
-                }
-                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), partialTick);
-            }
-        }
-
-        if (gui.hasBelow() && gui.below() != null) {
-            FramePainter.BelowArea belowArea = frame.currentBelowArea();
-            if (belowArea != null) {
-                if (gui.below().renderLayer() != ElementRenderLayer.OVERLAY_TOP) {
-                    gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), partialTick);
-                }
-            }
+        for (ElementPlacement placement : placements) {
+            queue.add(placement.element().layer(), () -> renderElement(g, placement, partialTick));
         }
 
         SplitPainter splitPainter = gui.splitPainter();
         if (slotArea != null && splitPainter != null) {
             for (SplitSpec split : gui.splits()) {
-                split.paint(g, splitPainter, slotArea);
+                queue.add(UiRenderLayer.split(0), () -> split.paint(g, splitPainter, slotArea));
             }
         }
 
-//        renderCustomMenuBackground(g, partialTick, mouseX, mouseY);
+        for (ManagedWidget widget : this.managedWidgets) {
+            queue.add(widget.layer(), () -> renderManagedWidget(g, widget, mouseX, mouseY, partialTick));
+        }
+
+        queue.renderMatching(phase -> phase.ordinal() <= UiRenderPhase.WIDGET.ordinal());
     }
 
     @Override
@@ -165,7 +163,25 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
                 FizzyTooltipElement.popGlobalSuppression();
             }
         }
-        renderOverlayTopElements(g, partialTick);
+
+        FramePainter frame = gui.frame();
+        boolean hasBelowBand = true;
+        boolean drawBottomEdge = false;
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
+        FramePainter.SlotArea slotArea = frame.currentSlotArea();
+
+        List<ElementPlacement> placements = collectElementPlacements(frame, slotArea);
+        UiRenderTaskQueue postQueue = new UiRenderTaskQueue();
+        for (ElementPlacement placement : placements) {
+            postQueue.add(placement.element().layer(), () -> renderElement(g, placement, partialTick));
+        }
+        for (ManagedWidget widget : this.managedWidgets) {
+            postQueue.add(widget.layer(), () -> renderManagedWidget(g, widget, mouseX, mouseY, partialTick));
+        }
+        postQueue.renderMatching(phase ->
+                phase == UiRenderPhase.TOOLTIP || phase == UiRenderPhase.OVERLAY
+        );
+
         if (suppressTooltips) {
             clearTooltipForNextRenderPass();
         }
@@ -222,9 +238,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-        // Intentionally skip AbstractContainerScreen labels (left gray title/inventory text).
-        // Frame title is rendered by FramePainter and custom foreground is rendered below.
-//        renderCustomMenuForeground(g, mouseX, mouseY);
     }
 
     protected void renderCustomMenuBackground(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
@@ -288,13 +301,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         return this.menu.slots.get(index);
     }
 
-    private class MenuInitContext implements ElementPainter.InitContext {
-        @Override
-        public <W extends AbstractWidget> W addRenderableWidget(W widget) {
-            return FizzyMenuScreenHost.this.addRenderableWidget(widget);
-        }
-    }
-
     public List<ElementPainter> elementsAtSlot(int row, int col) {
         FramePainter frame = gui.frame();
         boolean hasBelowBand = true;
@@ -345,49 +351,106 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         return ar > bx && br > ax && ab > by && bb > ay;
     }
 
-    private void renderOverlayTopElements(GuiGraphics g, float partialTick) {
-        FramePainter frame = gui.frame();
-        boolean hasBelowBand = true;
-        boolean drawBottomEdge = false;
-        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
-        FramePainter.SlotArea slotArea = frame.currentSlotArea();
+    private List<ElementPlacement> collectElementPlacements(FramePainter frame, @Nullable FramePainter.SlotArea slotArea) {
+        List<ElementPlacement> out = new ArrayList<>();
+        int order = 0;
 
         for (PadSpec pad : gui.pads()) {
             PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
             for (ElementPainter element : pad.elements()) {
-                if (element.renderLayer() != ElementRenderLayer.OVERLAY_TOP) {
-                    continue;
-                }
-                element.render(g, bounds.left(), bounds.top(), bounds.width(), bounds.height(), partialTick);
+                out.add(new ElementPlacement(
+                        element,
+                        bounds.left(),
+                        bounds.top(),
+                        bounds.width(),
+                        bounds.height(),
+                        order++
+                ));
             }
         }
 
-        if (gui.hasBelow() && gui.below() != null && gui.below().renderLayer() == ElementRenderLayer.OVERLAY_TOP) {
+        if (gui.hasBelow() && gui.below() != null) {
             FramePainter.BelowArea belowArea = frame.currentBelowArea();
             if (belowArea != null) {
-                gui.below().render(g, belowArea.left(), belowArea.top(), belowArea.width(), belowArea.height(), partialTick);
+                out.add(new ElementPlacement(
+                        gui.below(),
+                        belowArea.left(),
+                        belowArea.top(),
+                        belowArea.width(),
+                        belowArea.height(),
+                        order
+                ));
             }
+        }
+        return out;
+    }
+
+    private void renderElement(GuiGraphics g, ElementPlacement placement, float partialTick) {
+        ElementPainter element = placement.element();
+        g.pose().pushPose();
+        g.pose().translate(0.0f, 0.0f, element.zIndex());
+        try {
+            element.render(
+                    g,
+                    placement.left(),
+                    placement.top(),
+                    placement.width(),
+                    placement.height(),
+                    partialTick
+            );
+        } finally {
+            g.pose().popPose();
         }
     }
 
-    private List<AbstractWidget> overlayTopWidgets() {
-        List<AbstractWidget> out = new ArrayList<>();
-        for (PadSpec pad : gui.pads()) {
-            for (ElementPainter element : pad.elements()) {
-                if (element.renderLayer() != ElementRenderLayer.OVERLAY_TOP) {
-                    continue;
-                }
-                out.addAll(element.widgets());
+    private void renderManagedWidget(GuiGraphics g, ManagedWidget managedWidget, int mouseX, int mouseY, float partialTick) {
+        AbstractWidget widget = managedWidget.widget();
+        if (!widget.visible) {
+            return;
+        }
+        g.pose().pushPose();
+        g.pose().translate(0.0f, 0.0f, managedWidget.zIndex());
+        try {
+            widget.render(g, mouseX, mouseY, partialTick);
+        } finally {
+            g.pose().popPose();
+        }
+    }
+
+    private UiRenderLayer resolveWidgetLayer(@Nullable ElementPainter owner, AbstractWidget widget) {
+        if (FizzyTooltipElement.isTooltipWidget(widget)) {
+            return UiRenderLayer.tooltip(0);
+        }
+        if (owner != null) {
+            UiRenderLayer ownerLayer = owner.layer();
+            UiRenderPhase ownerPhase = ownerLayer.phase();
+            if (ownerPhase == UiRenderPhase.OVERLAY || ownerPhase == UiRenderPhase.TOOLTIP) {
+                return ownerLayer;
             }
         }
-        if (gui.hasBelow() && gui.below() != null && gui.below().renderLayer() == ElementRenderLayer.OVERLAY_TOP) {
-            out.addAll(gui.below().widgets());
+        return UiRenderLayer.widgets(0);
+    }
+
+    private int resolveWidgetZIndex(@Nullable ElementPainter owner, AbstractWidget widget) {
+        if (FizzyTooltipElement.isTooltipWidget(widget)) {
+            return FizzyTooltipElement.defaultTooltipZIndex();
+        }
+        return owner != null ? owner.zIndex() : 0;
+    }
+
+    private List<AbstractWidget> overlayWidgets() {
+        List<AbstractWidget> out = new ArrayList<>();
+        for (ManagedWidget widget : this.managedWidgets) {
+            if (widget.layer().phase() != UiRenderPhase.OVERLAY) {
+                continue;
+            }
+            out.add(widget.widget());
         }
         return out;
     }
 
     private boolean dispatchOverlayMouseClicked(double mouseX, double mouseY, int button) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
@@ -401,7 +464,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     private boolean dispatchOverlayMouseReleased(double mouseX, double mouseY, int button) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible) {
@@ -415,7 +478,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     private boolean dispatchOverlayMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
@@ -429,7 +492,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     private boolean dispatchOverlayMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        List<AbstractWidget> widgets = overlayTopWidgets();
+        List<AbstractWidget> widgets = overlayWidgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
@@ -443,14 +506,45 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     private boolean shouldSuppressTooltips() {
-        for (PadSpec pad : gui.pads()) {
-            for (ElementPainter element : pad.elements()) {
-                if (element.suppressesTooltips()) {
-                    return true;
-                }
+        FramePainter frame = gui.frame();
+        boolean hasBelowBand = true;
+        boolean drawBottomEdge = false;
+        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
+        List<ElementPlacement> placements = collectElementPlacements(frame, frame.currentSlotArea());
+        for (ElementPlacement placement : placements) {
+            if (placement.element().suppressesTooltips()) {
+                return true;
             }
         }
-        return gui.hasBelow() && gui.below() != null && gui.below().suppressesTooltips();
+        return false;
+    }
+
+    private class MenuInitContext implements ElementPainter.InitContext {
+        private @Nullable ElementPainter currentOwner;
+
+        private void runWithOwner(ElementPainter owner, Runnable action) {
+            ElementPainter previous = this.currentOwner;
+            this.currentOwner = owner;
+            try {
+                action.run();
+            } finally {
+                this.currentOwner = previous;
+            }
+        }
+
+        @Override
+        public <W extends AbstractWidget> W addRenderableWidget(W widget) {
+            UiRenderLayer layer = resolveWidgetLayer(this.currentOwner, widget);
+            int zIndex = resolveWidgetZIndex(this.currentOwner, widget);
+            managedWidgets.add(new ManagedWidget(widget, layer, zIndex));
+            return FizzyMenuScreenHost.this.addWidget(widget);
+        }
+    }
+
+    private record ManagedWidget(AbstractWidget widget, UiRenderLayer layer, int zIndex) {
+    }
+
+    private record ElementPlacement(ElementPainter element, int left, int top, int width, int height, int order) {
     }
 
     private record PlayerInventoryAnchors(int firstInventorySlotX, int firstInventorySlotY, int firstHotbarSlotY) {

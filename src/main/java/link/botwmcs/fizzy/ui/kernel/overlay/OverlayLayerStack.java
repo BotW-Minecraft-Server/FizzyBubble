@@ -4,12 +4,17 @@ import link.botwmcs.fizzy.client.overlay.Anchor;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 public final class OverlayLayerStack {
+    private static final List<OverlayLayerKey> ORDERED_LAYERS = Arrays.stream(OverlayLayerKey.values())
+            .sorted(Comparator.comparingInt(OverlayLayerKey::priority))
+            .toList();
+
     private final Map<OverlayLayerKey, List<OverlayRenderable>> layers = new EnumMap<>(OverlayLayerKey.class);
     private final Map<OverlayLayerKey, OverlayLayoutConfig> layoutConfigs = new EnumMap<>(OverlayLayerKey.class);
     private final OverlayFocusState focusState = new OverlayFocusState();
@@ -99,12 +104,35 @@ public final class OverlayLayerStack {
         return List.copyOf(list);
     }
 
+    public void renderAllLayers(
+            GuiGraphics graphics,
+            int screenWidth,
+            int screenHeight,
+            float partialTick
+    ) {
+        for (OverlayLayerKey layer : ORDERED_LAYERS) {
+            renderLayerWithPolicy(graphics, screenWidth, screenHeight, partialTick, layer);
+        }
+        releaseDeadRefs();
+    }
+
     public void renderHud(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick, Anchor anchor, boolean forceAnchor) {
         renderLayer(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.HUD, anchor, forceAnchor);
     }
 
     public void renderHudPerAnchor(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
         renderLayerPerAnchor(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.HUD);
+    }
+
+    public void renderLayer(
+            GuiGraphics graphics,
+            int screenWidth,
+            int screenHeight,
+            float partialTick,
+            OverlayLayerKey layer
+    ) {
+        renderLayerWithPolicy(graphics, screenWidth, screenHeight, partialTick, layer);
+        releaseDeadRefs();
     }
 
     public void renderLayer(
@@ -121,11 +149,8 @@ public final class OverlayLayerStack {
             releaseDeadRefs();
             return;
         }
-        OverlayLayoutEngine.layout(screenWidth, screenHeight, ordered, anchor, layoutConfig(layer), forceAnchor);
-        for (OverlayRenderable renderable : ordered) {
-            renderable.render(graphics, partialTick);
-        }
-        focusState.promoteTop(ordered);
+        applyBeforeLayout(ordered, screenWidth, screenHeight);
+        renderOrderedLayer(graphics, screenWidth, screenHeight, partialTick, layer, ordered, anchor, forceAnchor);
         releaseDeadRefs();
     }
 
@@ -136,11 +161,56 @@ public final class OverlayLayerStack {
             float partialTick,
             OverlayLayerKey layer
     ) {
-        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, Anchor.TOP_LEFT);
-        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, Anchor.TOP_RIGHT);
-        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, Anchor.BOTTOM_LEFT);
-        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, Anchor.BOTTOM_RIGHT);
+        List<OverlayRenderable> ordered = activeRenderables(layer);
+        if (ordered.isEmpty()) {
+            releaseDeadRefs();
+            return;
+        }
+        applyBeforeLayout(ordered, screenWidth, screenHeight);
+        renderLayerPerAnchorGroups(graphics, screenWidth, screenHeight, partialTick, layer, ordered);
         releaseDeadRefs();
+    }
+
+    private void renderLayerWithPolicy(
+            GuiGraphics graphics,
+            int screenWidth,
+            int screenHeight,
+            float partialTick,
+            OverlayLayerKey layer
+    ) {
+        List<OverlayRenderable> ordered = activeRenderables(layer);
+        if (ordered.isEmpty()) {
+            return;
+        }
+        applyBeforeLayout(ordered, screenWidth, screenHeight);
+        if (layer.usesPerAnchorLayout()) {
+            renderLayerPerAnchorGroups(graphics, screenWidth, screenHeight, partialTick, layer, ordered);
+            return;
+        }
+        renderOrderedLayer(
+                graphics,
+                screenWidth,
+                screenHeight,
+                partialTick,
+                layer,
+                ordered,
+                layer.defaultAnchor(),
+                layer.forceAnchorIntoInstance()
+        );
+    }
+
+    private void renderLayerPerAnchorGroups(
+            GuiGraphics graphics,
+            int screenWidth,
+            int screenHeight,
+            float partialTick,
+            OverlayLayerKey layer,
+            List<OverlayRenderable> source
+    ) {
+        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, source, Anchor.TOP_LEFT);
+        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, source, Anchor.TOP_RIGHT);
+        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, source, Anchor.BOTTOM_LEFT);
+        renderLayerAnchorGroup(graphics, screenWidth, screenHeight, partialTick, layer, source, Anchor.BOTTOM_RIGHT);
     }
 
     private void renderLayerAnchorGroup(
@@ -149,12 +219,9 @@ public final class OverlayLayerStack {
             int screenHeight,
             float partialTick,
             OverlayLayerKey layer,
+            List<OverlayRenderable> source,
             Anchor anchor
     ) {
-        List<OverlayRenderable> source = activeRenderables(layer);
-        if (source.isEmpty()) {
-            return;
-        }
         List<OverlayRenderable> group = new ArrayList<>();
         for (OverlayRenderable renderable : source) {
             if (renderable.getAnchor() == anchor) {
@@ -169,6 +236,29 @@ public final class OverlayLayerStack {
             renderable.render(graphics, partialTick);
         }
         focusState.promoteTop(group);
+    }
+
+    private void renderOrderedLayer(
+            GuiGraphics graphics,
+            int screenWidth,
+            int screenHeight,
+            float partialTick,
+            OverlayLayerKey layer,
+            List<OverlayRenderable> ordered,
+            Anchor anchor,
+            boolean forceAnchor
+    ) {
+        OverlayLayoutEngine.layout(screenWidth, screenHeight, ordered, anchor, layoutConfig(layer), forceAnchor);
+        for (OverlayRenderable renderable : ordered) {
+            renderable.render(graphics, partialTick);
+        }
+        focusState.promoteTop(ordered);
+    }
+
+    private static void applyBeforeLayout(List<OverlayRenderable> renderables, int screenWidth, int screenHeight) {
+        for (OverlayRenderable renderable : renderables) {
+            renderable.beforeLayout(screenWidth, screenHeight);
+        }
     }
 
     private List<OverlayRenderable> activeRenderables(OverlayLayerKey layer) {

@@ -4,6 +4,7 @@ import link.botwmcs.fizzy.client.util.TextRenderer;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
+import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -22,7 +23,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class FizzyTooltipElement implements ElementPainter {
-    private static final int TOOLTIP_Z = 400;
     private static int globalSuppressionDepth = 0;
     private static final TooltipColors DEFAULT_COLORS = new TooltipColors(
             -267386864,
@@ -94,6 +94,14 @@ public final class FizzyTooltipElement implements ElementPainter {
         return globalSuppressionDepth > 0;
     }
 
+    public static boolean isTooltipWidget(AbstractWidget widget) {
+        return widget instanceof TooltipWidget;
+    }
+
+    public static int defaultTooltipZIndex() {
+        return 120;
+    }
+
     @Override
     public void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {
         this.widget = new TooltipWidget(leftPx, topPx, widthPx, heightPx);
@@ -110,6 +118,16 @@ public final class FizzyTooltipElement implements ElementPainter {
     @Override
     public ElementType type() {
         return ElementType.CUSTOM;
+    }
+
+    @Override
+    public UiRenderLayer layer() {
+        return UiRenderLayer.tooltip(0);
+    }
+
+    @Override
+    public int zIndex() {
+        return defaultTooltipZIndex();
     }
 
     @Override
@@ -176,20 +194,18 @@ public final class FizzyTooltipElement implements ElementPainter {
         Vector2ic pos = positioner.positionTooltip(screenW, screenH, mouseX, mouseY, textWidth, textHeight);
         int x = pos.x();
         int y = pos.y();
+        int tooltipDepth = 0;
 
         TooltipRenderUtil.renderTooltipBackground(
                 g,
                 x, y,
                 textWidth, textHeight,
-                TOOLTIP_Z,
+                tooltipDepth,
                 colors.bgColor1(),
                 colors.bgColor2(),
                 colors.edgeColor1(),
                 colors.edgeColor2()
         );
-        g.pose().pushPose();
-        g.pose().translate(0.0f, 0.0f, TOOLTIP_Z);
-
         float availableWidthPx = textWidth;
         float availableHeightPx = textHeight;
         float totalHeightPx = layout.totalHeightPx();
@@ -223,8 +239,6 @@ public final class FizzyTooltipElement implements ElementPainter {
                 yOffset += lineSpacing * scale;
             }
         }
-
-        g.pose().popPose();
     }
 
     private LineLayout ensureLayout(Font font) {

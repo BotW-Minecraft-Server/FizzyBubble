@@ -16,8 +16,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class FizzyComponentElement implements AnimatableElement {
-    private static final float FCE_LAYER_Z = 80.0f;
-
     private final TextRenderer.Builder<?> baseBuilder;
     private final List<LineSpec> lineSpecs;
     private final boolean wrap;
@@ -83,50 +81,49 @@ public final class FizzyComponentElement implements AnimatableElement {
             return;
         }
 
-        g.pose().pushPose();
-        g.pose().translate(0.0f, 0.0f, FCE_LAYER_Z);
-        try {
-            float availableWidthPx = widthPx;
-            float availableHeightPx = heightPx;
-            float totalHeightPx = layout.totalHeightPx();
-            float y = 0.0f;
-            if (align == TextRenderer.Align.CENTER) {
-                y = (availableHeightPx - totalHeightPx) * 0.5f;
-            }
+        float availableWidthPx = widthPx;
+        float availableHeightPx = heightPx;
+        float totalHeightPx = layout.totalHeightPx();
+        float y = 0.0f;
+        if (align == TextRenderer.Align.CENTER) {
+            y = (availableHeightPx - totalHeightPx) * 0.5f;
+        }
 
-            List<Float> lineWidthsPx = layout.widthsPx();
-            int lineCount = lineRenderers.size();
-            for (int i = 0; i < lineCount; i++) {
-                TextRenderer lineRenderer = lineRenderers.get(i);
-                float lineWidthPx = lineWidthsPx.get(i);
-                float x;
-                switch (align) {
-                    case CENTER -> x = (availableWidthPx - lineWidthPx) * 0.5f;
-                    case RIGHT -> x = availableWidthPx - lineWidthPx;
-                    default -> x = 0.0f;
-                }
-                int offsetXPx = Math.round(x);
-                int offsetYPx = Math.round(y);
-                g.pose().pushPose();
-                g.pose().translate(offsetXPx, offsetYPx, 0.0f);
-                lineRenderer.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
-                g.pose().popPose();
-
-                float scale = Math.max(0.01f, lineRenderer.textScale());
-                float lineHeightPx = font.lineHeight * scale;
-                y += lineHeightPx;
-                if (i < lineCount - 1) {
-                    y += lineSpacing * scale;
-                }
+        List<Float> lineWidthsPx = layout.widthsPx();
+        int lineCount = lineRenderers.size();
+        for (int i = 0; i < lineCount; i++) {
+            TextRenderer lineRenderer = lineRenderers.get(i);
+            float lineWidthPx = lineWidthsPx.get(i);
+            float x;
+            switch (align) {
+                case CENTER -> x = (availableWidthPx - lineWidthPx) * 0.5f;
+                case RIGHT -> x = availableWidthPx - lineWidthPx;
+                default -> x = 0.0f;
             }
-        } finally {
+            int offsetXPx = Math.round(x);
+            int offsetYPx = Math.round(y);
+            g.pose().pushPose();
+            g.pose().translate(offsetXPx, offsetYPx, 0.0f);
+            lineRenderer.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
             g.pose().popPose();
+
+            float scale = Math.max(0.01f, lineRenderer.textScale());
+            float lineHeightPx = font.lineHeight * scale;
+            y += lineHeightPx;
+            if (i < lineCount - 1) {
+                y += lineSpacing * scale;
+            }
         }
     }
 
     @Override
     public ElementType type() {
         return ElementType.COMPONENT;
+    }
+
+    @Override
+    public int zIndex() {
+        return 80;
     }
 
     public TextRenderer.Align alignMode() {

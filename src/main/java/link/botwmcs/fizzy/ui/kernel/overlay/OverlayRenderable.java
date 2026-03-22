@@ -4,6 +4,9 @@ import link.botwmcs.fizzy.client.overlay.Anchor;
 import net.minecraft.client.gui.GuiGraphics;
 
 public interface OverlayRenderable {
+    default void beforeLayout(int screenWidth, int screenHeight) {
+    }
+
     boolean isActive();
 
     void hide();
