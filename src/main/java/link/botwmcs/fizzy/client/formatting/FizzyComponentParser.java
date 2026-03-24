@@ -23,10 +23,6 @@ public final class FizzyComponentParser {
     }
 
     public static Component parseText(String input, Style baseStyle) {
-        return parseText(input, baseStyle, 0.0F);
-    }
-
-    public static Component parseText(String input, Style baseStyle, float rainbowTime) {
         MutableComponent out = Component.empty();
         if (input == null || input.isEmpty()) {
             return out;

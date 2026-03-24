@@ -17,12 +17,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Global client-side emoji registry.
  *
- * Note: this class only provides token -> source mapping API for now.
- * Token parsing/injection is handled by higher-level formatting pipeline.
+ * Workflow:
+ * 1) register static/animated/custom emoji source to a token
+ * 2) player writes :token:
+ * 3) parser maps token -> inline emoji and renderer draws it
  */
 public final class EmojiRegistry {
     private static final String INTERACTIVE_MARKER_PREFIX = "\u0001fizzy_emoji_click\u0001";
@@ -148,6 +151,27 @@ public final class EmojiRegistry {
         VERSION.incrementAndGet();
     }
 
+    /**
+     * Convenience overload for built-in or external modules that prefer a lambda
+     * over implementing {@link EmojiPack}.
+     */
+    public static void registerPack(String packId, Consumer<EmojiPack.Registrar> consumer) {
+        if (consumer == null) {
+            return;
+        }
+        registerPack(new EmojiPack() {
+            @Override
+            public String id() {
+                return packId;
+            }
+
+            @Override
+            public void register(Registrar registrar) {
+                consumer.accept(registrar);
+            }
+        });
+    }
+
     public static void unregisterPack(String packId) {
         String normalizedPack = normalizePackId(packId);
         if (normalizedPack == null || normalizedPack.isEmpty()) {
@@ -165,6 +189,15 @@ public final class EmojiRegistry {
 
     public static Collection<String> tokens() {
         return Collections.unmodifiableSet(new HashSet<>(REGISTRY.keySet()));
+    }
+
+    public static void clearAll() {
+        if (REGISTRY.isEmpty() && PACK_INDEX.isEmpty()) {
+            return;
+        }
+        REGISTRY.clear();
+        PACK_INDEX.clear();
+        VERSION.incrementAndGet();
     }
 
     public static long version() {

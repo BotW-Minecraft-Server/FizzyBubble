@@ -1,6 +1,7 @@
 package link.botwmcs.fizzy.client.formatting;
 
 import link.botwmcs.fizzy.Config;
+import link.botwmcs.fizzy.client.formatting.emoji.EmojiRegistry;
 import link.botwmcs.fizzy.client.formatting.placeholder.PlaceholderRegistry;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -62,10 +63,11 @@ public final class FizzyComponentService {
         }
 
         PlaceholderRegistry.ensureDefaults();
-        long version = PlaceholderRegistry.version();
+        long placeholderVersion = PlaceholderRegistry.version();
+        long emojiVersion = EmojiRegistry.version();
         synchronized (CACHE) {
             CacheEntry cached = CACHE.get(original);
-            if (cached != null && cached.version == version) {
+            if (cached != null && cached.placeholderVersion == placeholderVersion && cached.emojiVersion == emojiVersion) {
                 return cached.formatted;
             }
         }
@@ -81,7 +83,7 @@ public final class FizzyComponentService {
             }, Style.EMPTY);
 
             synchronized (CACHE) {
-                CACHE.put(original, new CacheEntry(version, out));
+                CACHE.put(original, new CacheEntry(placeholderVersion, emojiVersion, out));
             }
             return out;
         } finally {
@@ -134,6 +136,6 @@ public final class FizzyComponentService {
         return text.indexOf('&') >= 0 || text.indexOf(':') >= 0;
     }
 
-    private record CacheEntry(long version, Component formatted) {
+    private record CacheEntry(long placeholderVersion, long emojiVersion, Component formatted) {
     }
 }

@@ -1,14 +1,11 @@
 package link.botwmcs.fizzy;
 
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
-import link.botwmcs.fizzy.client.formatting.emoji.EmojiRegistry;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.menu.FizzyMenus;
 import link.botwmcs.fizzy.menu.FizzyTestMenuScreen;
 import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -38,22 +35,10 @@ public class FizzyClient {
         // Some client setup code
         Fizzy.LOGGER.info("HELLO FROM CLIENT SETUP");
         Fizzy.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-        registerBuiltinEmojiTest();
         AnnounceMessageManager.ensureRegistered();
         if (EnvDetector.isLTSX()) {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
-    }
-
-    private static void registerBuiltinEmojiTest() {
-        ResourceLocation smileTexture = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/components/icon/heart.png");
-        EmojiRegistry.registerStaticInteractive("smile", smileTexture, 9.0F, 9.0F, context -> {
-            Minecraft mc = context.minecraft();
-            if (mc == null || mc.gui == null) {
-                return;
-            }
-            mc.gui.getChat().addMessage(Component.literal("[Fizzy] clicked :" + context.token() + ":"));
-        });
     }
 
     @SubscribeEvent
