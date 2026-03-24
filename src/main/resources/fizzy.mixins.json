@@ -12,6 +12,7 @@
   "client": [
     "client.BossHealthOverlayAccessor",
     "client.BossHealthOverlayMixin",
+    "client.CommandSuggestionsEmojiMixin",
     "client.ComponentRenderUtilsFizzyGlobalMixin",
     "client.FontFizzyGlobalMixin",
     "client.FontSetInlineImageGlyphInfoMixin",

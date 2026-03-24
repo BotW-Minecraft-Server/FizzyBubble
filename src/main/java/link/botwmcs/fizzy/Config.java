@@ -26,6 +26,9 @@ public class Config {
             .comment("Enable Fizzy global text stylization pipeline for all client-side text rendering")
             .comment("Supports '&' styles and placeholder resolution (image/button API)")
             .define("enableFizzyComponent", true);
+    public static final ModConfigSpec.BooleanValue ENABLE_EMOJI_SUGGESTIONS = BUILDER
+            .comment("Enable chat ':' emoji suggestions using vanilla suggestion UI (client-side only)")
+            .define("enableEmojiSuggestions", true);
 
 
 
