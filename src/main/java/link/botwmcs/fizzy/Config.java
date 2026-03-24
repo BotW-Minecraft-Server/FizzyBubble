@@ -22,6 +22,10 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> IMAGE_LOC = BUILDER
             .comment("Location to save images")
             .define("imageLoc", "./images/");
+    public static final ModConfigSpec.BooleanValue ENABLE_FIZZY_COMPONENT = BUILDER
+            .comment("Enable Fizzy global text stylization pipeline for all client-side text rendering")
+            .comment("Supports '&' styles and placeholder resolution (image/button API)")
+            .define("enableFizzyComponent", true);
 
 
 

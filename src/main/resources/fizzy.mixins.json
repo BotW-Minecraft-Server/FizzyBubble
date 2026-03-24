@@ -12,7 +12,15 @@
   "client": [
     "client.BossHealthOverlayAccessor",
     "client.BossHealthOverlayMixin",
+    "client.ComponentRenderUtilsFizzyGlobalMixin",
+    "client.FontFizzyGlobalMixin",
+    "client.FontSetInlineImageGlyphInfoMixin",
+    "client.FontStringRenderOutputInlineImageMixin",
     "client.LogoRendererMixin",
+    "client.MutableComponentFizzyGlobalMixin",
+    "client.ScreenEmojiInteractionMixin",
+    "client.SignTextDynamicRenderMessagesMixin",
+    "client.StringSplitterFizzyStyleSanitizeMixin",
     "client.PanoramaRendererMixin",
     "client.TitleScreenMixin"
   ]
