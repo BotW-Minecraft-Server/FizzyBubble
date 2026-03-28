@@ -10,6 +10,8 @@
     "requireAnnotations": true
   },
   "client": [
+    "client.AbstractContainerScreenAccessor",
+    "client.AbstractContainerScreenRenderStageMixin",
     "client.BossHealthOverlayAccessor",
     "client.BossHealthOverlayMixin",
     "client.CommandSuggestionsEmojiMixin",
@@ -18,6 +20,7 @@
     "client.FontSetInlineImageGlyphInfoMixin",
     "client.FontStringRenderOutputInlineImageMixin",
     "client.MutableComponentFizzyGlobalMixin",
+    "client.ScreenRenderStageMixin",
     "client.ScreenEmojiInteractionMixin",
     "client.SignTextDynamicRenderMessagesMixin",
     "client.StringSplitterFizzyStyleSanitizeMixin"

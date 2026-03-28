@@ -2,9 +2,12 @@ package link.botwmcs.fizzy;
 
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.formatting.emoji.builtin.IconEmojiPack;
+import link.botwmcs.fizzy.client.gui.TitleScreenProxyDemo;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.menu.FizzyMenus;
 import link.botwmcs.fizzy.menu.FizzyTestMenuScreen;
+import link.botwmcs.fizzy.proxy.api.HostRenderStage;
+import link.botwmcs.fizzy.proxy.runtime.ScreenProxyRuntime;
 import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -38,6 +41,7 @@ public class FizzyClient {
         Fizzy.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         AnnounceMessageManager.ensureRegistered();
         IconEmojiPack.registerBuiltin();
+        TitleScreenProxyDemo.register(ScreenProxyRuntime.instance().ruleRegistry());
         if (EnvDetector.isLTSX()) {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
@@ -59,13 +63,42 @@ public class FizzyClient {
     }
 
     @SubscribeEvent
+    static void onScreenInitPost(ScreenEvent.Init.Post event) {
+        ScreenProxyRuntime.instance().onScreenInit(event.getScreen());
+    }
+
+    @SubscribeEvent
+    static void onScreenRenderPre(ScreenEvent.Render.Pre event) {
+        ScreenProxyRuntime.instance().onRenderStage(
+                event.getScreen(),
+                HostRenderStage.SCREEN_PRE,
+                event.getGuiGraphics(),
+                (int) event.getMouseX(),
+                (int) event.getMouseY(),
+                0.0f
+        );
+    }
+
+    @SubscribeEvent
     static void onScreenRenderPost(ScreenEvent.Render.Post event) {
+        ScreenProxyRuntime.instance().onRenderStage(
+                event.getScreen(),
+                HostRenderStage.SCREEN_POST,
+                event.getGuiGraphics(),
+                (int) event.getMouseX(),
+                (int) event.getMouseY(),
+                0.0f
+        );
         OverlayManager.onMouseMoved(event.getMouseX(), event.getMouseY());
     }
 
     @SubscribeEvent
     static void onScreenMousePressed(ScreenEvent.MouseButtonPressed.Pre event) {
         if (OverlayManager.onMouseClicked(event.getMouseX(), event.getMouseY(), event.getButton())) {
+            event.setCanceled(true);
+            return;
+        }
+        if (ScreenProxyRuntime.instance().onMouseClicked(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton())) {
             event.setCanceled(true);
         }
     }
@@ -74,12 +107,27 @@ public class FizzyClient {
     static void onScreenMouseReleased(ScreenEvent.MouseButtonReleased.Pre event) {
         if (OverlayManager.onMouseReleased(event.getMouseX(), event.getMouseY(), event.getButton())) {
             event.setCanceled(true);
+            return;
+        }
+        if (ScreenProxyRuntime.instance().onMouseReleased(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton())) {
+            event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     static void onScreenMouseDragged(ScreenEvent.MouseDragged.Pre event) {
         if (OverlayManager.onMouseDragged(event.getMouseX(), event.getMouseY(), event.getMouseButton(), event.getDragX(), event.getDragY())) {
+            event.setCanceled(true);
+            return;
+        }
+        if (ScreenProxyRuntime.instance().onMouseDragged(
+                event.getScreen(),
+                event.getMouseX(),
+                event.getMouseY(),
+                event.getMouseButton(),
+                event.getDragX(),
+                event.getDragY()
+        )) {
             event.setCanceled(true);
         }
     }
@@ -88,6 +136,21 @@ public class FizzyClient {
     static void onScreenMouseScrolled(ScreenEvent.MouseScrolled.Pre event) {
         if (OverlayManager.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDeltaX(), event.getScrollDeltaY())) {
             event.setCanceled(true);
+            return;
         }
+        if (ScreenProxyRuntime.instance().onMouseScrolled(
+                event.getScreen(),
+                event.getMouseX(),
+                event.getMouseY(),
+                event.getScrollDeltaX(),
+                event.getScrollDeltaY()
+        )) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    static void onScreenClosing(ScreenEvent.Closing event) {
+        ScreenProxyRuntime.instance().onScreenClosing(event.getScreen());
     }
 }

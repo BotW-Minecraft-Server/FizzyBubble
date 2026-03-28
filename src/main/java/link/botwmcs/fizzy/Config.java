@@ -6,12 +6,6 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 // Demonstrates how to use Neo's config APIs
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-    public static final ModConfigSpec.ConfigValue<String> SERVER_ADDR = BUILDER
-            .comment("Join multiplayer server address (ipv4)")
-            .define("serverAddr", "server.botwmcs.link");
-    public static final ModConfigSpec.BooleanValue ENABLE_ONLINE_GALLERY = BUILDER
-            .comment("Enable online gallery")
-            .define("enableOnlineGallery", true);
     public static final ModConfigSpec.ConfigValue<String> GALLERY_URL = BUILDER
             .comment("Online gallery url")
             .comment("Do not change unless you know what you are doing")
@@ -19,9 +13,6 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> TOKEN = BUILDER
             .comment("Token for online gallery")
             .define("token", "1c17b11693cb5ec63859b091c5b9c1b2");
-    public static final ModConfigSpec.ConfigValue<String> IMAGE_LOC = BUILDER
-            .comment("Location to save images")
-            .define("imageLoc", "./images/");
     public static final ModConfigSpec.BooleanValue ENABLE_FIZZY_COMPONENT = BUILDER
             .comment("Enable Fizzy global text stylization pipeline for all client-side text rendering")
             .comment("Supports '&' styles and placeholder resolution (image/button API)")
