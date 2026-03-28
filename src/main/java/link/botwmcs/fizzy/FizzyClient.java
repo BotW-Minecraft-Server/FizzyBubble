@@ -2,7 +2,6 @@ package link.botwmcs.fizzy;
 
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.formatting.emoji.builtin.IconEmojiPack;
-import link.botwmcs.fizzy.client.gui.TitleScreenProxyDemo;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
 import link.botwmcs.fizzy.menu.FizzyMenus;
 import link.botwmcs.fizzy.menu.FizzyTestMenuScreen;
@@ -41,7 +40,6 @@ public class FizzyClient {
         Fizzy.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         AnnounceMessageManager.ensureRegistered();
         IconEmojiPack.registerBuiltin();
-        TitleScreenProxyDemo.register(ScreenProxyRuntime.instance().ruleRegistry());
         if (EnvDetector.isLTSX()) {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
