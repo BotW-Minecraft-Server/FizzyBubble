@@ -1,5 +1,7 @@
 # Fizzy
 
+![Fizzy Banner](docs/fizzy.png)
+
 Fizzy is a UI framework for Minecraft client mods.  
 It provides:
 

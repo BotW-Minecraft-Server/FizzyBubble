@@ -1,5 +1,7 @@
 # Fizzy
 
+![Fizzy Banner](docs/fizzy.png)
+
 Fizzy 是一个面向 Minecraft 客户端模组的 UI 框架。  
 它提供了：
 
