@@ -15,7 +15,7 @@ import link.botwmcs.fizzy.proxy.rule.ProxyResolutionResult;
 import link.botwmcs.fizzy.proxy.rule.ProxyRuleRegistry;
 import link.botwmcs.fizzy.proxy.rule.ProxyRuleResolver;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 
 import javax.annotation.Nullable;
@@ -86,7 +86,7 @@ public final class ScreenProxyRuntime {
     public void onRenderStage(
             @Nullable Screen screen,
             HostRenderStage stage,
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int mouseX,
             int mouseY,
             float partialTick

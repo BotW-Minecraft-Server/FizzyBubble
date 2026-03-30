@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.element.icon;
 
 import link.botwmcs.fizzy.Fizzy;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
@@ -129,7 +129,7 @@ public enum FizzyIcon {
     private static final String SLIM_ICON_DIR = "textures/gui/components/icon/slim/";
 
     private final String fileName;
-    private final ResourceLocation texture;
+    private final Identifier texture;
 
     FizzyIcon(String fileName) {
         this(SLIM_ICON_DIR, fileName);
@@ -145,7 +145,7 @@ public enum FizzyIcon {
         return this.fileName;
     }
 
-    public ResourceLocation texture() {
+    public Identifier texture() {
         return this.texture;
     }
 }

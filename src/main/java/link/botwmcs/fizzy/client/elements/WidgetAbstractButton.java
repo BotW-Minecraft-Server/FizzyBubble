@@ -1,19 +1,21 @@
 package link.botwmcs.fizzy.client.elements;
 
 import link.botwmcs.fizzy.Fizzy;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.ARGB;
 
 import javax.annotation.Nullable;
 
 public abstract class WidgetAbstractButton extends AbstractButton {
-    private static final ResourceLocation WIDGETS_TEXTURE = Fizzy.resourceLocation("textures/gui/ui/widgets.png");
+    private static final Identifier WIDGETS_TEXTURE = Fizzy.resourceLocation("textures/gui/ui/widgets.png");
     private static final int TEXTURE_SIZE = 256;
     private static final int SPRITE_WIDTH = 15;
     private static final int SPRITE_HEIGHT = 14;
@@ -41,7 +43,14 @@ public abstract class WidgetAbstractButton extends AbstractButton {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public final void onPress(InputWithModifiers input) {
+        this.onPress();
+    }
+
+    public abstract void onPress();
+
+    @Override
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         Sprite sprite = this.sprite;
         if (sprite == null) {
             return;
@@ -57,29 +66,21 @@ public abstract class WidgetAbstractButton extends AbstractButton {
         int drawY = this.getY() + (this.getHeight() - drawHeight) / 2;
 
         float alpha = this.active ? 1.0F : 0.5F;
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
         guiGraphics.blit(
+                RenderPipelines.GUI_TEXTURED,
                 WIDGETS_TEXTURE,
                 drawX,
                 drawY,
-                drawWidth,
-                drawHeight,
                 sprite.u(),
                 sprite.v(),
+                drawWidth,
+                drawHeight,
                 spriteWidth,
                 spriteHeight,
                 TEXTURE_SIZE,
-                TEXTURE_SIZE
+                TEXTURE_SIZE,
+                ARGB.white(alpha)
         );
-        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-    }
-
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        if (this.active && this.visible) {
-            this.playDownSound(Minecraft.getInstance().getSoundManager());
-            this.onPress();
-        }
     }
 
     // tools

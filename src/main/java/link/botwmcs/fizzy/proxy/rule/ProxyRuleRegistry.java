@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.proxy.rule;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,18 +10,18 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class ProxyRuleRegistry {
-    private final Map<ResourceLocation, ProxyRule> rulesById = new LinkedHashMap<>();
+    private final Map<Identifier, ProxyRule> rulesById = new LinkedHashMap<>();
 
     public synchronized void register(ProxyRule rule) {
         Objects.requireNonNull(rule, "rule");
         rulesById.put(rule.id(), rule);
     }
 
-    public synchronized void unregister(ResourceLocation id) {
+    public synchronized void unregister(Identifier id) {
         rulesById.remove(id);
     }
 
-    public synchronized Optional<ProxyRule> get(ResourceLocation id) {
+    public synchronized Optional<ProxyRule> get(Identifier id) {
         return Optional.ofNullable(rulesById.get(id));
     }
 
@@ -37,7 +37,7 @@ public final class ProxyRuleRegistry {
         rulesById.clear();
     }
 
-    public synchronized List<ResourceLocation> ids() {
+    public synchronized List<Identifier> ids() {
         return new ArrayList<>(rulesById.keySet());
     }
 }

@@ -5,8 +5,8 @@ import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ public final class ProgressElement implements AnimatableElement {
     private static final int VANILLA_BAR_HEIGHT = 5;
     private static final int VANILLA_BAR_TEXTURE_WIDTH = 182;
     private static final int VANILLA_BAR_TEXTURE_HEIGHT = 5;
-    private static final ResourceLocation NOTCHED_20_BACKGROUND_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/notched_20_background.png");
-    private static final ResourceLocation NOTCHED_20_PROGRESS_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/notched_20_progress.png");
+    private static final Identifier NOTCHED_20_BACKGROUND_TEXTURE = Identifier.withDefaultNamespace("textures/gui/sprites/boss_bar/notched_20_background.png");
+    private static final Identifier NOTCHED_20_PROGRESS_TEXTURE = Identifier.withDefaultNamespace("textures/gui/sprites/boss_bar/notched_20_progress.png");
     private static final int DEFAULT_MIN_NOTCH_SEGMENT_WIDTH_PX = 4;
     private static final int DEFAULT_CAP_WIDTH_PX = 4;
     private static final int[] AUTO_NOTCH_COUNTS = {20, 12, 10, 6};
@@ -51,7 +51,7 @@ public final class ProgressElement implements AnimatableElement {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (widthPx <= 0 || heightPx <= 0) {
             return;
         }
@@ -266,8 +266,8 @@ public final class ProgressElement implements AnimatableElement {
         return segmentWidth >= minNotchSegmentWidthPx;
     }
 
-    private static void drawScissoredAdaptiveNotch(GuiGraphics g,
-                                                   ResourceLocation texture,
+    private static void drawScissoredAdaptiveNotch(GuiGraphicsExtractor g,
+                                                   Identifier texture,
                                                    int x,
                                                    int y,
                                                    int width,
@@ -294,8 +294,8 @@ public final class ProgressElement implements AnimatableElement {
      * Draw notch overlay without scaling.
      * Width adapts by repeating/cropping the native notched_20 texture (182x5).
      */
-    private static void drawAdaptiveNotch(GuiGraphics g,
-                                          ResourceLocation texture,
+    private static void drawAdaptiveNotch(GuiGraphicsExtractor g,
+                                          Identifier texture,
                                           int x,
                                           int y,
                                           int width,
@@ -362,19 +362,19 @@ public final class ProgressElement implements AnimatableElement {
         WHITE("white"),
         YELLOW("yellow");
 
-        private final ResourceLocation backgroundSprite;
-        private final ResourceLocation progressSprite;
+        private final Identifier backgroundSprite;
+        private final Identifier progressSprite;
 
         Color(String name) {
-            this.backgroundSprite = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/" + name + "_background.png");
-            this.progressSprite = ResourceLocation.withDefaultNamespace("textures/gui/sprites/boss_bar/" + name + "_progress.png");
+            this.backgroundSprite = Identifier.withDefaultNamespace("textures/gui/sprites/boss_bar/" + name + "_background.png");
+            this.progressSprite = Identifier.withDefaultNamespace("textures/gui/sprites/boss_bar/" + name + "_progress.png");
         }
 
-        public ResourceLocation backgroundTexture() {
+        public Identifier backgroundTexture() {
             return backgroundSprite;
         }
 
-        public ResourceLocation progressTexture() {
+        public Identifier progressTexture() {
             return progressSprite;
         }
 

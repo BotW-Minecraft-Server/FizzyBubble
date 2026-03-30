@@ -8,7 +8,7 @@ import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 
 import javax.annotation.Nullable;
@@ -116,10 +116,10 @@ public final class HostRenderSupport {
         return false;
     }
 
-    public static void renderElement(GuiGraphics graphics, ElementPlacement placement, float partialTick) {
+    public static void renderElement(GuiGraphicsExtractor graphics, ElementPlacement placement, float partialTick) {
         ElementPainter element = placement.element();
-        graphics.pose().pushPose();
-        graphics.pose().translate(0.0f, 0.0f, element.zIndex());
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(0.0f, 0.0f);
         try {
             element.render(
                     graphics,
@@ -130,21 +130,21 @@ public final class HostRenderSupport {
                     partialTick
             );
         } finally {
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
         }
     }
 
-    public static void renderManagedWidget(GuiGraphics graphics, ManagedWidget managedWidget, int mouseX, int mouseY, float partialTick) {
+    public static void renderManagedWidget(GuiGraphicsExtractor graphics, ManagedWidget managedWidget, int mouseX, int mouseY, float partialTick) {
         AbstractWidget widget = managedWidget.widget();
         if (!widget.visible) {
             return;
         }
-        graphics.pose().pushPose();
-        graphics.pose().translate(0.0f, 0.0f, managedWidget.zIndex());
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(0.0f, 0.0f);
         try {
-            widget.render(graphics, mouseX, mouseY, partialTick);
+            widget.extractRenderState(graphics, mouseX, mouseY, partialTick);
         } finally {
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
         }
     }
 

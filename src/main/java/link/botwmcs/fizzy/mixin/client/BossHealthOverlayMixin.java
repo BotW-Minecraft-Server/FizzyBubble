@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.mixin.client;
 
 import link.botwmcs.fizzy.client.util.BossbarRenderProbe;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.BossHealthOverlay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BossHealthOverlay.class)
 public abstract class BossHealthOverlayMixin {
     @Inject(method = "render", at = @At("HEAD"))
-    private void fizzy$beginFrame(GuiGraphics gg, CallbackInfo ci) {
+    private void fizzy$beginFrame(GuiGraphicsExtractor gg, CallbackInfo ci) {
         BossbarRenderProbe.beginFrame();
     }
 
@@ -20,7 +20,7 @@ public abstract class BossHealthOverlayMixin {
             method = "render",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;drawBar(Lnet/minecraft/client/gui/GuiGraphics;IILnet/minecraft/world/BossEvent;)V"
+                    target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;drawBar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/BossEvent;)V"
             ),
             index = 2 // 第二个参数是 y
     )
@@ -31,7 +31,7 @@ public abstract class BossHealthOverlayMixin {
 
     // 帧结束：计算底边
     @Inject(method = "render", at = @At("TAIL"))
-    private void fizzy$endFrame(GuiGraphics gg, CallbackInfo ci) {
+    private void fizzy$endFrame(GuiGraphicsExtractor gg, CallbackInfo ci) {
         BossbarRenderProbe.endFrame();
     }
 }

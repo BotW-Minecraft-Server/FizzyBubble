@@ -5,28 +5,28 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.io.IOException;
 import java.util.Optional;
 
 public class ImageBehind implements BehindPainter {
-    private ResourceLocation behindTexture = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/title/background/default.png");
+    private Identifier behindTexture = Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/title/background/default.png");
     private int texW = 0;
     private int texH = 0;
     private boolean sizeChecked = false;
 
-    public ImageBehind(ResourceLocation behindTexture) {
+    public ImageBehind(Identifier behindTexture) {
         if (behindTexture != null) {
             this.behindTexture = behindTexture;
         }
     }
 
     @Override
-    public void paint(GuiGraphics g, FramePainter painter, float partialTick) {
+    public void paint(GuiGraphicsExtractor g, FramePainter painter, float partialTick) {
         Minecraft mc = Minecraft.getInstance();
 
         final int sw = mc.getWindow().getGuiScaledWidth();

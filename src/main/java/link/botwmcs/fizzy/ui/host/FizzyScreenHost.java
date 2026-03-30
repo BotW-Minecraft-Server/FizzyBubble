@@ -16,7 +16,7 @@ import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
@@ -98,7 +98,7 @@ public class FizzyScreenHost extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics g, int mx, int my, float dt) {
+    public void render(GuiGraphicsExtractor g, int mx, int my, float dt) {
         if (runtime != null) {
             runtime.frameTick();
         }
@@ -142,7 +142,7 @@ public class FizzyScreenHost extends Screen {
         }
 
         for (Renderable renderable : this.renderables) {
-            queue.add(UiRenderLayer.widgets(Integer.MAX_VALUE), () -> renderable.render(g, mx, my, dt));
+            queue.add(UiRenderLayer.widgets(Integer.MAX_VALUE), () -> renderable.extractRenderState(g, mx, my, dt));
         }
 
         if (suppressTooltips) {

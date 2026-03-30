@@ -3,10 +3,10 @@ package link.botwmcs.fizzy.proxy.host;
 import link.botwmcs.fizzy.proxy.api.HostRenderStage;
 import link.botwmcs.fizzy.proxy.api.HostStageCapabilities;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class GenericScreenHostAdapter implements HostAdapter {
-    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("fizzy", "generic_screen");
+    private static final Identifier ID = Identifier.fromNamespaceAndPath("fizzy", "generic_screen");
     private static final HostStageCapabilities STAGES = HostStageCapabilities.of(
             HostRenderStage.SCREEN_PRE,
             HostRenderStage.SOURCE_CONTENT_PRE,
@@ -15,7 +15,7 @@ public final class GenericScreenHostAdapter implements HostAdapter {
     );
 
     @Override
-    public ResourceLocation id() {
+    public Identifier id() {
         return ID;
     }
 

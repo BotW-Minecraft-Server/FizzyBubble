@@ -4,7 +4,7 @@ import link.botwmcs.fizzy.client.util.AnimationClock;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +44,7 @@ public final class AnimatedElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (animations.isEmpty()) {
             delegate.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
             return;
@@ -77,9 +77,9 @@ public final class AnimatedElement implements ElementPainter {
         float fracY = exactTop - renderTop;
         transform.clearOffset();
 
-        g.pose().pushPose();
+        g.pose().pushMatrix();
         if (fracX != 0.0f || fracY != 0.0f) {
-            g.pose().translate(fracX, fracY, 0.0f);
+            g.pose().translate(fracX, fracY);
         }
         transform.applyToPose(g.pose(), renderLeft, renderTop, widthPx, heightPx);
         boolean colorApplied = transform.applyColor(g);
@@ -95,7 +95,7 @@ public final class AnimatedElement implements ElementPainter {
         if (colorApplied) {
             g.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     @Override

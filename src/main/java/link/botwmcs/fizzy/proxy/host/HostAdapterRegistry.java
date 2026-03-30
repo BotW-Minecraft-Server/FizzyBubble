@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.proxy.host;
 
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,14 +17,14 @@ public final class HostAdapterRegistry {
             .reversed()
             .thenComparing(adapter -> adapter.id().toString());
 
-    private final Map<ResourceLocation, HostAdapter> adapters = new LinkedHashMap<>();
+    private final Map<Identifier, HostAdapter> adapters = new LinkedHashMap<>();
 
     public synchronized void register(HostAdapter adapter) {
         Objects.requireNonNull(adapter, "adapter");
         adapters.put(adapter.id(), adapter);
     }
 
-    public synchronized void unregister(ResourceLocation id) {
+    public synchronized void unregister(Identifier id) {
         adapters.remove(id);
     }
 

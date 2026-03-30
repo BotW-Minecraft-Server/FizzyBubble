@@ -2,8 +2,9 @@ package link.botwmcs.fizzy.client.elements;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
@@ -32,7 +33,14 @@ public abstract class VanillaLikeAbstractButton extends AbstractButton {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public final void onPress(InputWithModifiers input) {
+        this.onPress();
+    }
+
+    public abstract void onPress();
+
+    @Override
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         Style style = this.currentStyle();
         renderCodeBackground(guiGraphics, style);
         renderText(guiGraphics, style);
@@ -46,7 +54,7 @@ public abstract class VanillaLikeAbstractButton extends AbstractButton {
         return this.isHoveredOrFocused() ? triplet.hover() : triplet.normal();
     }
 
-    private void renderCodeBackground(GuiGraphics guiGraphics, Style style) {
+    private void renderCodeBackground(GuiGraphicsExtractor guiGraphics, Style style) {
         if (this.getWidth() <= 2 || this.getHeight() <= 2) {
             return;
         }
@@ -76,7 +84,7 @@ public abstract class VanillaLikeAbstractButton extends AbstractButton {
         guiGraphics.fill(right, top, right + 1, bottom, outline);
     }
 
-    private void renderText(GuiGraphics guiGraphics, Style style) {
+    private void renderText(GuiGraphicsExtractor guiGraphics, Style style) {
         Font font = Minecraft.getInstance().font;
         Component message = this.getMessage();
         int alphaInt = clampToByte(Math.round(this.alpha * 255.0F));
@@ -87,17 +95,9 @@ public abstract class VanillaLikeAbstractButton extends AbstractButton {
         int textY = this.getY() + (this.getHeight() - 8) / 2;
 
         if (this.drawTextShadow) {
-            guiGraphics.drawString(font, message, textX + 1, textY + 1, shadowColor, false);
+            guiGraphics.text(font, message, textX + 1, textY + 1, shadowColor, false);
         }
-        guiGraphics.drawString(font, message, textX, textY, textColor, false);
-    }
-
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        if (this.active && this.visible) {
-            this.playDownSound(Minecraft.getInstance().getSoundManager());
-            this.onPress();
-        }
+        guiGraphics.text(font, message, textX, textY, textColor, false);
     }
 
     @Override

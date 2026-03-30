@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.ui.frame;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public interface FramePainter {
     /**
@@ -10,7 +10,7 @@ public interface FramePainter {
      * @param h    GUI 高度（像素）
      * @param drawBottomEdge 是否绘制底边（Screen 渲染 true；Menu 渲染 false）
      */
-    void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow);
+    void paint(GuiGraphicsExtractor g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow);
     FrameMetrics metrics();
     void setLayout(int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow);
     Layout layout();

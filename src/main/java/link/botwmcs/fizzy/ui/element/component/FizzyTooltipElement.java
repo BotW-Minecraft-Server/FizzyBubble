@@ -8,7 +8,7 @@ import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
@@ -109,7 +109,7 @@ public final class FizzyTooltipElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.widget, leftPx, topPx, widthPx, heightPx);
     }
 
@@ -139,7 +139,7 @@ public final class FizzyTooltipElement implements ElementPainter {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             if (isGloballySuppressed() || !this.visible || !isPointInside(mouseX, mouseY)) {
                 return;
             }
@@ -148,10 +148,6 @@ public final class FizzyTooltipElement implements ElementPainter {
 
         @Override
         protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
-        }
-
-        @Override
-        public void onClick(double mouseX, double mouseY) {
         }
 
         @Override
@@ -171,7 +167,7 @@ public final class FizzyTooltipElement implements ElementPainter {
         }
     }
 
-    private void renderTooltip(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    private void renderTooltip(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.options.hideGui) {
             return;
@@ -192,18 +188,7 @@ public final class FizzyTooltipElement implements ElementPainter {
         Vector2ic pos = positioner.positionTooltip(screenW, screenH, mouseX, mouseY, textWidth, textHeight);
         int x = pos.x();
         int y = pos.y();
-        int tooltipDepth = 0;
-
-        TooltipRenderUtil.renderTooltipBackground(
-                g,
-                x, y,
-                textWidth, textHeight,
-                tooltipDepth,
-                colors.bgColor1(),
-                colors.bgColor2(),
-                colors.edgeColor1(),
-                colors.edgeColor2()
-        );
+        TooltipRenderUtil.extractTooltipBackground(g, x, y, textWidth, textHeight, null);
         float availableWidthPx = textWidth;
         float availableHeightPx = textHeight;
         float totalHeightPx = layout.totalHeightPx();
@@ -225,10 +210,10 @@ public final class FizzyTooltipElement implements ElementPainter {
             }
             int offsetXPx = Math.round(xOffset);
             int offsetYPx = Math.round(yOffset);
-            g.pose().pushPose();
-            g.pose().translate(offsetXPx, offsetYPx, 0.0f);
+            g.pose().pushMatrix();
+            g.pose().translate(offsetXPx, offsetYPx);
             lineRenderer.render(g, x, y, textWidth, textHeight, partialTick);
-            g.pose().popPose();
+            g.pose().popMatrix();
 
             float scale = Math.max(0.01f, lineRenderer.textScale());
             float lineHeightPx = font.lineHeight * scale;

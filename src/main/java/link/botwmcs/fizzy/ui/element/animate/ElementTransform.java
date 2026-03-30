@@ -1,7 +1,6 @@
 package link.botwmcs.fizzy.ui.element.animate;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import org.joml.Matrix3x2fStack;
 
 public final class ElementTransform {
     private float offsetX;
@@ -142,15 +141,11 @@ public final class ElementTransform {
         return colorA;
     }
 
-    public boolean applyColor(net.minecraft.client.gui.GuiGraphics g) {
-        if (!colorSet || (colorR == 1.0f && colorG == 1.0f && colorB == 1.0f && colorA == 1.0f)) {
-            return false;
-        }
-        g.setColor(colorR, colorG, colorB, colorA);
-        return true;
+    public boolean applyColor(net.minecraft.client.gui.GuiGraphicsExtractor g) {
+        return false;
     }
 
-    public void applyToPose(PoseStack pose, int leftPx, int topPx, int widthPx, int heightPx) {
+    public void applyToPose(Matrix3x2fStack pose, int leftPx, int topPx, int widthPx, int heightPx) {
         boolean hasScale = scaleX != 1.0f || scaleY != 1.0f;
         boolean hasRotation = rotationRad != 0.0f;
         if (!hasScale && !hasRotation) {
@@ -172,13 +167,13 @@ public final class ElementTransform {
             pivotAbsY = topPx + heightPx * 0.5f;
         }
 
-        pose.translate(pivotAbsX, pivotAbsY, 0.0f);
+        pose.translate(pivotAbsX, pivotAbsY);
         if (hasRotation) {
-            pose.mulPose(Axis.ZP.rotation(rotationRad));
+            pose.rotate(rotationRad);
         }
         if (hasScale) {
-            pose.scale(scaleX, scaleY, 1.0f);
+            pose.scale(scaleX, scaleY);
         }
-        pose.translate(-pivotAbsX, -pivotAbsY, 0.0f);
+        pose.translate(-pivotAbsX, -pivotAbsY);
     }
 }

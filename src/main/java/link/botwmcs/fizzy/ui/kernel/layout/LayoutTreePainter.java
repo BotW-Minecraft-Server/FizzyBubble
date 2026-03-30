@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.kernel.layout;
 
 import link.botwmcs.fizzy.ui.element.ElementPainter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.Objects;
 
@@ -22,7 +22,7 @@ public final class LayoutTreePainter implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor graphics, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (mountContext == null) {
             return;
         }

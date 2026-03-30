@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.client.util;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 
 public final class AnimationClock {
     private long lastUpdateMs;

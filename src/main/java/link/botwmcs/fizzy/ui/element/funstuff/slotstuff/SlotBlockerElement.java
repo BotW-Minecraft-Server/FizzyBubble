@@ -6,19 +6,19 @@ import link.botwmcs.fizzy.client.util.AnimationClock;
 import link.botwmcs.fizzy.client.util.BlockingElementSupport;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 
 import java.util.List;
 import java.util.Map;
 
 public final class SlotBlockerElement implements ElementPainter {
-    private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("textures/block/glass.png");
+    private static final Identifier TEXTURE = Identifier.withDefaultNamespace("textures/block/glass.png");
     private static final int GLASS_SIZE = 16;
     private static final float ANIM_SPEED = 4.0f; // progress per second
 
@@ -58,7 +58,7 @@ public final class SlotBlockerElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.widget, leftPx, topPx, widthPx, heightPx);
     }
 
@@ -89,7 +89,7 @@ public final class SlotBlockerElement implements ElementPainter {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             int w = this.getWidth();
             int h = this.getHeight();
             if (w <= 0 || h <= 0) {
@@ -184,7 +184,7 @@ public final class SlotBlockerElement implements ElementPainter {
         BlockingElementSupport.disableUnderlyingWidgets(elements, this, storedActive);
     }
 
-    private static void blitClipped(GuiGraphics g,
+    private static void blitClipped(GuiGraphicsExtractor g,
                                     int destX, int destY, int destW, int destH,
                                     int clipX, int clipY, int clipW, int clipH,
                                     int srcU, int srcV, int texW, int texH) {
@@ -206,6 +206,6 @@ public final class SlotBlockerElement implements ElementPainter {
 
         int u = srcU + (visX - destX);
         int v = srcV + (visY - destY);
-        g.blit(TEXTURE, visX, visY, u, v, visW, visH, texW, texH);
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TEXTURE, visX, visY, u, v, visW, visH, texW, texH);
     }
 }

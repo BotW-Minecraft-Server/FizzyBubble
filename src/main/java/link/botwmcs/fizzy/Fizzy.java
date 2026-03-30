@@ -14,7 +14,7 @@ import link.botwmcs.fizzy.network.s2c.FizzyMenuSyncS2CPayload;
 import link.botwmcs.fizzy.network.s2c.HudOverlayPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -120,7 +120,7 @@ public class Fizzy {
         GuiCommand.register(event.getDispatcher());
     }
 
-    public static ResourceLocation resourceLocation(String path) {
-        return ResourceLocation.fromNamespaceAndPath(MODID, path);
+    public static Identifier resourceLocation(String path) {
+        return Identifier.fromNamespaceAndPath(MODID, path);
     }
 }

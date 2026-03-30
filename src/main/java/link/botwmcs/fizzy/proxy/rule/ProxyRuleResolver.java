@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.proxy.rule;
 
 import link.botwmcs.fizzy.proxy.api.KernelAttachSpec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,7 +35,7 @@ public final class ProxyRuleResolver {
         }
 
         KernelAttachSpec merged = KernelSpecMerger.merge(patches);
-        List<ResourceLocation> ids = matchedRules.stream().map(ProxyRule::id).toList();
+        List<Identifier> ids = matchedRules.stream().map(ProxyRule::id).toList();
         return new ProxyResolutionResult(merged, ids, buildDebugSummary(matchedRules, merged));
     }
 

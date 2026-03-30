@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.kernel.overlay;
 
 import link.botwmcs.fizzy.client.overlay.Anchor;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,7 +108,7 @@ public final class OverlayLayerStack {
     }
 
     public void renderAllLayers(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick
@@ -119,16 +119,16 @@ public final class OverlayLayerStack {
         releaseDeadRefs();
     }
 
-    public void renderHud(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick, Anchor anchor, boolean forceAnchor) {
+    public void renderHud(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float partialTick, Anchor anchor, boolean forceAnchor) {
         renderLayer(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.HUD, anchor, forceAnchor);
     }
 
-    public void renderHudPerAnchor(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
+    public void renderHudPerAnchor(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float partialTick) {
         renderLayerPerAnchor(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.HUD);
     }
 
     public void renderLayer(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -139,7 +139,7 @@ public final class OverlayLayerStack {
     }
 
     public void renderLayer(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -165,7 +165,7 @@ public final class OverlayLayerStack {
     }
 
     public void renderLayerPerAnchor(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -189,7 +189,7 @@ public final class OverlayLayerStack {
     }
 
     private void renderLayerWithPolicy(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -226,7 +226,7 @@ public final class OverlayLayerStack {
     }
 
     private void renderLayerPerAnchorGroups(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -240,7 +240,7 @@ public final class OverlayLayerStack {
     }
 
     private void renderLayerAnchorGroup(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -265,7 +265,7 @@ public final class OverlayLayerStack {
     }
 
     private void renderOrderedLayer(
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int screenWidth,
             int screenHeight,
             float partialTick,
@@ -281,7 +281,7 @@ public final class OverlayLayerStack {
         focusState.promoteTop(ordered);
     }
 
-    private static void renderManualLayer(GuiGraphics graphics, float partialTick, List<OverlayRenderable> ordered) {
+    private static void renderManualLayer(GuiGraphicsExtractor graphics, float partialTick, List<OverlayRenderable> ordered) {
         for (OverlayRenderable renderable : ordered) {
             renderable.render(graphics, partialTick);
         }

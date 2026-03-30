@@ -5,7 +5,7 @@ import link.botwmcs.fizzy.client.util.animate.LerpedFloat;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayRenderable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
 
 import java.util.Objects;
@@ -101,7 +101,7 @@ public final class ModalOverlay implements OverlayRenderable {
     }
 
     @Override
-    public void render(GuiGraphics graphics, float partialTick) {
+    public void render(GuiGraphicsExtractor graphics, float partialTick) {
         if (!active || viewportWidth <= 0 || viewportHeight <= 0) {
             return;
         }
@@ -139,7 +139,7 @@ public final class ModalOverlay implements OverlayRenderable {
         int titleColor = withAlpha(0xFFE8F6FF, a);
         if (!title.isEmpty()) {
             if ((titleColor >>> 24) != 0) {
-                graphics.drawString(font, title, cardLeft + 8, cardTop + 8, titleColor, false);
+                graphics.text(font, title, cardLeft + 8, cardTop + 8, titleColor, false);
             }
         }
 
@@ -147,7 +147,7 @@ public final class ModalOverlay implements OverlayRenderable {
         int messageColor = withAlpha(0xFFC8D4E8, a);
         if (!message.isEmpty()) {
             if ((messageColor >>> 24) != 0) {
-                graphics.drawString(font, message, cardLeft + 8, cardTop + 24, messageColor, false);
+                graphics.text(font, message, cardLeft + 8, cardTop + 24, messageColor, false);
             }
         }
     }

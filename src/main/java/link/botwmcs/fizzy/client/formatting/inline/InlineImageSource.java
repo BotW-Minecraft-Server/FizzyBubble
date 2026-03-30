@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.client.formatting.inline;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Provides the image frame used by a placeholder-backed inline glyph.
@@ -12,7 +12,7 @@ public interface InlineImageSource {
      * @param nowMillis current client time in milliseconds
      * @return texture to render for this frame
      */
-    ResourceLocation texture(long nowMillis);
+    Identifier texture(long nowMillis);
 
     /**
      * Logical source width in pixels.

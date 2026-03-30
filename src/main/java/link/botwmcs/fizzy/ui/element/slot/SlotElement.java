@@ -4,11 +4,11 @@ import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 
 public final class SlotElement implements AnimatableElement {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/slot.png"
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/slot.png"
     );
 
     private static final int TEXTURE_SIZE = 256;
@@ -32,7 +32,7 @@ public final class SlotElement implements AnimatableElement {
     private static final int TEX_BOTTOM_BORDER_V = TEX_INNER_V + SAMPLE_SLOT_COUNT * TEX_INNER + (SAMPLE_SLOT_COUNT - 1) * TEX_DIVIDER;                                  // 55
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (widthPx <= 0 || heightPx <= 0) {
             return;
         }
@@ -79,27 +79,27 @@ public final class SlotElement implements AnimatableElement {
         return TEX_BORDER * 2 + slots * TEX_INNER + (slots - 1) * TEX_DIVIDER;
     }
 
-    private static void drawHorizontalStripe(GuiGraphics g, int destX, int destY, int slotsX, int textureV,
+    private static void drawHorizontalStripe(GuiGraphicsExtractor g, int destX, int destY, int slotsX, int textureV,
                                              int height, int slotTextureU, int dividerTextureU) {
         int x = destX;
 
         // Left border column.
-        g.blit(TEXTURE, x, destY, TEX_ORIGIN, textureV, TEX_BORDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TEXTURE, x, destY, TEX_ORIGIN, textureV, TEX_BORDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
         x += TEX_BORDER;
 
         for (int col = 0; col < slotsX; col++) {
             // Slot inner background.
-            g.blit(TEXTURE, x, destY, slotTextureU, textureV, TEX_INNER, height, TEXTURE_SIZE, TEXTURE_SIZE);
+            g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TEXTURE, x, destY, slotTextureU, textureV, TEX_INNER, height, TEXTURE_SIZE, TEXTURE_SIZE);
             x += TEX_INNER;
 
             if (col < slotsX - 1) {
                 // Divider between adjacent slots.
-                g.blit(TEXTURE, x, destY, dividerTextureU, textureV, TEX_DIVIDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
+                g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TEXTURE, x, destY, dividerTextureU, textureV, TEX_DIVIDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
                 x += TEX_DIVIDER;
             }
         }
 
         // Right border column.
-        g.blit(TEXTURE, x, destY, TEX_BORDER_RIGHT_U, textureV, TEX_BORDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TEXTURE, x, destY, TEX_BORDER_RIGHT_U, textureV, TEX_BORDER, height, TEXTURE_SIZE, TEXTURE_SIZE);
     }
 }

@@ -1,26 +1,26 @@
 package link.botwmcs.fizzy.client.elements;
 
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 public abstract class CustomIconAbstractButton extends AbstractButton {
-    private final ResourceLocation texture;
+    private final Identifier texture;
     private final boolean stretchToFit;
     private final boolean allowUpscale;
     private @Nullable SoundEvent pressSound;
 
     public CustomIconAbstractButton(int x, int y, int width, int height, Component message,
-                                    ResourceLocation texture, boolean stretchToFit, boolean allowUpscale) {
+                                    Identifier texture, boolean stretchToFit, boolean allowUpscale) {
         super(x, y, width, height, message);
         this.texture = Objects.requireNonNull(texture, "texture");
         this.stretchToFit = stretchToFit;
@@ -28,7 +28,14 @@ public abstract class CustomIconAbstractButton extends AbstractButton {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public final void onPress(InputWithModifiers input) {
+        this.onPress();
+    }
+
+    public abstract void onPress();
+
+    @Override
+    protected void extractContents(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         float alpha = this.active ? 1.0F : 0.5F;
         FizzyGuiUtils.drawTextureFit(
                 g,
@@ -43,15 +50,7 @@ public abstract class CustomIconAbstractButton extends AbstractButton {
         );
     }
 
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        if (this.active && this.visible) {
-            this.playDownSound(Minecraft.getInstance().getSoundManager());
-            this.onPress();
-        }
-    }
-
-    public ResourceLocation texture() {
+    public Identifier texture() {
         return this.texture;
     }
 

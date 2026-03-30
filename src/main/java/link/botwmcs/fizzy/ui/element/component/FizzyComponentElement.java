@@ -6,7 +6,7 @@ import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public final class FizzyComponentElement implements AnimatableElement {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (widthPx <= 0 || heightPx <= 0) {
             return;
         }
@@ -102,10 +102,10 @@ public final class FizzyComponentElement implements AnimatableElement {
             }
             int offsetXPx = Math.round(x);
             int offsetYPx = Math.round(y);
-            g.pose().pushPose();
-            g.pose().translate(offsetXPx, offsetYPx, 0.0f);
+            g.pose().pushMatrix();
+            g.pose().translate(offsetXPx, offsetYPx);
             lineRenderer.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
-            g.pose().popPose();
+            g.pose().popMatrix();
 
             float scale = Math.max(0.01f, lineRenderer.textScale());
             float lineHeightPx = font.lineHeight * scale;

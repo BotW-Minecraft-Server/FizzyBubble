@@ -4,9 +4,11 @@ import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
@@ -31,8 +33,16 @@ public abstract class FizzyAbstractButton extends AbstractButton {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public final void onPress(InputWithModifiers input) {
+        this.onPress();
+    }
+
+    public abstract void onPress();
+
+    @Override
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.blitSprite(
+                RenderPipelines.GUI_TEXTURED,
                 SPRITES.get(this.isActive(), this.isHoveredOrFocused()),
                 this.getX(), this.getY(), this.getWidth(), this.getHeight()
         );
@@ -42,7 +52,7 @@ public abstract class FizzyAbstractButton extends AbstractButton {
 
     }
 
-    public void renderString(GuiGraphics g, Font font, int color) {
+    public void renderString(GuiGraphicsExtractor g, Font font, int color) {
         int yOffset = this.isHoveredOrFocused() ? 1 : 0;
         FizzyGuiUtils.drawCenteredLabel(
                 g,
@@ -56,14 +66,6 @@ public abstract class FizzyAbstractButton extends AbstractButton {
                 true,
                 yOffset
         );
-    }
-
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        if (this.active && this.visible) {
-            this.playDownSound(Minecraft.getInstance().getSoundManager());
-            this.onPress();
-        }
     }
 
     @Override

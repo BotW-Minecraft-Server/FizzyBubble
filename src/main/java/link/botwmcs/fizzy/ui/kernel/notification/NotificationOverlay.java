@@ -3,10 +3,10 @@ package link.botwmcs.fizzy.ui.kernel.notification;
 import link.botwmcs.fizzy.client.overlay.Anchor;
 import link.botwmcs.fizzy.client.util.animate.LerpedFloat;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayRenderable;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
 
 import java.util.Objects;
@@ -91,7 +91,7 @@ public final class NotificationOverlay implements OverlayRenderable {
     }
 
     @Override
-    public void render(GuiGraphics graphics, float partialTick) {
+    public void render(GuiGraphicsExtractor graphics, float partialTick) {
         if (!active) {
             return;
         }
@@ -141,7 +141,7 @@ public final class NotificationOverlay implements OverlayRenderable {
         int titleColor = withAlpha(level.titleColor(), a);
         if (!titleText.isEmpty()) {
             if ((titleColor >>> 24) != 0) {
-                graphics.drawString(font, titleText, x + 8, titleY, titleColor, false);
+                graphics.text(font, titleText, x + 8, titleY, titleColor, false);
             }
         }
 
@@ -149,7 +149,7 @@ public final class NotificationOverlay implements OverlayRenderable {
         int messageColor = withAlpha(0xFFE6EEF7, a);
         if (!messageText.isEmpty()) {
             if ((messageColor >>> 24) != 0) {
-                graphics.drawString(font, messageText, x + 8, messageY, messageColor, false);
+                graphics.text(font, messageText, x + 8, messageY, messageColor, false);
             }
         }
 

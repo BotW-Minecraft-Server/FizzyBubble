@@ -5,11 +5,11 @@ import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public final class IconButtonElement implements ElementPainter {
     private final Component message;
     private final CustomIconButton.OnPress onPress;
-    private final ResourceLocation texture;
+    private final Identifier texture;
     private final boolean stretchToFit;
     private final boolean allowUpscale;
     private final @Nullable Tooltip tooltip;
@@ -44,7 +44,7 @@ public final class IconButtonElement implements ElementPainter {
         this.pressSound = builder.pressSound;
     }
 
-    public static Builder builder(Component message, CustomIconButton.OnPress onPress, ResourceLocation texture) {
+    public static Builder builder(Component message, CustomIconButton.OnPress onPress, Identifier texture) {
         return new Builder(message, onPress, texture);
     }
 
@@ -76,7 +76,7 @@ public final class IconButtonElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.button, leftPx, topPx, widthPx, heightPx);
         if (this.customTooltipElement != null) {
             this.customTooltipElement.render(g, leftPx, topPx, widthPx, heightPx, partialTick);
@@ -101,7 +101,7 @@ public final class IconButtonElement implements ElementPainter {
     public static final class Builder {
         private final Component message;
         private final CustomIconButton.OnPress onPress;
-        private final ResourceLocation texture;
+        private final Identifier texture;
         private boolean stretchToFit;
         private boolean allowUpscale;
         private @Nullable Tooltip tooltip;
@@ -110,7 +110,7 @@ public final class IconButtonElement implements ElementPainter {
         private Consumer<CustomIconButton> buttonConsumer = button -> {};
         private @Nullable SoundEvent pressSound;
 
-        private Builder(Component message, CustomIconButton.OnPress onPress, ResourceLocation texture) {
+        private Builder(Component message, CustomIconButton.OnPress onPress, Identifier texture) {
             this.message = Objects.requireNonNull(message, "message");
             this.onPress = Objects.requireNonNull(onPress, "onPress");
             this.texture = Objects.requireNonNull(texture, "texture");

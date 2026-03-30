@@ -11,12 +11,12 @@ import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.element.icon.FizzyIcon;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 import javax.annotation.Nullable;
@@ -42,7 +42,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
     private @Nullable FizzyComponentElement customTextElement;
     private Consumer<FizzyComponentElement.Builder> textCustomizer;
 
-    private @Nullable ResourceLocation iconTexture;
+    private @Nullable Identifier iconTexture;
     private boolean iconStretchToFit;
     private boolean iconAllowUpscale;
 
@@ -115,7 +115,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.syncWidgetBounds(this.button, leftPx, topPx, widthPx, heightPx);
         FizzyGuiUtils.syncWidgetBounds(this.contentOverlay, leftPx, topPx, widthPx, heightPx);
         if (this.customTooltipElement != null) {
@@ -167,7 +167,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
         return this;
     }
 
-    public VanillaLikeButtonElement setIcon(@Nullable ResourceLocation texture) {
+    public VanillaLikeButtonElement setIcon(@Nullable Identifier texture) {
         this.iconTexture = texture;
         return this;
     }
@@ -178,7 +178,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
     }
 
     public VanillaLikeButtonElement clearIcon() {
-        return setIcon((ResourceLocation) null);
+        return setIcon((Identifier) null);
     }
 
     public VanillaLikeButtonElement setLayout(ContentLayout layout) {
@@ -305,7 +305,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
         FizzyTooltipWidgetUtil.show(tooltipElement);
     }
 
-    private void renderCompositeContent(GuiGraphics g, float partialTick) {
+    private void renderCompositeContent(GuiGraphicsExtractor g, float partialTick) {
         if (this.button == null) {
             return;
         }
@@ -439,7 +439,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             renderCompositeContent(g, partialTick);
         }
 
@@ -489,7 +489,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
         private @Nullable Component textComponent = Component.empty();
         private @Nullable FizzyComponentElement customTextElement;
         private Consumer<FizzyComponentElement.Builder> textCustomizer = builder -> {};
-        private @Nullable ResourceLocation iconTexture;
+        private @Nullable Identifier iconTexture;
         private boolean iconStretchToFit;
         private boolean iconAllowUpscale;
         private int iconSizePx = DEFAULT_ICON_SIZE_PX;
@@ -557,7 +557,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
             return this;
         }
 
-        public Builder icon(ResourceLocation texture) {
+        public Builder icon(Identifier texture) {
             this.iconTexture = Objects.requireNonNull(texture, "texture");
             return this;
         }
@@ -567,7 +567,7 @@ public final class VanillaLikeButtonElement implements ElementPainter {
             return this;
         }
 
-        public Builder icon(ResourceLocation texture, boolean stretchToFit, boolean allowUpscale) {
+        public Builder icon(Identifier texture, boolean stretchToFit, boolean allowUpscale) {
             this.iconTexture = Objects.requireNonNull(texture, "texture");
             this.iconStretchToFit = stretchToFit;
             this.iconAllowUpscale = allowUpscale;

@@ -1,10 +1,10 @@
 package link.botwmcs.fizzy.proxy.rule;
 
 import link.botwmcs.fizzy.proxy.api.KernelAttachSpec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public interface ProxyRule {
-    ResourceLocation id();
+    Identifier id();
 
     int priority();
 

@@ -1,6 +1,5 @@
 package link.botwmcs.fizzy.client.bossbar;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.overlay.Anchor;
 import link.botwmcs.fizzy.client.util.BossbarRenderProbe;
@@ -8,9 +7,9 @@ import link.botwmcs.fizzy.client.util.animate.LerpedFloat;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayRenderable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class AnnounceMessage implements OverlayRenderable {
     private static final int PADDING = 17;
@@ -19,8 +18,8 @@ public final class AnnounceMessage implements OverlayRenderable {
     private static final int SIDE_CAP_W = 6;
     private static final int CENTER_MIN_TO_DRAW = 1;
     private static final float WIDTH_SPEED_PER_TICK = 0.30f;
-    private static final ResourceLocation WIDGETS =
-            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/components/widgets.png");
+    private static final Identifier WIDGETS =
+            Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/components/widgets.png");
 
     private final LerpedFloat barSize = LerpedFloat.linear();
 
@@ -109,8 +108,8 @@ public final class AnnounceMessage implements OverlayRenderable {
     }
 
     @Override
-    public void render(GuiGraphics graphics, float partialTick) {
-        float deltaTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
+    public void render(GuiGraphicsExtractor graphics, float partialTick) {
+        float deltaTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks();
         updateFromRender(deltaTicks);
         renderAt(graphics, partialTick, targetX, targetY);
     }
@@ -137,44 +136,44 @@ public final class AnnounceMessage implements OverlayRenderable {
         barSize.tickChaser();
     }
 
-    private void renderAt(GuiGraphics graphics, float partialTick, int centerX, int baseY) {
+    private void renderAt(GuiGraphicsExtractor graphics, float partialTick, int centerX, int baseY) {
         Minecraft mc = Minecraft.getInstance();
-        PoseStack pose = graphics.pose();
-        pose.pushPose();
+        var pose = graphics.pose();
+        pose.pushMatrix();
 
         int safeCenterX = centerX > 0
                 ? centerX
                 : (screenWidth > 0 ? screenWidth : mc.getWindow().getGuiScaledWidth()) / 2;
         int safeY = Math.max(BASE_Y, baseY > 0 ? baseY : BASE_Y);
 
-        pose.translate(safeCenterX - 91, safeY, 0.0f);
+        pose.translate(safeCenterX - 91, safeY);
 
         int size = (int) barSize.getValue(partialTick);
         if (size > CENTER_MIN_TO_DRAW) {
             enabled = true;
 
-            pose.pushPose();
-            pose.translate(size / -2.0f + 91.0f, -27.0f, 100.0f);
-            graphics.blit(WIDGETS, -SIDE_CAP_W, 0, 0, 0, SIDE_CAP_W, BAR_HEIGHT, 256, 256);
-            graphics.blit(WIDGETS, size, 0, SIDE_CAP_W, 0, SIDE_CAP_W, BAR_HEIGHT, 256, 256);
-            graphics.blit(WIDGETS, 0, 0, 0, 128 - size / 2.0f, BAR_HEIGHT, size, 20, 256, 256);
-            pose.popPose();
+            pose.pushMatrix();
+            pose.translate(size / -2.0f + 91.0f, -27.0f);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, WIDGETS, -SIDE_CAP_W, 0, 0, 0, SIDE_CAP_W, BAR_HEIGHT, 256, 256);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, WIDGETS, size, 0, SIDE_CAP_W, 0, SIDE_CAP_W, BAR_HEIGHT, 256, 256);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, WIDGETS, 0, 0, 0, 128 - size / 2.0f, BAR_HEIGHT, size, 20, 256, 256);
+            pose.popMatrix();
 
             if (currentText != null) {
                 Font font = mc.font;
                 if (font.width(currentText) < size - 10) {
-                    pose.pushPose();
-                    pose.translate(font.width(currentText) / 2.0f + 82.0f, -27.0f, 100.0f);
-                    graphics.drawCenteredString(font, currentText, 9 - font.width(currentText) / 2, 6, 0xFFFFFF);
-                    pose.popPose();
+                    pose.pushMatrix();
+                    pose.translate(font.width(currentText) / 2.0f + 82.0f, -27.0f);
+                    graphics.centeredText(font, currentText, 9 - font.width(currentText) / 2, 6, 0xFFFFFF);
+                    pose.popMatrix();
                 }
             }
         } else {
             enabled = false;
         }
 
-        pose.translate(91.0f, -9.0f, 0.0f);
-        pose.scale(0.925f, 0.925f, 1.0f);
-        pose.popPose();
+        pose.translate(91.0f, -9.0f);
+        pose.scale(0.925f, 0.925f);
+        pose.popMatrix();
     }
 }

@@ -3,7 +3,7 @@ package link.botwmcs.fizzy.client.util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -124,7 +124,7 @@ public final class TextRenderer {
         return new TextMetrics(List.of(line), width, totalHeight);
     }
 
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (widthPx <= 0 || heightPx <= 0) {
             return;
         }
@@ -188,9 +188,9 @@ public final class TextRenderer {
             g.enableScissor(leftPx, topPx, leftPx + widthPx, topPx + heightPx);
         }
 
-        g.pose().pushPose();
-        g.pose().translate(leftPx, topPx, 0);
-        g.pose().scale(scale, scale, 1.0f);
+        g.pose().pushMatrix();
+        g.pose().translate(leftPx, topPx);
+        g.pose().scale(scale, scale);
 
         int globalCharIndex = 0;
         int visibleIndex = 0;
@@ -239,32 +239,32 @@ public final class TextRenderer {
             lineVisibleIndex++;
             visibleIndex++;
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
         if (clipToPad) {
             g.disableScissor();
         }
     }
 
-    private void drawStyledChar(GuiGraphics g, Font font, String ch, float x, float y, float width,
+    private void drawStyledChar(GuiGraphicsExtractor g, Font font, String ch, float x, float y, float width,
                                 ResolvedStyle style, boolean shadow) {
         drawStyledCharAt(g, font, ch, Math.round(x), Math.round(y), width, style, shadow);
     }
 
-    private void drawStyledCharSmooth(GuiGraphics g, Font font, String ch, float x, float y, float width,
+    private void drawStyledCharSmooth(GuiGraphicsExtractor g, Font font, String ch, float x, float y, float width,
                                       ResolvedStyle style, boolean shadow) {
-        g.pose().pushPose();
-        g.pose().translate(x, y, 0);
+        g.pose().pushMatrix();
+        g.pose().translate(x, y);
         drawStyledCharAt(g, font, ch, 0, 0, width, style, shadow);
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
-    private void drawStyledCharAt(GuiGraphics g, Font font, String ch, int x, int y, float width,
+    private void drawStyledCharAt(GuiGraphicsExtractor g, Font font, String ch, int x, int y, float width,
                                   ResolvedStyle style, boolean shadow) {
         int color = ensureAlpha(style.color());
         if (style.bold()) {
-            g.drawString(font, ch, x + 1, y, color, shadow);
+            g.text(font, ch, x + 1, y, color, shadow);
         }
-        g.drawString(font, ch, x, y, color, shadow);
+        g.text(font, ch, x, y, color, shadow);
 
         if (style.underline() || style.strikethrough()) {
             int lineColor = 0xFF000000 | (color & 0xFFFFFF);

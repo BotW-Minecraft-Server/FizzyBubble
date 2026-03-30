@@ -1,6 +1,5 @@
 package link.botwmcs.fizzy.client.overlay;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.api.IOverlayContent;
 import link.botwmcs.fizzy.client.util.animate.LerpedFloat;
@@ -8,14 +7,14 @@ import link.botwmcs.fizzy.ui.kernel.overlay.OverlayRenderable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 public class CreateHudOverlay implements OverlayRenderable {
     // ==== 面板资源 & 几何 ====
-    private static final ResourceLocation BG = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/components/hud/create_style.png"); // 需提供一张226x118的贴图或改尺寸
+    private static final Identifier BG = Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/components/hud/create_style.png"); // 需提供一张226x118的贴图或改尺寸
     private static final int GUI_W = 226, GUI_H = 118;
     private static final int TITLE_X = 6, TITLE_Y = 2; // 上移标题
     private static final int TIME_PAD_X = 6;
@@ -175,7 +174,7 @@ public class CreateHudOverlay implements OverlayRenderable {
 
     // ========== 更新 & 渲染 ==========
     @Override
-    public void render(GuiGraphics g, float pt) {
+    public void render(GuiGraphicsExtractor g, float pt) {
         if (!active) return;
         boolean important = content != null && content.isImportant();
 
@@ -197,20 +196,19 @@ public class CreateHudOverlay implements OverlayRenderable {
         }
 
         // 背板
-        g.pose().pushPose();
-        g.pose().translate((int) xPos.getValue(pt), (int) yPos.getValue(pt), 0);
-        g.pose().scale(uiScale, uiScale, uiScale);
+        g.pose().pushMatrix();
+        g.pose().translate((int) xPos.getValue(pt), (int) yPos.getValue(pt));
+        g.pose().scale(uiScale, uiScale);
 
-        RenderSystem.setShaderTexture(0, BG);
-//        g.blit(BG, 0, 0, 0, 0, GUI_W, GUI_H, 256, 256);
-        g.blit(BG, 0, 0, 0, important ? 138 : 0, GUI_W, GUI_H, 256, 256);
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, BG, 0, 0, 0.0f, important ? 138.0f : 0.0f, GUI_W, GUI_H, 256, 256);
 
         // 标题 & 时间
-        String timeStr = formatTickTime(Minecraft.getInstance().level.getDayTime());
+        long dayTime = Math.round(Minecraft.getInstance().level.getLevelData().getDayTimeFraction() * 24000.0f);
+        String timeStr = formatTickTime(dayTime);
         int ttlColor = withAlpha(0xFF4F4F4F, a);
         if ((ttlColor >>> 24) != 0) {
-            g.drawString(font, title, TITLE_X, TITLE_Y, ttlColor, false);
-            g.drawString(font, timeStr, GUI_W - TIME_PAD_X - font.width(timeStr), TITLE_Y, ttlColor, false);
+            g.text(font, title, TITLE_X, TITLE_Y, ttlColor, false);
+            g.text(font, timeStr, GUI_W - TIME_PAD_X - font.width(timeStr), TITLE_Y, ttlColor, false);
         }
 
         // 滚动文字（调高裁剪窗口，避免吃字）
@@ -220,20 +218,20 @@ public class CreateHudOverlay implements OverlayRenderable {
         int scBottom = (int) (yPos.getValue(pt) + (SLIDE_AREA_Y + SLIDE_AREA_H) * uiScale);
         g.enableScissor(scLeft, scTop, scRight, scBottom);
 
-        g.pose().pushPose();
+        g.pose().pushMatrix();
         // 维持你原来的 1/0.75 视觉（略放大文字）
         float scale = 1f / 0.75f;
-        g.pose().scale(scale, scale, scale);
+        g.pose().scale(scale, scale);
 
-        tickMarquee(2f * Minecraft.getInstance().getTimer().getGameTimeDeltaTicks());
+        tickMarquee(2f * Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks());
         int txtColor = withAlpha(0xFFFF9900, a * Mth.clamp(textAlpha.getValue(), 0f, 1f));
         int drawX = (int) ((SLIDE_AREA_X + slidingOffset) / (1f / TEXT_SCALE)); // 等价于 /0.75f
         int drawY = (int) ((SLIDE_AREA_Y) / (1f / TEXT_SCALE));
         if ((txtColor >>> 24) != 0) {
-            g.drawString(font, slidingText, drawX, drawY, txtColor, false);
+            g.text(font, slidingText, drawX, drawY, txtColor, false);
         }
 
-        g.pose().popPose();
+        g.pose().popMatrix();
         g.disableScissor();
 
         // ===== 内容区 =====
@@ -246,8 +244,8 @@ public class CreateHudOverlay implements OverlayRenderable {
                 (int) (xPos.getValue(pt) + (cx + cw) * uiScale),
                 (int) (yPos.getValue(pt) + (cy + ch) * uiScale)
         );
-        g.pose().pushPose();
-        g.pose().translate(cx, cy, 0);
+        g.pose().pushMatrix();
+        g.pose().translate(cx, cy);
 
         curAlpha.tickChaser();
         nextAlpha.tickChaser();
@@ -257,14 +255,14 @@ public class CreateHudOverlay implements OverlayRenderable {
 
         // 渲染当前页（带 ca）
         if (currentContent != null && ca > 0.01f) {
-            g.pose().pushPose();
+            g.pose().pushMatrix();
             // 你可选：用着色/混色叠加；这里直接乘面板 a 与内容 a 作为文字/图形的颜色 alpha
             currentContent.tick();
             // 背层
             currentContent.renderBackLayer(g, 0, 0, pt);
             // 主层（若你需要对文字颜色做 withAlpha，请在 page 内部乘上 ca*a）
             currentContent.renderMainLayer(g, 0, 0, pt);
-            g.pose().popPose();
+            g.pose().popMatrix();
         }
 
         // 渲染新页（带 na）
@@ -274,15 +272,15 @@ public class CreateHudOverlay implements OverlayRenderable {
             incomingContent.renderMainLayer(g, 0, 0, pt);
         }
 
-        g.pose().popPose();
+        g.pose().popMatrix();
         g.disableScissor();
 
         // 前层（裁剪外，通常做高亮/tooltip），同理双通道
-        g.pose().pushPose();
-        g.pose().translate(cx, cy, 0);
+        g.pose().pushMatrix();
+        g.pose().translate(cx, cy);
         if (currentContent != null && ca > 0.01f) currentContent.renderFrontLayer(g, 0, 0, pt);
         if (incomingContent != null && na > 0.01f) incomingContent.renderFrontLayer(g, 0, 0, pt);
-        g.pose().popPose();
+        g.pose().popMatrix();
 
         // 切换完成判定：旧的 alpha 到 0、新的到 1
         if (contentTransitioning && ca <= 0.01f && na >= 0.99f) {
@@ -295,7 +293,7 @@ public class CreateHudOverlay implements OverlayRenderable {
             nextAlpha.startWithValue(0f);
         }
 
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
     @Override

@@ -26,7 +26,7 @@ import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
 import link.botwmcs.fizzy.ui.core.UiUnit;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -115,7 +115,7 @@ public final class ScreenProxySession implements AutoCloseable {
         renderedStages.clear();
     }
 
-    public void renderStage(HostRenderStage stage, GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void renderStage(HostRenderStage stage, GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (closed || !initialized) {
             return;
         }
@@ -417,7 +417,7 @@ public final class ScreenProxySession implements AutoCloseable {
     private void renderStageTasks(
             HostRenderStage stage,
             RenderState state,
-            GuiGraphics graphics,
+            GuiGraphicsExtractor graphics,
             int mouseX,
             int mouseY,
             float partialTick
@@ -744,7 +744,7 @@ public final class ScreenProxySession implements AutoCloseable {
         }
 
         @Override
-        public void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
+        public void paint(GuiGraphicsExtractor g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
         }
 
         @Override

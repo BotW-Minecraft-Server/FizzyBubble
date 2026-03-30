@@ -40,7 +40,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 
@@ -92,7 +92,7 @@ public class GuiCommand {
         int heightPx = painter.computeHeightPx(MOTIVE_ROWS, true);
 
         var warningIcon = IconElement.builder(
-                        ResourceLocation.fromNamespaceAndPath("fizzy", "textures/gui/components/icon/warning.png")
+                        Identifier.fromNamespaceAndPath("fizzy", "textures/gui/components/icon/warning.png")
                 )
                 .stretchToFit(false)
                 .allowUpscale(false)
@@ -214,12 +214,12 @@ public class GuiCommand {
         var appleIcon = IconButtonElement.builder(
                         Component.empty(),
                         btn -> mc.player.sendSystemMessage(Component.literal("Apple icon clicked!")),
-                        ResourceLocation.withDefaultNamespace("textures/item/apple.png")
+                        Identifier.withDefaultNamespace("textures/item/apple.png")
                 )
                 .build();
 
         var nuggetIcon = IconElement.builder(
-                ResourceLocation.withDefaultNamespace("textures/item/gold_nugget.png")
+                Identifier.withDefaultNamespace("textures/item/gold_nugget.png")
                 )
                 .build()
                 .animated(ScaleAnimation.pulse(1.0f, 0.2f, 0.1f));
@@ -246,7 +246,7 @@ public class GuiCommand {
                 .build();
 
         var embeddedIconRow = IconElement.builder(
-                ResourceLocation.withDefaultNamespace("textures/item/gold_nugget.png")
+                Identifier.withDefaultNamespace("textures/item/gold_nugget.png")
         ).build();
 
         var nuggetContextMenu = ContextMenuElement.builder()

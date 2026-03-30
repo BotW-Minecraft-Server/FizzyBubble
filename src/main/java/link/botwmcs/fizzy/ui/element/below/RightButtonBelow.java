@@ -9,7 +9,7 @@ import link.botwmcs.fizzy.ui.kernel.layout.LayoutAlign;
 import link.botwmcs.fizzy.ui.kernel.layout.LayoutDsl;
 import link.botwmcs.fizzy.ui.kernel.layout.LayoutModifier;
 import link.botwmcs.fizzy.ui.kernel.layout.LayoutTreePainter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 
@@ -57,7 +57,7 @@ public final class RightButtonBelow implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor graphics, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         layout.render(graphics, leftPx, topPx, widthPx, heightPx, partialTick);
     }
 

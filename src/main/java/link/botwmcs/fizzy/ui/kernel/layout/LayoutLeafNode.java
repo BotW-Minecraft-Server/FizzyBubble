@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.kernel.layout;
 
 import link.botwmcs.fizzy.ui.element.ElementPainter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.Objects;
 
@@ -21,7 +21,7 @@ final class LayoutLeafNode extends LayoutNode {
     }
 
     @Override
-    protected void onRender(LayoutMountContext context, GuiGraphics graphics, float partialTick, LayoutRect bounds) {
+    protected void onRender(LayoutMountContext context, GuiGraphicsExtractor graphics, float partialTick, LayoutRect bounds) {
         ensureInit(context, bounds);
         if (!modifier().isVisible()) {
             return;

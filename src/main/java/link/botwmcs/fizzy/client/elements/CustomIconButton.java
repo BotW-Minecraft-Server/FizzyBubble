@@ -3,7 +3,7 @@ package link.botwmcs.fizzy.client.elements;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -16,12 +16,12 @@ public class CustomIconButton extends CustomIconAbstractButton {
 
     private final OnPress onPress;
 
-    public static Builder builder(Component message, OnPress onPress, ResourceLocation texture) {
+    public static Builder builder(Component message, OnPress onPress, Identifier texture) {
         return new Builder(message, onPress, texture);
     }
 
     public CustomIconButton(int x, int y, int width, int height, Component message,
-                            ResourceLocation texture, boolean stretchToFit, boolean allowUpscale,
+                            Identifier texture, boolean stretchToFit, boolean allowUpscale,
                             OnPress onPress) {
         super(x, y, width, height, message, texture, stretchToFit, allowUpscale);
         this.onPress = onPress;
@@ -46,7 +46,7 @@ public class CustomIconButton extends CustomIconAbstractButton {
     public static class Builder {
         private final Component message;
         private final OnPress onPress;
-        private final ResourceLocation texture;
+        private final Identifier texture;
         private int x;
         private int y;
         private int width = DEFAULT_WIDTH;
@@ -55,7 +55,7 @@ public class CustomIconButton extends CustomIconAbstractButton {
         private boolean allowUpscale;
         private @Nullable Tooltip tooltip;
 
-        private Builder(Component message, OnPress onPress, ResourceLocation texture) {
+        private Builder(Component message, OnPress onPress, Identifier texture) {
             this.message = message;
             this.onPress = onPress;
             this.texture = texture;

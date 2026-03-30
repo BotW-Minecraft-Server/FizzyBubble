@@ -4,12 +4,14 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -26,8 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class FizzyGuiUtils {
     private static final TextureSize FALLBACK_TEXTURE_SIZE = new TextureSize(16, 16);
-    private static final Map<ResourceLocation, TextureSize> TEXTURE_SIZE_CACHE = new ConcurrentHashMap<>();
-    private static ResourceLocation blankTextureLocation;
+    private static final Map<Identifier, TextureSize> TEXTURE_SIZE_CACHE = new ConcurrentHashMap<>();
+    private static Identifier blankTextureLocation;
 
 
     private FizzyGuiUtils() {
@@ -36,11 +38,11 @@ public final class FizzyGuiUtils {
     /**
      * Returns a 1x1 white texture registered in the texture manager.
      */
-    public static ResourceLocation getBlankTexture() {
+    public static Identifier getBlankTexture() {
         if (blankTextureLocation == null) {
             NativeImage img = new NativeImage(1, 1, false);
-            img.setPixelRGBA(0, 0, 0xFFFFFFFF);
-            blankTextureLocation = Minecraft.getInstance().getTextureManager().register("blank", new DynamicTexture(img));
+            img.setPixel(0, 0, 0xFFFFFFFF);
+            blankTextureLocation = Minecraft.getInstance().getTextureManager().register("blank", new DynamicTexture(() -> "blank", img));
         }
 
         return blankTextureLocation;
@@ -76,15 +78,15 @@ public final class FizzyGuiUtils {
     /**
      * Returns cached texture dimensions for the given resource.
      */
-    public static TextureSize textureSize(ResourceLocation texture) {
+    public static TextureSize textureSize(Identifier texture) {
         return TEXTURE_SIZE_CACHE.computeIfAbsent(texture, FizzyGuiUtils::resolveTextureSize);
     }
 
     /**
      * Draws a texture into the target rectangle using full opacity.
      */
-    public static void drawTextureFit(GuiGraphics g,
-                                      ResourceLocation texture,
+    public static void drawTextureFit(GuiGraphicsExtractor g,
+                                      Identifier texture,
                                       int x,
                                       int y,
                                       int width,
@@ -97,8 +99,8 @@ public final class FizzyGuiUtils {
     /**
      * Draws a texture either stretched or aspect-fitted and centered in the target rectangle.
      */
-    public static void drawTextureFit(GuiGraphics g,
-                                      ResourceLocation texture,
+    public static void drawTextureFit(GuiGraphicsExtractor g,
+                                      Identifier texture,
                                       int x,
                                       int y,
                                       int width,
@@ -137,19 +139,14 @@ public final class FizzyGuiUtils {
             drawY = y + (height - drawH) / 2;
         }
 
-        g.setColor(1.0f, 1.0f, 1.0f, safeAlpha);
-        try {
-            g.blit(texture, drawX, drawY, 0, 0, drawW, drawH, texW, texH);
-        } finally {
-            g.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        }
+        g.blit(RenderPipelines.GUI_TEXTURED, texture, drawX, drawY, 0.0F, 0.0F, drawW, drawH, texW, texH, texW, texH, ARGB.white(safeAlpha));
     }
 
     /**
      * Draws a nine-slice with identical border thickness on all sides.
      */
-    public static void drawNineSlice(GuiGraphics g,
-                                     ResourceLocation texture,
+    public static void drawNineSlice(GuiGraphicsExtractor g,
+                                     Identifier texture,
                                      int x,
                                      int y,
                                      int width,
@@ -163,8 +160,8 @@ public final class FizzyGuiUtils {
     /**
      * Draws a nine-slice with independent horizontal and vertical border thickness.
      */
-    public static void drawNineSlice(GuiGraphics g,
-                                     ResourceLocation texture,
+    public static void drawNineSlice(GuiGraphicsExtractor g,
+                                     Identifier texture,
                                      int x,
                                      int y,
                                      int width,
@@ -179,8 +176,8 @@ public final class FizzyGuiUtils {
     /**
      * Draws a fully configurable nine-slice using explicit borders for each side.
      */
-    public static void drawNineSlice(GuiGraphics g,
-                                     ResourceLocation texture,
+    public static void drawNineSlice(GuiGraphicsExtractor g,
+                                     Identifier texture,
                                      int x,
                                      int y,
                                      int width,
@@ -216,7 +213,7 @@ public final class FizzyGuiUtils {
         int srcCenterH = texH - srcTop - srcBottom;
 
         if ((destCenterW > 0 && srcCenterW <= 0) || (destCenterH > 0 && srcCenterH <= 0)) {
-            g.blit(texture, x, y, width, height, 0, 0, texW, texH, texW, texH);
+            g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0.0F, 0.0F, width, height, texW, texH, texW, texH);
             return;
         }
 
@@ -262,8 +259,8 @@ public final class FizzyGuiUtils {
     /**
      * Draws a horizontally capped bar (left+right caps, stretched center).
      */
-    public static void drawHorizontalCapNineSlice(GuiGraphics g,
-                                                  ResourceLocation texture,
+    public static void drawHorizontalCapNineSlice(GuiGraphicsExtractor g,
+                                                  Identifier texture,
                                                   int x,
                                                   int y,
                                                   int width,
@@ -276,7 +273,7 @@ public final class FizzyGuiUtils {
         }
         int safeCap = Math.max(0, Math.min(capWidth, texW / 2));
         if (safeCap <= 0 || texW - safeCap * 2 <= 0) {
-            g.blit(texture, x, y, width, height, 0, 0, texW, texH, texW, texH);
+            g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0.0F, 0.0F, width, height, texW, texH, texW, texH);
             return;
         }
         drawNineSlice(g, texture, x, y, width, height, texW, texH, safeCap, safeCap, 0, 0);
@@ -285,8 +282,8 @@ public final class FizzyGuiUtils {
     /**
      * Draws a horizontally capped bar and clips it by filled width.
      */
-    public static void drawScissoredHorizontalCapProgress(GuiGraphics g,
-                                                          ResourceLocation texture,
+    public static void drawScissoredHorizontalCapProgress(GuiGraphicsExtractor g,
+                                                          Identifier texture,
                                                           int x,
                                                           int y,
                                                           int width,
@@ -321,7 +318,7 @@ public final class FizzyGuiUtils {
     /**
      * Draws centered text using the default Minecraft glyph height (8px).
      */
-    public static void drawCenteredLabel(GuiGraphics g,
+    public static void drawCenteredLabel(GuiGraphicsExtractor g,
                                          Font font,
                                          Component text,
                                          int x,
@@ -337,7 +334,7 @@ public final class FizzyGuiUtils {
     /**
      * Draws centered text with configurable glyph height and Y offset.
      */
-    public static void drawCenteredLabel(GuiGraphics g,
+    public static void drawCenteredLabel(GuiGraphicsExtractor g,
                                          Font font,
                                          Component text,
                                          int x,
@@ -351,7 +348,7 @@ public final class FizzyGuiUtils {
         int textWidth = font.width(text);
         int textX = x + (width - textWidth) / 2;
         int textY = y + (height - glyphHeight) / 2 + yOffset;
-        g.drawString(font, text, textX, textY, color, shadow);
+        g.text(font, text, textX, textY, color, shadow);
     }
 
     /**
@@ -523,33 +520,15 @@ public final class FizzyGuiUtils {
      *
      * @see <a href="http://github.com/Creators-of-Create/Create/blob/mc1.18/dev/src/main/java/com/simibubi/create/content/trains/schedule/ScheduleScreen.java">...</a>
      */
-    public static void startStencil(GuiGraphics g, float x, float y, float w, float h) {
-        RenderSystem.clear(GL30.GL_STENCIL_BUFFER_BIT | GL30.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
-
-        GL11.glDisable(GL11.GL_STENCIL_TEST);
-        RenderSystem.stencilMask(~0);
-        RenderSystem.clear(GL11.GL_STENCIL_BUFFER_BIT, Minecraft.ON_OSX);
-        GL11.glEnable(GL11.GL_STENCIL_TEST);
-        RenderSystem.stencilOp(GL11.GL_REPLACE, GL11.GL_KEEP, GL11.GL_KEEP);
-        RenderSystem.stencilMask(0xFF);
-        RenderSystem.stencilFunc(GL11.GL_NEVER, 1, 0xFF);
-
-        g.pose().pushPose();
-        g.pose().translate(x, y, 0);
-        g.pose().scale(w, h, 1);
-        g.fillGradient(0, 0, -100, 1, 1, 0xff000000, 0xff000000);
-        g.pose().popPose();
-
-        GL11.glEnable(GL11.GL_STENCIL_TEST);
-        RenderSystem.stencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-        RenderSystem.stencilFunc(GL11.GL_EQUAL, 1, 0xFF);
+    public static void startStencil(GuiGraphicsExtractor g, float x, float y, float w, float h) {
+        // TODO 26.1: stencil setup needs a new GPU-path implementation.
     }
 
     /**
      * Ends stencil rendering and disables stencil test.
      */
     public static void endStencil() {
-        GL11.glDisable(GL11.GL_STENCIL_TEST);
+        // TODO 26.1: paired with startStencil().
     }
 
     /**
@@ -592,8 +571,8 @@ public final class FizzyGuiUtils {
         return new int[] {Math.max(0, firstScaled), Math.max(0, secondScaled)};
     }
 
-    private static void blitScaledRegion(GuiGraphics g,
-                                         ResourceLocation texture,
+    private static void blitScaledRegion(GuiGraphicsExtractor g,
+                                         Identifier texture,
                                          int x,
                                          int y,
                                          int width,
@@ -607,13 +586,13 @@ public final class FizzyGuiUtils {
         if (width <= 0 || height <= 0 || uWidth <= 0 || vHeight <= 0) {
             return;
         }
-        g.blit(texture, x, y, width, height, u, v, uWidth, vHeight, texW, texH);
+        g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, (float) u, (float) v, width, height, uWidth, vHeight, texW, texH);
     }
 
     /**
      * Reads texture dimensions from resources, falling back to 16x16 when unavailable.
      */
-    private static TextureSize resolveTextureSize(ResourceLocation texture) {
+    private static TextureSize resolveTextureSize(Identifier texture) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) {
             return FALLBACK_TEXTURE_SIZE;

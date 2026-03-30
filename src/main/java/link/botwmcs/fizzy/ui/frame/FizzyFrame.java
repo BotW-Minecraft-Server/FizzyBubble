@@ -2,17 +2,17 @@ package link.botwmcs.fizzy.ui.frame;
 
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class FizzyFrame implements FramePainter {
-    private static final ResourceLocation DEFAULT_PANEL_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png");
-    private static final ResourceLocation DEFAULT_DARK_PANEL_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default_dark.png");
+    private static final Identifier DEFAULT_PANEL_TEXTURE =
+            Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default.png");
+    private static final Identifier DEFAULT_DARK_PANEL_TEXTURE =
+            Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/panel_default_dark.png");
 
-    private final ResourceLocation tex;
+    private final Identifier tex;
     private final FrameMetrics m;
     private final int panelWidthPx;  // 面板显示宽度（通常等于纹理宽）
     private final Component title;
@@ -32,11 +32,11 @@ public class FizzyFrame implements FramePainter {
         this(DEFAULT_PANEL_TEXTURE, FizzyFrameMetrics.ofDefault256x256(), FizzyFrameMetrics.ofDefault256x256().panelW(), title, dark);
     }
 
-    public FizzyFrame(ResourceLocation tex, FrameMetrics metrics, Component title) {
+    public FizzyFrame(Identifier tex, FrameMetrics metrics, Component title) {
         this(tex, metrics, metrics.panelW(), title, false);
     }
 
-    public FizzyFrame(ResourceLocation tex, FrameMetrics metrics, int panelWidthPx, Component title, boolean dark) {
+    public FizzyFrame(Identifier tex, FrameMetrics metrics, int panelWidthPx, Component title, boolean dark) {
         this.dark = dark;
         this.tex = tex;
         this.m = metrics;
@@ -52,7 +52,7 @@ public class FizzyFrame implements FramePainter {
      * @param drawBottomEdge true=Screen 绘底边；false=Menu 不绘底边
      */
     @Override
-    public void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
+    public void paint(GuiGraphicsExtractor g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
         final int texW = m.texW(), texH = m.texH();
         final int drawW = panelWidthPx; // 固定使用面板宽，避免横向拉伸失真
         int y = top;
@@ -60,7 +60,7 @@ public class FizzyFrame implements FramePainter {
         // 标题渲染
         Minecraft mc = Minecraft.getInstance();
         int stringW = mc.font.width(this.title);
-        g.drawString(mc.font, this.title, left + m.panelW() / 2 - stringW / 2, y + m.titleStartH(), 0xFFFFFF, true);
+        g.text(mc.font, this.title, left + m.panelW() / 2 - stringW / 2, y + m.titleStartH(), 0xFFFFFF, true);
 
         // 计算行数（严格基于目标高度反推，防止调用方传错）
         int expectedRowsPart = h - m.slotStartTopPx() - m.bottomPadHeight()
@@ -117,7 +117,7 @@ public class FizzyFrame implements FramePainter {
         // 至此 y 应等于 top + h
     }
 
-    private void blit(GuiGraphics g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
+    private void blit(GuiGraphicsExtractor g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
 //        g.blit(/*texture*/ null, 0,0,0,0,0,0,0,0); // 占位避免导入顺序警告
         // 正式调用（1.21.1 MojMaps 常用签名）：
         g.blit(this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex, x, y, u, v, w, h, texW, texH);

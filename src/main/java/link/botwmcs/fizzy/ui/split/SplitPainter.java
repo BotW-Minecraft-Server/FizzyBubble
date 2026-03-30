@@ -2,20 +2,20 @@ package link.botwmcs.fizzy.ui.split;
 
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public interface SplitPainter {
-    void paint(GuiGraphics g, int x, int y, int lengthPx, SplitType type);
+    void paint(GuiGraphicsExtractor g, int x, int y, int lengthPx, SplitType type);
     SplitMetrics metrics();
 
-    default void paintInSlotArea(GuiGraphics g, FramePainter.SlotArea area, int offsetX, int offsetY, int lengthPx, SplitType type) {
+    default void paintInSlotArea(GuiGraphicsExtractor g, FramePainter.SlotArea area, int offsetX, int offsetY, int lengthPx, SplitType type) {
         if (area == null) {
             throw new IllegalStateException("SlotArea is null. Did you forget to call setLayout() on FramePainter?");
         }
         paint(g, area.x() + offsetX, area.y() + offsetY, lengthPx, type);
     }
 
-    default void paintBetweenSlots(GuiGraphics g, FramePainter.SlotArea area, int rowStart, int colStart, int rowEnd, int colEnd) {
+    default void paintBetweenSlots(GuiGraphicsExtractor g, FramePainter.SlotArea area, int rowStart, int colStart, int rowEnd, int colEnd) {
         if (area == null) {
             throw new IllegalStateException("SlotArea is null. Did you forget to call setLayout() on FramePainter?");
         }

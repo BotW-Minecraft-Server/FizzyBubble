@@ -10,7 +10,7 @@ import link.botwmcs.fizzy.ui.element.slot.SlotElement;
 import link.botwmcs.fizzy.ui.frame.FizzyFrame;
 import link.botwmcs.fizzy.ui.host.FizzyMenuScreenHost;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -75,7 +75,7 @@ public final class FizzyTestMenuScreen extends FizzyMenuScreenHost<FizzyTestMenu
     }
 
     @Override
-    protected void renderCustomMenuBackground(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
+    protected void renderCustomMenuBackground(GuiGraphicsExtractor g, float partialTick, int mouseX, int mouseY) {
         int barLeft = this.leftPos + BAR_X;
         int barTop = this.topPos + BAR_Y;
         int barRight = barLeft + BAR_WIDTH;
@@ -92,7 +92,7 @@ public final class FizzyTestMenuScreen extends FizzyMenuScreenHost<FizzyTestMenu
     }
 
     @Override
-    protected void renderCustomMenuForeground(GuiGraphics g, int mouseX, int mouseY) {
+    protected void renderCustomMenuForeground(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         int progress = this.menu.progress();
         int max = this.menu.maxProgress();
         String progressText = "Progress: " + progress + " / " + max;

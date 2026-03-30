@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.ui.kernel.layout;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ final class LayoutContainerNode extends LayoutNode {
     }
 
     @Override
-    protected void onRender(LayoutMountContext context, GuiGraphics graphics, float partialTick, LayoutRect bounds) {
+    protected void onRender(LayoutMountContext context, GuiGraphicsExtractor graphics, float partialTick, LayoutRect bounds) {
         if (!modifier().isVisible()) {
             return;
         }

@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.element;
 
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 @FunctionalInterface
 public interface ElementPainter {
     default void init(InitContext context, int leftPx, int topPx, int widthPx, int heightPx) {}
-    void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick);
+    void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick);
     default ElementType type() { return ElementType.CUSTOM; }
     default UiRenderLayer layer() { return UiRenderLayer.elements(0); }
     default int zIndex() { return 0; }

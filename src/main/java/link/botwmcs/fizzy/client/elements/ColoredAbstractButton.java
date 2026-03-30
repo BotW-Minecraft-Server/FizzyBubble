@@ -4,9 +4,11 @@ import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
@@ -81,20 +83,22 @@ public abstract class ColoredAbstractButton extends AbstractButton {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        var sprite = sprites.get(this.isActive(), this.isHoveredOrFocused());
-        guiGraphics.blitSprite(sprite, this.getX(), this.getY(), this.getWidth(), this.getHeight());
+    public final void onPress(InputWithModifiers input) {
+        this.onPress();
+    }
 
-//        guiGraphics.blitSprite(
-//                sprites.get(this.isActive(), this.isHoveredOrFocused()),
-//                this.getX(), this.getY(), this.getWidth(), this.getHeight()
-//        );
+    public abstract void onPress();
+
+    @Override
+    protected void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        var sprite = sprites.get(this.isActive(), this.isHoveredOrFocused());
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.getX(), this.getY(), this.getWidth(), this.getHeight());
 
         int color = this.isActive() ? 0xFFFFFFFF : 0xFFA0A0A0;
         renderString(guiGraphics, Minecraft.getInstance().font, color);
     }
 
-    public void renderString(GuiGraphics g, Font font, int color) {
+    public void renderString(GuiGraphicsExtractor g, Font font, int color) {
         FizzyGuiUtils.drawCenteredLabel(
                 g,
                 font,
@@ -120,13 +124,5 @@ public abstract class ColoredAbstractButton extends AbstractButton {
             return;
         }
         super.playDownSound(handler);
-    }
-
-    @Override
-    public void onClick(double mouseX, double mouseY) {
-        if (this.active && this.visible) {
-            this.playDownSound(Minecraft.getInstance().getSoundManager());
-            this.onPress();
-        }
     }
 }

@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.split;
 
 import link.botwmcs.fizzy.ui.frame.FramePainter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public record SlotSplitSpec(int rowStart, int colStart, int rowEnd, int colEnd) implements SplitSpec {
     public SlotSplitSpec {
@@ -17,7 +17,7 @@ public record SlotSplitSpec(int rowStart, int colStart, int rowEnd, int colEnd) 
     }
 
     @Override
-    public void paint(GuiGraphics g, SplitPainter painter, FramePainter.SlotArea slotArea) {
+    public void paint(GuiGraphicsExtractor g, SplitPainter painter, FramePainter.SlotArea slotArea) {
         painter.paintBetweenSlots(g, slotArea, rowStart, colStart, rowEnd, colEnd);
     }
 }

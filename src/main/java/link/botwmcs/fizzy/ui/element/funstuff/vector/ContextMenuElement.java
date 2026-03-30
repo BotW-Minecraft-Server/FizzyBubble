@@ -5,10 +5,10 @@ import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import link.botwmcs.fizzy.client.util.Gwen;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -97,7 +97,7 @@ public final class ContextMenuElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         this.triggerLeftPx = leftPx;
         this.triggerTopPx = topPx;
         this.triggerWidthPx = Math.max(0, widthPx);
@@ -606,7 +606,7 @@ public final class ContextMenuElement implements ElementPainter {
         return false;
     }
 
-    private void renderMenus(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    private void renderMenus(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         if (this.rootPopup == null) {
             return;
         }
@@ -614,14 +614,14 @@ public final class ContextMenuElement implements ElementPainter {
         renderPopup(g, this.rootPopup, mouseX, mouseY, partialTick, 0);
     }
 
-    private void renderPopup(GuiGraphics g, PopupState popup, int mouseX, int mouseY, float partialTick, int depth) {
+    private void renderPopup(GuiGraphicsExtractor g, PopupState popup, int mouseX, int mouseY, float partialTick, int depth) {
         ClipRect clipRect = revealClipFor(popup);
         if (clipRect.width() <= 0 || clipRect.height() <= 0) {
             return;
         }
 
-        g.pose().pushPose();
-        g.pose().translate(0.0f, 0.0f, POPUP_DEPTH_STEP_Z * depth);
+        g.pose().pushMatrix();
+        g.pose().translate(0.0f, 0.0f);
         try {
             Gwen.withScissor(
                     g,
@@ -639,7 +639,7 @@ public final class ContextMenuElement implements ElementPainter {
                     }
             );
         } finally {
-            g.pose().popPose();
+            g.pose().popMatrix();
         }
 
         if (popup.child() != null) {
@@ -647,7 +647,7 @@ public final class ContextMenuElement implements ElementPainter {
         }
     }
 
-    private void renderRow(GuiGraphics g, RowRuntime row, boolean hovered, int mouseX, int mouseY, float partialTick) {
+    private void renderRow(GuiGraphicsExtractor g, RowRuntime row, boolean hovered, int mouseX, int mouseY, float partialTick) {
         boolean clickable = isClickableRow(row);
         if (hovered && clickable) {
             g.fill(row.left(), row.top(), row.right(), row.bottom(), HOVER_BG_COLOR);
@@ -707,18 +707,18 @@ public final class ContextMenuElement implements ElementPainter {
                             if (!widget.visible) {
                                 continue;
                             }
-                            widget.render(g, mouseX, mouseY, partialTick);
+                            widget.extractRenderState(g, mouseX, mouseY, partialTick);
                         }
                     }
             );
         }
     }
 
-    private static void clipRender(GuiGraphics g, int left, int top, int right, int bottom, Runnable renderTask) {
+    private static void clipRender(GuiGraphicsExtractor g, int left, int top, int right, int bottom, Runnable renderTask) {
         Gwen.withScissor(g, left, top, right, bottom, renderTask);
     }
 
-    private void drawSubmenuArrow(GuiGraphics g, RowRuntime row, boolean enabled) {
+    private void drawSubmenuArrow(GuiGraphicsExtractor g, RowRuntime row, boolean enabled) {
         Font font = currentFont();
         if (font == null) {
             return;
@@ -728,10 +728,10 @@ public final class ContextMenuElement implements ElementPainter {
         int arrowWidth = font.width(arrow);
         int x = row.contentRight() - arrowWidth;
         int y = row.top() + (row.height() - font.lineHeight) / 2;
-        g.drawString(font, arrow, x, y, color, false);
+        g.text(font, arrow, x, y, color, false);
     }
 
-    private static void drawPanel(GuiGraphics g, int left, int top, int width, int height) {
+    private static void drawPanel(GuiGraphicsExtractor g, int left, int top, int width, int height) {
         int right = left + width;
         int bottom = top + height;
         if (width <= 1 || height <= 1) {
@@ -861,7 +861,7 @@ public final class ContextMenuElement implements ElementPainter {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             lastMouseX = mouseX;
             lastMouseY = mouseY;
         }
@@ -1183,7 +1183,7 @@ public final class ContextMenuElement implements ElementPainter {
 
         int measureHeightPx(@Nullable Font font);
 
-        void render(GuiGraphics g,
+        void render(GuiGraphicsExtractor g,
                     int leftPx,
                     int topPx,
                     int widthPx,
@@ -1222,7 +1222,7 @@ public final class ContextMenuElement implements ElementPainter {
         }
 
         @Override
-        public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick, boolean enabled) {
+        public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick, boolean enabled) {
             if (widthPx <= 0 || heightPx <= 0) {
                 return;
             }
@@ -1240,7 +1240,7 @@ public final class ContextMenuElement implements ElementPainter {
             String clipped = font.plainSubstrByWidth(firstLine, Math.max(1, widthPx));
             int color = enabled ? LABEL_COLOR : LABEL_DISABLED_COLOR;
             int y = topPx + (heightPx - font.lineHeight) / 2;
-            g.drawString(font, clipped, leftPx, y, color, false);
+            g.text(font, clipped, leftPx, y, color, false);
         }
     }
 
@@ -1268,7 +1268,7 @@ public final class ContextMenuElement implements ElementPainter {
         }
 
         @Override
-        public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick, boolean enabled) {
+        public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick, boolean enabled) {
             if (widthPx <= 0 || heightPx <= 0) {
                 return;
             }

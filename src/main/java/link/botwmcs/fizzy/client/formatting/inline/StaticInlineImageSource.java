@@ -1,10 +1,10 @@
 package link.botwmcs.fizzy.client.formatting.inline;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
-public record StaticInlineImageSource(ResourceLocation resource, float width, float height) implements InlineImageSource {
+public record StaticInlineImageSource(Identifier resource, float width, float height) implements InlineImageSource {
     @Override
-    public ResourceLocation texture(long nowMillis) {
+    public Identifier texture(long nowMillis) {
         return resource;
     }
 }

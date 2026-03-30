@@ -3,25 +3,25 @@ package link.botwmcs.fizzy.ui.element.icon;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 
 import java.util.Objects;
 
 public final class IconElement implements AnimatableElement {
-    private final ResourceLocation texture;
+    private final Identifier texture;
     private final boolean stretchToFit;
     private final boolean allowUpscale;
 
-    public IconElement(ResourceLocation texture) {
+    public IconElement(Identifier texture) {
         this(texture, false, false);
     }
 
-    public IconElement(ResourceLocation texture, boolean stretchToFit) {
+    public IconElement(Identifier texture, boolean stretchToFit) {
         this(texture, stretchToFit, false);
     }
 
-    public IconElement(ResourceLocation texture, boolean stretchToFit, boolean allowUpscale) {
+    public IconElement(Identifier texture, boolean stretchToFit, boolean allowUpscale) {
         this.texture = Objects.requireNonNull(texture, "texture");
         this.stretchToFit = stretchToFit;
         this.allowUpscale = allowUpscale;
@@ -33,12 +33,12 @@ public final class IconElement implements AnimatableElement {
         this.allowUpscale = builder.allowUpscale;
     }
 
-    public static Builder builder(ResourceLocation texture) {
+    public static Builder builder(Identifier texture) {
         return new Builder(texture);
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         FizzyGuiUtils.drawTextureFit(g, texture, leftPx, topPx, widthPx, heightPx, stretchToFit, allowUpscale);
     }
 
@@ -48,11 +48,11 @@ public final class IconElement implements AnimatableElement {
     }
 
     public static final class Builder {
-        private final ResourceLocation texture;
+        private final Identifier texture;
         private boolean stretchToFit;
         private boolean allowUpscale;
 
-        private Builder(ResourceLocation texture) {
+        private Builder(Identifier texture) {
             this.texture = Objects.requireNonNull(texture, "texture");
         }
 

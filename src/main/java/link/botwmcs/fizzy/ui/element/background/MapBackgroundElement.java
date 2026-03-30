@@ -3,15 +3,15 @@ package link.botwmcs.fizzy.ui.element.background;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 
 public final class MapBackgroundElement implements AnimatableElement {
-    private static final ResourceLocation MAP_BG = ResourceLocation.withDefaultNamespace("textures/map/map_background.png");
+    private static final Identifier MAP_BG = Identifier.withDefaultNamespace("textures/map/map_background.png");
     private static final int BORDER_PX = 3;
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         if (widthPx <= 0 || heightPx <= 0) {
             return;
         }

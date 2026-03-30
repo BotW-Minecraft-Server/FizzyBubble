@@ -4,10 +4,10 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 
 import javax.annotation.Nullable;
@@ -29,8 +29,8 @@ public final class ScreenshotManager {
     public static final ScreenshotManager INSTANCE = new ScreenshotManager();
 
     private ScreenshotManager() {}
-    private static final ResourceLocation FALLBACK_OVERLAY =
-            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/title/background/default.png");
+    private static final Identifier FALLBACK_OVERLAY =
+            Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/title/background/default.png");
 
     // 16:9 基准
     private static final int  TEXTURE_WIDTH  = 1920;
@@ -51,12 +51,12 @@ public final class ScreenshotManager {
     private int index = -1;
 
     // 当前帧
-    private ResourceLocation curRL;
+    private Identifier curRL;
     private DynamicTexture curTex;
     private int curW, curH;
 
     // 目标帧（做渐变用）
-    private ResourceLocation nextRL;
+    private Identifier nextRL;
     private DynamicTexture  nextTex;
     private int nextW, nextH;
 
@@ -177,7 +177,7 @@ public final class ScreenshotManager {
 
 
     // 渲染（由 Mixin 调用）
-    public void renderBackground(GuiGraphics gg, int x, int y, int width, int height) {
+    public void renderBackground(GuiGraphicsExtractor gg, int x, int y, int width, int height) {
         // 保障至少有一张
         if (curRL == null && nextRL == null) {
             ensurePrepared(true);
@@ -231,14 +231,14 @@ public final class ScreenshotManager {
     // ===== 快照查询 API =====
     /** 不可变的图片快照 */
     public static final class ImageInfo {
-        public final ResourceLocation rl;
+        public final Identifier rl;
         public final int width, height;
         public final boolean isFallback;
         public final @Nullable Path file; // 可能为 null（fallback 或未就绪）
         public final float visibleAlpha;   // 在当前帧里这张图的可见 alpha（0..1）
         public final boolean isFading;     // 是否处于渐变过程
 
-        private ImageInfo(ResourceLocation rl, int w, int h, boolean fallback, @Nullable Path file, float alpha, boolean fading) {
+        private ImageInfo(Identifier rl, int w, int h, boolean fallback, @Nullable Path file, float alpha, boolean fading) {
             this.rl = rl; this.width = w; this.height = h;
             this.isFallback = fallback; this.file = file;
             this.visibleAlpha = alpha; this.isFading = fading;
@@ -254,7 +254,7 @@ public final class ScreenshotManager {
     public ImageInfo getDisplayedImage() {
         final boolean fadingLocal = this.fading;
         final int fadeTicksLocal = this.fadeTicks;
-        final ResourceLocation cur = this.curRL, nxt = this.nextRL;
+        final Identifier cur = this.curRL, nxt = this.nextRL;
         final int cW = this.curW, cH = this.curH, nW = this.nextW, nH = this.nextH;
         final Path cF = this.curFile, nF = this.nextFile;
 
@@ -282,7 +282,7 @@ public final class ScreenshotManager {
 
     /** 不论是否在渐变，返回当前层（旧图层）的信息；不存在时返回 fallback。 */
     public ImageInfo getCurrentLayerImage() {
-        final ResourceLocation cur = this.curRL;
+        final Identifier cur = this.curRL;
         if (cur != null) {
             float alpha = this.fading ? clamp01(1f - ((float)this.fadeTicks / (float)FADE_TICKS)) : 1f;
             return new ImageInfo(cur, (this.curW > 0 ? this.curW : TEXTURE_WIDTH), (this.curH > 0 ? this.curH : TEXTURE_HEIGHT),
@@ -293,7 +293,7 @@ public final class ScreenshotManager {
 
     /** 不论是否在渐变，返回目标层（新图层）的信息；不存在时返回 fallback。 */
     public ImageInfo getNextLayerImage() {
-        final ResourceLocation nxt = this.nextRL;
+        final Identifier nxt = this.nextRL;
         if (nxt != null) {
             float alpha = this.fading ? clamp01((float)this.fadeTicks / (float)FADE_TICKS) : 1f;
             return new ImageInfo(nxt, (this.nextW > 0 ? this.nextW : TEXTURE_WIDTH), (this.nextH > 0 ? this.nextH : TEXTURE_HEIGHT),
@@ -427,7 +427,7 @@ public final class ScreenshotManager {
                 dropCurrent();
                 DynamicTexture tex = new DynamicTexture(img);
                 String safeName = file.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
-                ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + safeName);
+                Identifier rl = Identifier.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + safeName);
 
                 TextureManager tm = Minecraft.getInstance().getTextureManager();
                 tm.register(rl, tex);
@@ -467,7 +467,7 @@ public final class ScreenshotManager {
 
                 DynamicTexture tex = new DynamicTexture(img);
                 String safeName = file.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
-                ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + safeName);
+                Identifier rl = Identifier.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + safeName);
 
                 Minecraft.getInstance().getTextureManager().register(rl, tex);
 
@@ -503,7 +503,7 @@ public final class ScreenshotManager {
     }
 
     // ============ 内部：绘制工具 ============
-    private static void blitWithAlpha(GuiGraphics gg, ResourceLocation rl, int x, int y, int w, int h, int srcW, int srcH, float alpha) {
+    private static void blitWithAlpha(GuiGraphicsExtractor gg, Identifier rl, int x, int y, int w, int h, int srcW, int srcH, float alpha) {
         // 保存/恢复 shader 颜色
         float[] prev = getShaderColor();
         RenderSystem.setShaderColor(1f, 1f, 1f, alpha);

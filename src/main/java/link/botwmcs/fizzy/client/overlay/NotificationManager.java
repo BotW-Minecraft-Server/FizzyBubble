@@ -4,7 +4,7 @@ import link.botwmcs.fizzy.ui.kernel.notification.NotificationLevel;
 import link.botwmcs.fizzy.ui.kernel.notification.NotificationOverlay;
 import link.botwmcs.fizzy.ui.kernel.notification.NotificationSpec;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayLayerKey;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.util.Objects;
@@ -51,7 +51,7 @@ public final class NotificationManager {
         OverlayManager.stack().clear(OverlayLayerKey.NOTIFICATION);
     }
 
-    public static void renderAll(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
+    public static void renderAll(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float partialTick) {
         OverlayManager.stack().renderLayer(graphics, screenWidth, screenHeight, partialTick, OverlayLayerKey.NOTIFICATION);
     }
 

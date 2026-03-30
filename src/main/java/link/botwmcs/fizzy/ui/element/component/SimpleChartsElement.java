@@ -4,7 +4,7 @@ import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.client.util.Gwen;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -102,7 +102,7 @@ public final class SimpleChartsElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         resolveCells(leftPx, topPx, widthPx, heightPx, this.resolvedCells);
         if (this.rootWidget != null) {
             this.rootWidget.setX(leftPx);
@@ -122,7 +122,7 @@ public final class SimpleChartsElement implements ElementPainter {
         return List.copyOf(this.childWidgets);
     }
 
-    private void renderCellsAndWidgets(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    private void renderCellsAndWidgets(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         if (this.rootWidget == null) {
             return;
         }
@@ -148,7 +148,7 @@ public final class SimpleChartsElement implements ElementPainter {
                         }
                         if (cellIndex < this.widgetsByCell.size()) {
                             for (AbstractWidget widget : this.widgetsByCell.get(cellIndex)) {
-                                widget.render(g, mouseX, mouseY, partialTick);
+                                widget.extractRenderState(g, mouseX, mouseY, partialTick);
                             }
                         }
                     }
@@ -302,7 +302,7 @@ public final class SimpleChartsElement implements ElementPainter {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             renderCellsAndWidgets(g, mouseX, mouseY, partialTick);
         }
 

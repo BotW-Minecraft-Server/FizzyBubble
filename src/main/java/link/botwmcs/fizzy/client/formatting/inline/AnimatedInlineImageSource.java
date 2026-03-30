@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.client.formatting.inline;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,12 +9,12 @@ import java.util.List;
  * Frame-based animated inline source.
  */
 public final class AnimatedInlineImageSource implements InlineImageSource {
-    private final List<ResourceLocation> frames;
+    private final List<Identifier> frames;
     private final long frameDurationMs;
     private final float width;
     private final float height;
 
-    public AnimatedInlineImageSource(List<ResourceLocation> frames, long frameDurationMs, float width, float height) {
+    public AnimatedInlineImageSource(List<Identifier> frames, long frameDurationMs, float width, float height) {
         if (frames == null || frames.isEmpty()) {
             throw new IllegalArgumentException("frames must not be empty");
         }
@@ -25,7 +25,7 @@ public final class AnimatedInlineImageSource implements InlineImageSource {
     }
 
     @Override
-    public ResourceLocation texture(long nowMillis) {
+    public Identifier texture(long nowMillis) {
         int size = this.frames.size();
         if (size == 1) {
             return this.frames.get(0);

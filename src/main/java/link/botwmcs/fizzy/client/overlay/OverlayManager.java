@@ -5,7 +5,7 @@ import link.botwmcs.fizzy.client.overlay.content.SimpleTextPage;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayLayerKey;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayLayerStack;
 import link.botwmcs.fizzy.ui.kernel.overlay.OverlayRenderable;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public final class OverlayManager {
@@ -50,15 +50,15 @@ public final class OverlayManager {
         STACK.clear(OverlayLayerKey.HUD);
     }
 
-    public static void renderAll(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick, Anchor anchor) {
+    public static void renderAll(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float partialTick, Anchor anchor) {
         STACK.renderHud(graphics, screenWidth, screenHeight, partialTick, anchor, true);
     }
 
-    public static void renderAllPerInstance(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
+    public static void renderAllPerInstance(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float partialTick) {
         STACK.renderHudPerAnchor(graphics, screenWidth, screenHeight, partialTick);
     }
 
-    public static void renderAllLayers(GuiGraphics graphics, int screenWidth, int screenHeight, float partialTick) {
+    public static void renderAllLayers(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float partialTick) {
         STACK.renderAllLayers(graphics, screenWidth, screenHeight, partialTick);
     }
 

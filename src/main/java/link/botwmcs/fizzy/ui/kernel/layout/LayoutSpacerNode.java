@@ -1,6 +1,6 @@
 package link.botwmcs.fizzy.ui.kernel.layout;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 final class LayoutSpacerNode extends LayoutNode {
     LayoutSpacerNode(LayoutModifier modifier) {
@@ -12,6 +12,6 @@ final class LayoutSpacerNode extends LayoutNode {
     }
 
     @Override
-    protected void onRender(LayoutMountContext context, GuiGraphics graphics, float partialTick, LayoutRect bounds) {
+    protected void onRender(LayoutMountContext context, GuiGraphicsExtractor graphics, float partialTick, LayoutRect bounds) {
     }
 }

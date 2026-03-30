@@ -1,16 +1,16 @@
 package link.botwmcs.fizzy.api;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public interface IOverlayContent {
     /** 背层（先画，常用于背景/分割线/装饰） */
-    default void renderBackLayer(GuiGraphics g, int x, int y, float partialTick) {}
+    default void renderBackLayer(GuiGraphicsExtractor g, int x, int y, float partialTick) {}
 
     /** 主层（主体内容） */
-    void renderMainLayer(GuiGraphics g, int x, int y, float partialTick);
+    void renderMainLayer(GuiGraphicsExtractor g, int x, int y, float partialTick);
 
     /** 前层（最后画，常用于高亮、tooltip、闪烁指示等） */
-    default void renderFrontLayer(GuiGraphics g, int x, int y, float partialTick) {}
+    default void renderFrontLayer(GuiGraphicsExtractor g, int x, int y, float partialTick) {}
 
     /** 逐帧逻辑 */
     default void tick() {}
@@ -26,7 +26,7 @@ public interface IOverlayContent {
 
     default void setExternalAlpha(float a) {} // 由实例在渲染前传入 ca 或 na
 //    /** 在 Overlay 内部内容区域渲染 */
-//    void render(GuiGraphics g, int x, int y, int width, int height, float partialTick);
+//    void render(GuiGraphicsExtractor g, int x, int y, int width, int height, float partialTick);
 //
 //    /** 每帧更新逻辑（可选） */
 //    default void tick() {}

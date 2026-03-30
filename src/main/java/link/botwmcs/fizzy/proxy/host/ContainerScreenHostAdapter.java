@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 
@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ContainerScreenHostAdapter implements HostAdapter {
-    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("fizzy", "container_screen");
+    private static final Identifier ID = Identifier.fromNamespaceAndPath("fizzy", "container_screen");
     private static final HostStageCapabilities STAGES = HostStageCapabilities.of(
             HostRenderStage.SCREEN_PRE,
             HostRenderStage.SOURCE_BG_PRE,
@@ -33,7 +33,7 @@ public final class ContainerScreenHostAdapter implements HostAdapter {
     private static final int AXIS_CLUSTER_TOLERANCE = 3;
 
     @Override
-    public ResourceLocation id() {
+    public Identifier id() {
         return ID;
     }
 

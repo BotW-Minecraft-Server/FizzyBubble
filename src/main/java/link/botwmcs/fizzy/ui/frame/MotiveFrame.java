@@ -2,20 +2,20 @@ package link.botwmcs.fizzy.ui.frame;
 
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class MotiveFrame implements FramePainter {
     private static final FrameMetrics DEFAULT_METRICS = MotiveFrameMetrics.ofDefault256x256();
-    private static final ResourceLocation DEFAULT_PANEL_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/blank_sharp.png");
-    private static final ResourceLocation DEFAULT_DARK_PANEL_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/blank_sharp_dark.png");
+    private static final Identifier DEFAULT_PANEL_TEXTURE =
+            Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/blank_sharp.png");
+    private static final Identifier DEFAULT_DARK_PANEL_TEXTURE =
+            Identifier.fromNamespaceAndPath(Fizzy.MODID, "textures/gui/ui/blank_sharp_dark.png");
     private static final int TOP_CAP_HEIGHT = 3;
     private static final int BOTTOM_CAP_HEIGHT = 3;
 
-    private final ResourceLocation tex;
+    private final Identifier tex;
     private final FrameMetrics m;
     private final int panelWidthPx;
     private final Component title;
@@ -34,11 +34,11 @@ public class MotiveFrame implements FramePainter {
         this(DEFAULT_PANEL_TEXTURE, DEFAULT_METRICS, DEFAULT_METRICS.panelW(), title, dark);
     }
 
-    public MotiveFrame(ResourceLocation tex, FrameMetrics metrics, Component title) {
+    public MotiveFrame(Identifier tex, FrameMetrics metrics, Component title) {
         this(tex, metrics, metrics.panelW(), title, false);
     }
 
-    public MotiveFrame(ResourceLocation tex, FrameMetrics metrics, int panelWidthPx, Component title, boolean dark) {
+    public MotiveFrame(Identifier tex, FrameMetrics metrics, int panelWidthPx, Component title, boolean dark) {
         this.tex = tex;
         this.m = metrics;
         this.panelWidthPx = panelWidthPx;
@@ -47,7 +47,7 @@ public class MotiveFrame implements FramePainter {
     }
 
     @Override
-    public void paint(GuiGraphics g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
+    public void paint(GuiGraphicsExtractor g, int left, int top, int w, int h, boolean drawBottomEdge, boolean hasBelow) {
         final int texW = m.texW();
         final int texH = m.texH();
         final int drawW = panelWidthPx;
@@ -74,10 +74,10 @@ public class MotiveFrame implements FramePainter {
         int titleX = left + drawW / 2 - titleWidth / 2;
         int titleY = top + m.titleStartH();
         int titleColor = this.dark ? 0xE6E6E6 : 0xFFFFFF;
-        g.drawString(mc.font, this.title, titleX, titleY, titleColor, true);
+        g.text(mc.font, this.title, titleX, titleY, titleColor, true);
     }
 
-    private void blit(GuiGraphics g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
+    private void blit(GuiGraphicsExtractor g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
         g.blit(this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex, x, y, u, v, w, h, texW, texH);
     }
 

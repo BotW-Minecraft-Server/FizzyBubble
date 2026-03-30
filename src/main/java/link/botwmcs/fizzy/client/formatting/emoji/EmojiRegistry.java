@@ -6,7 +6,7 @@ import link.botwmcs.fizzy.client.formatting.inline.StaticInlineImageSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +58,7 @@ public final class EmojiRegistry {
         VERSION.incrementAndGet();
     }
 
-    public static void registerStatic(String token, ResourceLocation texture, float width, float height) {
+    public static void registerStatic(String token, Identifier texture, float width, float height) {
         if (texture == null) {
             throw new IllegalArgumentException("emoji texture must not be null");
         }
@@ -67,7 +67,7 @@ public final class EmojiRegistry {
 
     public static void registerStaticInteractive(
             String token,
-            ResourceLocation texture,
+            Identifier texture,
             float width,
             float height,
             EmojiClickHandler clickHandler
@@ -78,7 +78,7 @@ public final class EmojiRegistry {
         registerInteractive(token, new StaticInlineImageSource(texture, Math.max(1.0F, width), Math.max(1.0F, height)), clickHandler);
     }
 
-    public static void registerAnimated(String token, List<ResourceLocation> frames, long frameDurationMs, float width, float height) {
+    public static void registerAnimated(String token, List<Identifier> frames, long frameDurationMs, float width, float height) {
         if (frames == null || frames.isEmpty()) {
             throw new IllegalArgumentException("emoji frames must not be empty");
         }
@@ -87,7 +87,7 @@ public final class EmojiRegistry {
 
     public static void registerAnimatedInteractive(
             String token,
-            List<ResourceLocation> frames,
+            List<Identifier> frames,
             long frameDurationMs,
             float width,
             float height,

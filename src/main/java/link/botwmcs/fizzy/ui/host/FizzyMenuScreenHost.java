@@ -19,11 +19,11 @@ import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
-    private static final ResourceLocation GENERIC_54 = ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
+    private static final Identifier GENERIC_54 = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
     private static final int GENERIC_TEX_SIZE = 256;
     private static final int PLAYER_INV_TOP_TRIM = 13;
     private static final int PLAYER_INV_SECTION_V = 126 + PLAYER_INV_TOP_TRIM;
@@ -103,12 +103,12 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void renderBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         this.renderBg(g, partialTick, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
+    protected void renderBg(GuiGraphicsExtractor g, float partialTick, int mouseX, int mouseY) {
         if (runtime != null) {
             runtime.frameTick();
         }
@@ -155,7 +155,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         boolean suppressTooltips = shouldSuppressTooltips();
         if (suppressTooltips) {
             FizzyTooltipElement.pushGlobalSuppression();
@@ -192,7 +192,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     @Override
-    protected void renderTooltip(GuiGraphics g, int x, int y) {
+    protected void renderTooltip(GuiGraphicsExtractor g, int x, int y) {
         if (shouldSuppressTooltips()) {
             return;
         }
@@ -241,13 +241,13 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     @Override
-    protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+    protected void renderLabels(GuiGraphicsExtractor g, int mouseX, int mouseY) {
     }
 
-    protected void renderCustomMenuBackground(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
+    protected void renderCustomMenuBackground(GuiGraphicsExtractor g, float partialTick, int mouseX, int mouseY) {
     }
 
-    protected void renderCustomMenuForeground(GuiGraphics g, int mouseX, int mouseY) {
+    protected void renderCustomMenuForeground(GuiGraphicsExtractor g, int mouseX, int mouseY) {
     }
 
     protected int playerInventorySlotLeft() {
@@ -270,7 +270,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         return this.topPos + this.imageHeight;
     }
 
-    private void drawPlayerInventoryBackground(GuiGraphics g) {
+    private void drawPlayerInventoryBackground(GuiGraphicsExtractor g) {
         g.blit(
                 GENERIC_54,
                 playerInventoryBackgroundLeft(),

@@ -1,7 +1,7 @@
 package link.botwmcs.fizzy.ui.split;
 
 import link.botwmcs.fizzy.ui.frame.FramePainter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.Objects;
 
@@ -14,7 +14,7 @@ public record PixelSplitSpec(int offsetX, int offsetY, int lengthPx, SplitType t
     }
 
     @Override
-    public void paint(GuiGraphics g, SplitPainter painter, FramePainter.SlotArea slotArea) {
+    public void paint(GuiGraphicsExtractor g, SplitPainter painter, FramePainter.SlotArea slotArea) {
         painter.paintInSlotArea(g, slotArea, offsetX, offsetY, lengthPx, type);
     }
 }

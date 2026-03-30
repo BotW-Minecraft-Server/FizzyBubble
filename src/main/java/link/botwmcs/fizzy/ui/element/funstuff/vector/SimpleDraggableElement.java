@@ -4,7 +4,7 @@ import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.client.util.Gwen;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -120,7 +120,7 @@ public final class SimpleDraggableElement implements ElementPainter {
     }
 
     @Override
-    public void render(GuiGraphics g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int leftPx, int topPx, int widthPx, int heightPx, float partialTick) {
         updateViewport(leftPx, topPx, widthPx, heightPx);
         if (scrollWidget != null) {
             scrollWidget.setX(leftPx);
@@ -151,7 +151,7 @@ public final class SimpleDraggableElement implements ElementPainter {
         clampScroll();
     }
 
-    private void renderContentAndScrollbar(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    private void renderContentAndScrollbar(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         if (viewportWidth <= 0 || viewportHeight <= 0) {
             if (showScrollbar) {
                 drawScrollbar(g, mouseX, mouseY);
@@ -177,7 +177,7 @@ public final class SimpleDraggableElement implements ElementPainter {
                     }
 
                     for (AbstractWidget widget : childWidgets) {
-                        widget.render(g, mouseX, mouseY, partialTick);
+                        widget.extractRenderState(g, mouseX, mouseY, partialTick);
                     }
                 }
         );
@@ -187,7 +187,7 @@ public final class SimpleDraggableElement implements ElementPainter {
         }
     }
 
-    private void drawScrollbar(GuiGraphics g, int mouseX, int mouseY) {
+    private void drawScrollbar(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         int trackLeft = scrollbarLeft();
         int trackTop = viewportTop;
         int trackRight = trackLeft + scrollbarWidthPx;
@@ -317,7 +317,7 @@ public final class SimpleDraggableElement implements ElementPainter {
         }
 
         @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             updateViewport(getX(), getY(), getWidth(), getHeight());
             renderContentAndScrollbar(g, mouseX, mouseY, partialTick);
         }

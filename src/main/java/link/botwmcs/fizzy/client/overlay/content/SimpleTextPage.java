@@ -2,7 +2,7 @@ package link.botwmcs.fizzy.client.overlay.content;
 
 import link.botwmcs.fizzy.api.IOverlayContent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class SimpleTextPage implements IOverlayContent {
@@ -13,7 +13,7 @@ public class SimpleTextPage implements IOverlayContent {
     }
 
     @Override
-    public void renderMainLayer(GuiGraphics g, int x, int y, float partialTick) {
-        g.drawString(Minecraft.getInstance().font, text, x + 4, y + 4, 0xFFFFFFFF, false);
+    public void renderMainLayer(GuiGraphicsExtractor g, int x, int y, float partialTick) {
+        g.text(Minecraft.getInstance().font, text, x + 4, y + 4, 0xFFFFFFFF, false);
     }
 }
