@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.ui.frame;
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -120,7 +121,20 @@ public class FizzyFrame implements FramePainter {
     private void blit(GuiGraphicsExtractor g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
 //        g.blit(/*texture*/ null, 0,0,0,0,0,0,0,0); // 占位避免导入顺序警告
         // 正式调用（1.21.1 MojMaps 常用签名）：
-        g.blit(this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex, x, y, u, v, w, h, texW, texH);
+        g.blit(
+                RenderPipelines.GUI_TEXTURED,
+                this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex,
+                x,
+                y,
+                (float) u,
+                (float) v,
+                w,
+                h,
+                w,
+                h,
+                texW,
+                texH
+        );
     }
 
     /** 供宿主用来计算最终面板高度（避免魔法数字） */

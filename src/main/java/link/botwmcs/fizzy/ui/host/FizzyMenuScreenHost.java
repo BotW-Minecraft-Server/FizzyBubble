@@ -22,6 +22,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -240,11 +241,14 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     private void drawPlayerInventoryBackground(GuiGraphicsExtractor g) {
         g.blit(
+                RenderPipelines.GUI_TEXTURED,
                 GENERIC_54,
                 playerInventoryBackgroundLeft(),
                 playerInventoryBackgroundTop(),
-                0,
-                PLAYER_INV_SECTION_V,
+                0.0f,
+                (float) PLAYER_INV_SECTION_V,
+                PLAYER_INV_SECTION_W,
+                PLAYER_INV_SECTION_H,
                 PLAYER_INV_SECTION_W,
                 PLAYER_INV_SECTION_H,
                 GENERIC_TEX_SIZE,

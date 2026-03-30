@@ -3,7 +3,6 @@ package link.botwmcs.fizzy.ui.element.animate;
 import link.botwmcs.fizzy.client.util.AnimationClock;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import java.util.ArrayList;
@@ -101,14 +100,12 @@ public final class AnimatedElement implements ElementPainter {
     }
 
     private FrameTime updateTime() {
-        Minecraft mc = Minecraft.getInstance();
-        boolean paused = mc != null && mc.isPaused();
-        AnimationClock.TickDelta delta = animationClock.tick(paused);
+        AnimationClock.TickDelta delta = animationClock.tick(false);
         float deltaSeconds = delta.seconds();
         float deltaTicks = delta.ticks();
         ageSeconds += deltaSeconds;
         ageTicks += deltaTicks;
-        return new FrameTime(deltaSeconds, deltaTicks, paused);
+        return new FrameTime(deltaSeconds, deltaTicks, false);
     }
 
     private record FrameTime(float deltaSeconds, float deltaTicks, boolean paused) {

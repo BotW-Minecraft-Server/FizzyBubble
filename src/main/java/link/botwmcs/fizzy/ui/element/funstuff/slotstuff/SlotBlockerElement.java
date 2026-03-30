@@ -69,7 +69,7 @@ public final class SlotBlockerElement implements ElementPainter {
     }
 
     private void tickAnimation() {
-        AnimationClock.TickDelta delta = animationClock.tick(Minecraft.getInstance().isPaused());
+        AnimationClock.TickDelta delta = animationClock.tick(false);
         float dt = delta.seconds();
         float target = openTarget ? 1.0f : 0.0f;
         if (openProgress < target) {

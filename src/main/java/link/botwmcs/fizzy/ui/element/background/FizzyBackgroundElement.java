@@ -6,6 +6,7 @@ import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 import java.util.EnumMap;
@@ -61,7 +62,7 @@ public final class FizzyBackgroundElement implements AnimatableElement {
             int xx = x, remW = w;
             while (remW > 0) {
                 int dw = Math.min(tileW, remW);
-                g.blit(tex, xx, yy, 0, 0, dw, dh, tileW, tileH);
+                g.blit(RenderPipelines.GUI_TEXTURED, tex, xx, yy, 0.0f, 0.0f, dw, dh, dw, dh, tileW, tileH);
                 xx += dw;
                 remW -= dw;
             }

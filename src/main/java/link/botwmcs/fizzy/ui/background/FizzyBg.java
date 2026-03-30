@@ -4,6 +4,7 @@ import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 public class FizzyBg implements BgPainter {
@@ -58,7 +59,7 @@ public class FizzyBg implements BgPainter {
             int remW = w;
             while (remW > 0) {
                 int dw = Math.min(tileW, remW);
-                g.blit(texture, xx, yy, 0, 0, dw, dh, tileW, tileH);
+                g.blit(RenderPipelines.GUI_TEXTURED, texture, xx, yy, 0.0f, 0.0f, dw, dh, dw, dh, tileW, tileH);
                 xx += dw;
                 remW -= dw;
             }

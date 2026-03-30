@@ -2,6 +2,7 @@ package link.botwmcs.fizzy.ui.split;
 
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 public class FizzySplit implements SplitPainter {
@@ -33,14 +34,14 @@ public class FizzySplit implements SplitPainter {
             int drawn = 0;
             while (drawn < lengthPx) {
                 int drawH = Math.min(tileH, lengthPx - drawn);
-                g.blit(texture, x, y + drawn, u, v, tileW, drawH, texW, texH);
+                g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y + drawn, (float) u, (float) v, tileW, drawH, tileW, drawH, texW, texH);
                 drawn += drawH;
             }
         } else {
             int drawn = 0;
             while (drawn < lengthPx) {
                 int drawW = Math.min(tileW, lengthPx - drawn);
-                g.blit(texture, x + drawn, y, u, v, drawW, tileH, texW, texH);
+                g.blit(RenderPipelines.GUI_TEXTURED, texture, x + drawn, y, (float) u, (float) v, drawW, tileH, drawW, tileH, texW, texH);
                 drawn += drawW;
             }
         }

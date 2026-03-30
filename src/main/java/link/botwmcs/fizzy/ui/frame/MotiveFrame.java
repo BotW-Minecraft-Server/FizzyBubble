@@ -3,6 +3,7 @@ package link.botwmcs.fizzy.ui.frame;
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -78,7 +79,20 @@ public class MotiveFrame implements FramePainter {
     }
 
     private void blit(GuiGraphicsExtractor g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
-        g.blit(this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex, x, y, u, v, w, h, texW, texH);
+        g.blit(
+                RenderPipelines.GUI_TEXTURED,
+                this.dark ? DEFAULT_DARK_PANEL_TEXTURE : this.tex,
+                x,
+                y,
+                (float) u,
+                (float) v,
+                w,
+                h,
+                w,
+                h,
+                texW,
+                texH
+        );
     }
 
     public int computeHeightPx(int rows, boolean includeBottomEdge) {
