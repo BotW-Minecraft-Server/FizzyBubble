@@ -559,12 +559,13 @@ public final class ScreenProxySession implements AutoCloseable {
     }
 
     private static boolean dispatchMouseClicked(List<ManagedWidget> widgets, double x, double y, int button) {
+        var event = HostRenderSupport.createMouseButtonEvent(x, y, button);
         for (ManagedWidget managed : widgets) {
             AbstractWidget widget = managed.widget();
             if (!widget.visible || !widget.active) {
                 continue;
             }
-            if (widget.mouseClicked(x, y, button)) {
+            if (widget.mouseClicked(event, false)) {
                 return true;
             }
         }
@@ -572,12 +573,13 @@ public final class ScreenProxySession implements AutoCloseable {
     }
 
     private static boolean dispatchMouseReleased(List<ManagedWidget> widgets, double x, double y, int button) {
+        var event = HostRenderSupport.createMouseButtonEvent(x, y, button);
         for (ManagedWidget managed : widgets) {
             AbstractWidget widget = managed.widget();
             if (!widget.visible) {
                 continue;
             }
-            if (widget.mouseReleased(x, y, button)) {
+            if (widget.mouseReleased(event)) {
                 return true;
             }
         }
@@ -585,12 +587,13 @@ public final class ScreenProxySession implements AutoCloseable {
     }
 
     private static boolean dispatchMouseDragged(List<ManagedWidget> widgets, double x, double y, int button, double dragX, double dragY) {
+        var event = HostRenderSupport.createMouseButtonEvent(x, y, button);
         for (ManagedWidget managed : widgets) {
             AbstractWidget widget = managed.widget();
             if (!widget.visible || !widget.active) {
                 continue;
             }
-            if (widget.mouseDragged(x, y, button, dragX, dragY)) {
+            if (widget.mouseDragged(event, dragX, dragY)) {
                 return true;
             }
         }

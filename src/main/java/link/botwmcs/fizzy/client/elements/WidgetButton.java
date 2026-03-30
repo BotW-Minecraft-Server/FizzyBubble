@@ -3,12 +3,9 @@ package link.botwmcs.fizzy.client.elements;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
-@OnlyIn(Dist.CLIENT)
 public class WidgetButton extends WidgetAbstractButton {
     public static final int DEFAULT_WIDTH = 15;
     public static final int DEFAULT_HEIGHT = 14;
@@ -35,12 +32,10 @@ public class WidgetButton extends WidgetAbstractButton {
         this.defaultButtonNarrationText(narrationElementOutput);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface OnPress {
         void onPress(WidgetButton button);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
         private final OnPress onPress;

@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 public class OverlayCommand {
     public static void register(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("overlay")
-                .requires(src -> src.hasPermission(2)) // 按需调整权限
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.literal("create")
                         .then(Commands.argument("title", StringArgumentType.string())
                                 .then(Commands.argument("scrolling", StringArgumentType.string())

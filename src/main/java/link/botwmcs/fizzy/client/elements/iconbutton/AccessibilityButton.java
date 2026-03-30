@@ -4,13 +4,10 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-@OnlyIn(Dist.CLIENT)
 public class AccessibilityButton extends AccessibilityAbstractButton {
     public static final int SMALL_WIDTH     = 120;
     public static final int DEFAULT_WIDTH   = 150;
@@ -54,7 +51,6 @@ public class AccessibilityButton extends AccessibilityAbstractButton {
 
     // ====================== Builder ======================
 
-    @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
         public final OnPress onPress;
@@ -115,12 +111,10 @@ public class AccessibilityButton extends AccessibilityAbstractButton {
 
     // ====================== 接口 ======================
 
-    @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
         MutableComponent createNarrationMessage(Supplier<Component> parentSupplier);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface OnPress {
         void onPress(AccessibilityButton button);
     }

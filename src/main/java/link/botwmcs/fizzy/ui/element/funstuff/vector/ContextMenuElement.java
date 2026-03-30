@@ -1,5 +1,6 @@
 package link.botwmcs.fizzy.ui.element.funstuff.vector;
 
+import link.botwmcs.fizzy.client.util.HostRenderSupport;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
@@ -11,6 +12,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
@@ -546,13 +548,14 @@ public final class ContextMenuElement implements ElementPainter {
     }
 
     private boolean forwardRowMouseClicked(RowRuntime row, double mouseX, double mouseY, int button) {
+        MouseButtonEvent event = HostRenderSupport.createMouseButtonEvent(mouseX, mouseY, button);
         List<AbstractWidget> widgets = row.widgets();
         for (int i = widgets.size() - 1; i >= 0; i--) {
             AbstractWidget widget = widgets.get(i);
             if (!widget.visible || !widget.active) {
                 continue;
             }
-            if (widget.mouseClicked(mouseX, mouseY, button)) {
+            if (widget.mouseClicked(event, false)) {
                 row.setPressedWidget(widget);
                 return true;
             }
@@ -561,10 +564,11 @@ public final class ContextMenuElement implements ElementPainter {
     }
 
     private boolean releasePressedWidgets(PopupState popup, double mouseX, double mouseY, int button) {
+        MouseButtonEvent event = HostRenderSupport.createMouseButtonEvent(mouseX, mouseY, button);
         boolean handled = false;
         for (RowRuntime row : popup.rows()) {
             if (row.pressedWidget() != null) {
-                handled = row.pressedWidget().mouseReleased(mouseX, mouseY, button) || handled;
+                handled = row.pressedWidget().mouseReleased(event) || handled;
                 row.setPressedWidget(null);
             }
         }
@@ -575,12 +579,13 @@ public final class ContextMenuElement implements ElementPainter {
     }
 
     private boolean dragPressedWidgets(PopupState popup, double mouseX, double mouseY, int button, double dragX, double dragY) {
+        MouseButtonEvent event = HostRenderSupport.createMouseButtonEvent(mouseX, mouseY, button);
         boolean handled = false;
         for (RowRuntime row : popup.rows()) {
             if (row.pressedWidget() == null) {
                 continue;
             }
-            handled = row.pressedWidget().mouseDragged(mouseX, mouseY, button, dragX, dragY) || handled;
+            handled = row.pressedWidget().mouseDragged(event, dragX, dragY) || handled;
         }
         if (popup.child() != null) {
             handled = dragPressedWidgets(popup.child(), mouseX, mouseY, button, dragX, dragY) || handled;
@@ -880,20 +885,20 @@ public final class ContextMenuElement implements ElementPainter {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            lastMouseX = event.x();
+            lastMouseY = event.y();
 
-            if (button == 1) {
+            if (event.button() == 1) {
                 if (rootPopup == null) {
-                    if (!isTriggerArea(mouseX, mouseY)) {
+                    if (!isTriggerArea(event.x(), event.y())) {
                         return false;
                     }
-                    openRootMenu(mouseX, mouseY);
+                    openRootMenu(event.x(), event.y());
                     return true;
                 }
-                if (isTriggerArea(mouseX, mouseY)) {
-                    openRootMenu(mouseX, mouseY);
+                if (isTriggerArea(event.x(), event.y())) {
+                    openRootMenu(event.x(), event.y());
                 } else {
                     closeMenu();
                 }
@@ -904,41 +909,41 @@ public final class ContextMenuElement implements ElementPainter {
                 return false;
             }
 
-            if (button != 0) {
+            if (event.button() != 0) {
                 return true;
             }
 
-            updateHoverAndSubmenus(mouseX, mouseY);
-            HitTestResult hit = hitTest(mouseX, mouseY);
+            updateHoverAndSubmenus(event.x(), event.y());
+            HitTestResult hit = hitTest(event.x(), event.y());
             if (hit == null) {
                 closeMenu();
                 return true;
             }
-            return handlePrimaryClick(hit, mouseX, mouseY);
+            return handlePrimaryClick(hit, event.x(), event.y());
         }
 
         @Override
-        public boolean mouseReleased(double mouseX, double mouseY, int button) {
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
+        public boolean mouseReleased(MouseButtonEvent event) {
+            lastMouseX = event.x();
+            lastMouseY = event.y();
             if (rootPopup == null) {
                 return false;
             }
-            boolean handled = releasePressedWidgets(rootPopup, mouseX, mouseY, button);
-            return handled || button == 0 || button == 1;
+            boolean handled = releasePressedWidgets(rootPopup, event.x(), event.y(), event.button());
+            return handled || event.button() == 0 || event.button() == 1;
         }
 
         @Override
-        public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
+        public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+            lastMouseX = event.x();
+            lastMouseY = event.y();
             if (rootPopup == null) {
                 return false;
             }
-            if (button != 0) {
+            if (event.button() != 0) {
                 return true;
             }
-            return dragPressedWidgets(rootPopup, mouseX, mouseY, button, dragX, dragY);
+            return dragPressedWidgets(rootPopup, event.x(), event.y(), event.button(), dragX, dragY);
         }
 
         @Override

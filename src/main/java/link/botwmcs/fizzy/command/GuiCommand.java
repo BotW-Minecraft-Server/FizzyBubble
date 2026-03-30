@@ -158,7 +158,7 @@ public class GuiCommand {
                 .overrideSizePx(widthPx, heightPx)
                 .build();
 
-        mc.tell(() -> mc.setScreen(new FizzyScreenHost(gui) {
+        mc.execute(() -> mc.setScreen(new FizzyScreenHost(gui) {
             @Override
             public Component getTitle() {
                 return Component.literal("Motive");
@@ -194,7 +194,7 @@ public class GuiCommand {
 
         int effectivePage = page == PAGE_TWO ? PAGE_TWO : PAGE_ONE;
         String title1 = "Fizzy Panel (" + pageRows + " rows) - Page " + effectivePage;
-        mc.tell(() -> {
+        mc.execute(() -> {
             mc.setScreen(new FizzyScreenHost(gui) {
                 @Override public Component getTitle() {
                     return Component.literal(title1);

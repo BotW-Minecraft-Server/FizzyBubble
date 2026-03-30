@@ -1,11 +1,11 @@
 package link.botwmcs.fizzy.ui.element.funstuff.vector;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.client.util.FizzyGuiUtils;
 import link.botwmcs.fizzy.ui.core.UiUnit;
 import link.botwmcs.fizzy.ui.element.ElementType;
 import link.botwmcs.fizzy.ui.element.animate.AnimatableElement;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
@@ -62,38 +62,33 @@ public final class ProgressElement implements AnimatableElement {
         int filledWidth = Mth.clamp(Mth.lerpDiscrete(progress, 0, widthPx), 0, widthPx);
         int notchCount = resolveNotchCount(widthPx);
 
-        RenderSystem.enableBlend();
-        try {
-            FizzyGuiUtils.drawHorizontalCapNineSlice(
-                    g,
-                    color.backgroundTexture(),
-                    leftPx,
-                    drawY,
-                    widthPx,
-                    drawHeight,
-                    VANILLA_BAR_TEXTURE_WIDTH,
-                    VANILLA_BAR_TEXTURE_HEIGHT,
-                    capWidthPx
-            );
-            FizzyGuiUtils.drawScissoredHorizontalCapProgress(
-                    g,
-                    color.progressTexture(),
-                    leftPx,
-                    drawY,
-                    widthPx,
-                    drawHeight,
-                    filledWidth,
-                    VANILLA_BAR_TEXTURE_WIDTH,
-                    VANILLA_BAR_TEXTURE_HEIGHT,
-                    capWidthPx
-            );
+        FizzyGuiUtils.drawHorizontalCapNineSlice(
+                g,
+                color.backgroundTexture(),
+                leftPx,
+                drawY,
+                widthPx,
+                drawHeight,
+                VANILLA_BAR_TEXTURE_WIDTH,
+                VANILLA_BAR_TEXTURE_HEIGHT,
+                capWidthPx
+        );
+        FizzyGuiUtils.drawScissoredHorizontalCapProgress(
+                g,
+                color.progressTexture(),
+                leftPx,
+                drawY,
+                widthPx,
+                drawHeight,
+                filledWidth,
+                VANILLA_BAR_TEXTURE_WIDTH,
+                VANILLA_BAR_TEXTURE_HEIGHT,
+                capWidthPx
+        );
 
-            if (notchCount > 0) {
-                drawAdaptiveNotch(g, NOTCHED_20_BACKGROUND_TEXTURE, leftPx, drawY, widthPx, drawHeight, notchCount);
-                drawScissoredAdaptiveNotch(g, NOTCHED_20_PROGRESS_TEXTURE, leftPx, drawY, widthPx, drawHeight, filledWidth, notchCount);
-            }
-        } finally {
-            RenderSystem.disableBlend();
+        if (notchCount > 0) {
+            drawAdaptiveNotch(g, NOTCHED_20_BACKGROUND_TEXTURE, leftPx, drawY, widthPx, drawHeight, notchCount);
+            drawScissoredAdaptiveNotch(g, NOTCHED_20_PROGRESS_TEXTURE, leftPx, drawY, widthPx, drawHeight, filledWidth, notchCount);
         }
     }
 
@@ -321,13 +316,14 @@ public final class ProgressElement implements AnimatableElement {
             }
             int srcU = NOTCH_SAMPLE_U + (clippedX - drawX);
             g.blit(
+                    RenderPipelines.GUI_TEXTURED,
                     texture,
                     clippedX,
                     destY,
+                    (float) srcU,
+                    (float) srcV,
                     clippedW,
                     drawHeight,
-                    srcU,
-                    srcV,
                     clippedW,
                     drawHeight,
                     VANILLA_BAR_TEXTURE_WIDTH,

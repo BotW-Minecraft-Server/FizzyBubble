@@ -7,6 +7,7 @@ import link.botwmcs.fizzy.client.util.Gwen;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
@@ -327,18 +328,18 @@ public final class SimpleDraggableElement implements ElementPainter {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (!this.active || !this.visible || button != 0) {
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            if (!this.active || !this.visible || event.button() != 0) {
                 return false;
             }
             updateViewport(getX(), getY(), getWidth(), getHeight());
             pressedChild = null;
 
-            if (isPointInsideScrollbar(mouseX, mouseY)) {
+            if (isPointInsideScrollbar(event.x(), event.y())) {
                 if (maxScrollPx() <= 0) {
                     return true;
                 }
-                int mouseYPx = Mth.floor(mouseY);
+                int mouseYPx = Mth.floor(event.y());
                 int thumbTop = thumbTopPx();
                 int thumbHeight = thumbHeightPx();
                 if (mouseYPx >= thumbTop && mouseYPx < thumbTop + thumbHeight) {
@@ -352,7 +353,7 @@ public final class SimpleDraggableElement implements ElementPainter {
                 return true;
             }
 
-            if (!isPointInsideViewport(mouseX, mouseY)) {
+            if (!isPointInsideViewport(event.x(), event.y())) {
                 return false;
             }
 
@@ -361,7 +362,7 @@ public final class SimpleDraggableElement implements ElementPainter {
                 if (!widget.visible) {
                     continue;
                 }
-                if (widget.mouseClicked(mouseX, mouseY, button)) {
+                if (widget.mouseClicked(event, doubleClick)) {
                     pressedChild = widget;
                     return true;
                 }
@@ -370,8 +371,8 @@ public final class SimpleDraggableElement implements ElementPainter {
         }
 
         @Override
-        public boolean mouseReleased(double mouseX, double mouseY, int button) {
-            if (!this.visible || button != 0) {
+        public boolean mouseReleased(MouseButtonEvent event) {
+            if (!this.visible || event.button() != 0) {
                 return false;
             }
             boolean handled = false;
@@ -381,18 +382,18 @@ public final class SimpleDraggableElement implements ElementPainter {
             }
 
             if (pressedChild != null) {
-                handled = pressedChild.mouseReleased(mouseX, mouseY, button) || handled;
+                handled = pressedChild.mouseReleased(event) || handled;
                 pressedChild = null;
                 return handled;
             }
 
-            if (isPointInsideViewport(mouseX, mouseY)) {
+            if (isPointInsideViewport(event.x(), event.y())) {
                 for (int i = childWidgets.size() - 1; i >= 0; i--) {
                     AbstractWidget widget = childWidgets.get(i);
                     if (!widget.visible) {
                         continue;
                     }
-                    if (widget.mouseReleased(mouseX, mouseY, button)) {
+                    if (widget.mouseReleased(event)) {
                         handled = true;
                         break;
                     }
@@ -403,17 +404,17 @@ public final class SimpleDraggableElement implements ElementPainter {
         }
 
         @Override
-        public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-            if (!this.active || !this.visible || button != 0) {
+        public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+            if (!this.active || !this.visible || event.button() != 0) {
                 return false;
             }
             if (draggingScrollbar) {
-                int mouseYPx = Mth.floor(mouseY);
+                int mouseYPx = Mth.floor(event.y());
                 setScrollFromThumbTop(mouseYPx - scrollbarDragGrabOffsetPx);
                 return true;
             }
             if (pressedChild != null) {
-                return pressedChild.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+                return pressedChild.mouseDragged(event, dragX, dragY);
             }
             return false;
         }

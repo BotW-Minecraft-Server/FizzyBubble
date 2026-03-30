@@ -10,6 +10,8 @@ import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -169,24 +171,28 @@ public final class HostRenderSupport {
         return owner != null ? owner.zIndex() : 0;
     }
 
-    public static boolean dispatchOverlayMouseClicked(List<ManagedWidget> managedWidgets, double mouseX, double mouseY, int button) {
+    public static MouseButtonEvent createMouseButtonEvent(double mouseX, double mouseY, int button) {
+        return new MouseButtonEvent(mouseX, mouseY, new MouseButtonInfo(button, 0));
+    }
+
+    public static boolean dispatchOverlayMouseClicked(List<ManagedWidget> managedWidgets, MouseButtonEvent event, boolean doubleClick) {
         for (AbstractWidget widget : overlayWidgetsTopDown(managedWidgets)) {
             if (!widget.visible || !widget.active) {
                 continue;
             }
-            if (widget.mouseClicked(mouseX, mouseY, button)) {
+            if (widget.mouseClicked(event, doubleClick)) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean dispatchOverlayMouseReleased(List<ManagedWidget> managedWidgets, double mouseX, double mouseY, int button) {
+    public static boolean dispatchOverlayMouseReleased(List<ManagedWidget> managedWidgets, MouseButtonEvent event) {
         for (AbstractWidget widget : overlayWidgetsTopDown(managedWidgets)) {
             if (!widget.visible) {
                 continue;
             }
-            if (widget.mouseReleased(mouseX, mouseY, button)) {
+            if (widget.mouseReleased(event)) {
                 return true;
             }
         }
@@ -195,9 +201,7 @@ public final class HostRenderSupport {
 
     public static boolean dispatchOverlayMouseDragged(
             List<ManagedWidget> managedWidgets,
-            double mouseX,
-            double mouseY,
-            int button,
+            MouseButtonEvent event,
             double dragX,
             double dragY
     ) {
@@ -205,7 +209,7 @@ public final class HostRenderSupport {
             if (!widget.visible || !widget.active) {
                 continue;
             }
-            if (widget.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
+            if (widget.mouseDragged(event, dragX, dragY)) {
                 return true;
             }
         }

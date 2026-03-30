@@ -13,10 +13,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
 public abstract class StartAbstractButton extends AbstractButton {
     protected static final int TEXT_MARGIN = 2;
     private static final WidgetSprites SPRITES = new WidgetSprites(

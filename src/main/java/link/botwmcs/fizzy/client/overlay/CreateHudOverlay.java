@@ -203,7 +203,7 @@ public class CreateHudOverlay implements OverlayRenderable {
         g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, BG, 0, 0, 0.0f, important ? 138.0f : 0.0f, GUI_W, GUI_H, 256, 256);
 
         // 标题 & 时间
-        long dayTime = Math.round(Minecraft.getInstance().level.getLevelData().getDayTimeFraction() * 24000.0f);
+        long dayTime = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getLevelData().getGameTime() : 0L;
         String timeStr = formatTickTime(dayTime);
         int ttlColor = withAlpha(0xFF4F4F4F, a);
         if ((ttlColor >>> 24) != 0) {

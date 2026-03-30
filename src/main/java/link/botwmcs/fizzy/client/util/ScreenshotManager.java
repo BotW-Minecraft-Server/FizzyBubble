@@ -5,9 +5,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.RandomSource;
 
 import javax.annotation.Nullable;
@@ -416,7 +418,7 @@ public final class ScreenshotManager {
             return;
         }
 
-        RenderSystem.recordRenderCall(() -> {
+        RenderSystem.queueFencedTask(() -> {
             try (InputStream bin = new java.io.ByteArrayInputStream(data)) {
                 NativeImage img = NativeImage.read(bin);
                 if (img == null || img.getWidth() <= 0 || img.getHeight() <= 0) {
@@ -425,7 +427,7 @@ public final class ScreenshotManager {
                 }
                 // 替换 current
                 dropCurrent();
-                DynamicTexture tex = new DynamicTexture(img);
+                DynamicTexture tex = new DynamicTexture(() -> "fizzy_current_" + file.getFileName(), img);
                 String safeName = file.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
                 Identifier rl = Identifier.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + safeName);
 
@@ -457,7 +459,7 @@ public final class ScreenshotManager {
         }
 
         // 在渲染线程上传为 next
-        RenderSystem.recordRenderCall(() -> {
+        RenderSystem.queueFencedTask(() -> {
             try (InputStream bin = new java.io.ByteArrayInputStream(data)) {
                 NativeImage img = NativeImage.read(bin);
                 if (img == null || img.getWidth() <= 0 || img.getHeight() <= 0) return;
@@ -465,7 +467,7 @@ public final class ScreenshotManager {
                 // 替换 next（先释放旧的 next）
                 dropNext();
 
-                DynamicTexture tex = new DynamicTexture(img);
+                DynamicTexture tex = new DynamicTexture(() -> "fizzy_next_" + file.getFileName(), img);
                 String safeName = file.getFileName().toString().replaceAll("[^A-Za-z0-9._-]", "_");
                 Identifier rl = Identifier.fromNamespaceAndPath(Fizzy.MODID, "screens/cover/" + safeName);
 
@@ -504,17 +506,10 @@ public final class ScreenshotManager {
 
     // ============ 内部：绘制工具 ============
     private static void blitWithAlpha(GuiGraphicsExtractor gg, Identifier rl, int x, int y, int w, int h, int srcW, int srcH, float alpha) {
-        // 保存/恢复 shader 颜色
-        float[] prev = getShaderColor();
-        RenderSystem.setShaderColor(1f, 1f, 1f, alpha);
-        gg.blit(rl, x, y, w, h, 0f, 0f, srcW, srcH, srcW, srcH);
-        RenderSystem.setShaderColor(prev[0], prev[1], prev[2], prev[3]);
-    }
-
-    private static float[] getShaderColor() {
-        // Moj 内部没有直接 getter，这里用一个小 hack：自己维护也行。为了稳妥，恢复为默认 1,1,1,1 前先保存。
-        // 这里简单地返回默认色，调用者上层如果全程不用自定义颜色，也没问题。
-        return new float[]{1f,1f,1f,1f};
+        if (alpha <= 0.0f || w <= 0 || h <= 0 || srcW <= 0 || srcH <= 0) {
+            return;
+        }
+        gg.blit(RenderPipelines.GUI_TEXTURED, rl, x, y, 0f, 0f, w, h, srcW, srcH, srcW, srcH, ARGB.white(clamp01(alpha)));
     }
 
     /** 返回 [ox, oy, rw, rh] */

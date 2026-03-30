@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class FizzyGuiUtils {
     private static final TextureSize FALLBACK_TEXTURE_SIZE = new TextureSize(16, 16);
     private static final Map<Identifier, TextureSize> TEXTURE_SIZE_CACHE = new ConcurrentHashMap<>();
+    private static final Identifier BLANK_TEXTURE_ID = Identifier.fromNamespaceAndPath("fizzy", "blank");
     private static Identifier blankTextureLocation;
 
 
@@ -42,7 +43,8 @@ public final class FizzyGuiUtils {
         if (blankTextureLocation == null) {
             NativeImage img = new NativeImage(1, 1, false);
             img.setPixel(0, 0, 0xFFFFFFFF);
-            blankTextureLocation = Minecraft.getInstance().getTextureManager().register("blank", new DynamicTexture(() -> "blank", img));
+            Minecraft.getInstance().getTextureManager().register(BLANK_TEXTURE_ID, new DynamicTexture(() -> "blank", img));
+            blankTextureLocation = BLANK_TEXTURE_ID;
         }
 
         return blankTextureLocation;

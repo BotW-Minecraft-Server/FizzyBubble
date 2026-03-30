@@ -10,14 +10,11 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.awt.Color;
 import java.util.Objects;
 
-@OnlyIn(Dist.CLIENT)
 public abstract class VanillaLikeAbstractButton extends AbstractButton {
     private static final int TEXT_HIGHLIGHT = rgb(0xE5, 0xE5, 0xE5);
     private static final int TEXT_DISABLED = rgb(0x75, 0x75, 0x75);

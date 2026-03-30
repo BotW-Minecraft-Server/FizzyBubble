@@ -82,7 +82,7 @@ public final class AnimatedElement implements ElementPainter {
             g.pose().translate(fracX, fracY);
         }
         transform.applyToPose(g.pose(), renderLeft, renderTop, widthPx, heightPx);
-        boolean colorApplied = transform.applyColor(g);
+        transform.applyColor(g);
 
         for (ElementAnimation animation : animations) {
             animation.beforeRender(ctx, g);
@@ -92,9 +92,6 @@ public final class AnimatedElement implements ElementPainter {
             animations.get(i).afterRender(ctx, g);
         }
 
-        if (colorApplied) {
-            g.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        }
         g.pose().popMatrix();
     }
 

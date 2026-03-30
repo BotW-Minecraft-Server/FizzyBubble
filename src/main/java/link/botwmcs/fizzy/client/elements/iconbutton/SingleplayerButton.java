@@ -4,8 +4,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -110,12 +108,10 @@ public class SingleplayerButton extends SingleplayerAbstractButton {
 
     // ---------- Functional interfaces ----------
 
-    @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
         MutableComponent createNarrationMessage(Supplier<Component> supplier);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface OnPress {
         void onPress(SingleplayerButton self);
     }

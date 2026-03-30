@@ -22,7 +22,6 @@
     "client.MutableComponentFizzyGlobalMixin",
     "client.ScreenRenderStageMixin",
     "client.ScreenEmojiInteractionMixin",
-    "client.SignTextDynamicRenderMessagesMixin",
-    "client.StringSplitterFizzyStyleSanitizeMixin"
+    "client.SignTextDynamicRenderMessagesMixin"
   ]
 }

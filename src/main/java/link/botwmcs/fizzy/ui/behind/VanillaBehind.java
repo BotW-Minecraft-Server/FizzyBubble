@@ -1,6 +1,5 @@
 package link.botwmcs.fizzy.ui.behind;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -15,15 +14,8 @@ public class VanillaBehind implements BehindPainter {
         int screenW = mc.getWindow().getGuiScaledWidth();
         int screenH = mc.getWindow().getGuiScaledHeight();
 
-        g.flush();
-        RenderSystem.disableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        mc.gameRenderer.processBlurEffect(partialTick);
-        mc.getMainRenderTarget().bindWrite(false);
+        g.blurBeforeThisStratum();
         g.fillGradient(0, 0, screenW, screenH, TOP_COLOR, BOTTOM_COLOR);
-        RenderSystem.disableBlend();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
     }
 
     @Override

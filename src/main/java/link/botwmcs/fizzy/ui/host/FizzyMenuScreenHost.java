@@ -1,6 +1,5 @@
 package link.botwmcs.fizzy.ui.host;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.client.util.HostRenderSupport;
 import link.botwmcs.fizzy.client.util.HostRenderSupport.ElementPlacement;
 import link.botwmcs.fizzy.client.util.HostRenderSupport.ManagedWidget;
@@ -21,6 +20,7 @@ import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -48,14 +48,12 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     private int nextManagedWidgetSerial;
 
     public FizzyMenuScreenHost(T menu, Inventory inv, Component title, FizzyGui gui) {
-        super(menu, inv, title);
+        super(menu, inv, title, gui.widthPx(), gui.heightPx());
         this.gui = gui;
     }
 
     @Override
     protected void init() {
-        this.imageWidth = gui.widthPx();
-        this.imageHeight = gui.heightPx();
         super.init();
         if (runtime == null || runtime.isClosed()) {
             runtime = UiRuntime.createForCurrentThread();
@@ -103,16 +101,14 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
     }
 
     @Override
-    public void renderBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        this.renderBg(g, partialTick, mouseX, mouseY);
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
     }
 
     @Override
-    protected void renderBg(GuiGraphicsExtractor g, float partialTick, int mouseX, int mouseY) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         if (runtime != null) {
             runtime.frameTick();
         }
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         FramePainter frame = gui.frame();
         boolean hasBelowBand = true;
@@ -121,6 +117,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         FramePainter.SlotArea slotArea = frame.currentSlotArea();
 
         List<ElementPlacement> placements = HostRenderSupport.collectElementPlacements(gui, frame, slotArea);
+        boolean suppressTooltips = HostRenderSupport.shouldSuppressTooltips(placements);
         UiRenderTaskQueue queue = new UiRenderTaskQueue();
 
         BehindPainter behind = gui.behind();
@@ -151,76 +148,51 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
             queue.add(widget.layer(), () -> HostRenderSupport.renderManagedWidget(g, widget, mouseX, mouseY, partialTick));
         }
 
-        queue.renderMatching(phase -> phase.ordinal() <= UiRenderPhase.WIDGET.ordinal());
-    }
-
-    @Override
-    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        boolean suppressTooltips = shouldSuppressTooltips();
         if (suppressTooltips) {
             FizzyTooltipElement.pushGlobalSuppression();
         }
         try {
-            super.render(g, mouseX, mouseY, partialTick);
+            queue.renderMatching(phase -> phase.ordinal() <= UiRenderPhase.WIDGET.ordinal());
+            super.extractContents(g, mouseX, mouseY, partialTick);
+            queue.renderMatching(phase -> phase == UiRenderPhase.TOOLTIP || phase == UiRenderPhase.OVERLAY);
+            super.extractCarriedItem(g, mouseX, mouseY);
+            super.extractSnapbackItem(g);
+            if (!suppressTooltips) {
+                super.extractTooltip(g, mouseX, mouseY);
+            }
         } finally {
             if (suppressTooltips) {
                 FizzyTooltipElement.popGlobalSuppression();
             }
         }
-
-        FramePainter frame = gui.frame();
-        boolean hasBelowBand = true;
-        boolean drawBottomEdge = false;
-        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
-        FramePainter.SlotArea slotArea = frame.currentSlotArea();
-
-        List<ElementPlacement> placements = HostRenderSupport.collectElementPlacements(gui, frame, slotArea);
-        UiRenderTaskQueue postQueue = new UiRenderTaskQueue();
-        for (ElementPlacement placement : placements) {
-            postQueue.add(placement.element().layer(), () -> HostRenderSupport.renderElement(g, placement, partialTick));
-        }
-        for (ManagedWidget widget : this.managedWidgets) {
-            postQueue.add(widget.layer(), () -> HostRenderSupport.renderManagedWidget(g, widget, mouseX, mouseY, partialTick));
-        }
-        postQueue.renderMatching(phase ->
-                phase == UiRenderPhase.TOOLTIP || phase == UiRenderPhase.OVERLAY
-        );
-
-        if (suppressTooltips) {
-            clearTooltipForNextRenderPass();
-        }
     }
 
     @Override
-    protected void renderTooltip(GuiGraphicsExtractor g, int x, int y) {
-        if (shouldSuppressTooltips()) {
-            return;
-        }
-        super.renderTooltip(g, x, y);
+    protected void extractLabels(GuiGraphicsExtractor g, int x, int y) {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (HostRenderSupport.dispatchOverlayMouseClicked(this.managedWidgets, mouseX, mouseY, button)) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (HostRenderSupport.dispatchOverlayMouseClicked(this.managedWidgets, event, doubleClick)) {
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (HostRenderSupport.dispatchOverlayMouseReleased(this.managedWidgets, mouseX, mouseY, button)) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (HostRenderSupport.dispatchOverlayMouseReleased(this.managedWidgets, event)) {
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (HostRenderSupport.dispatchOverlayMouseDragged(this.managedWidgets, mouseX, mouseY, button, dragX, dragY)) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (HostRenderSupport.dispatchOverlayMouseDragged(this.managedWidgets, event, dragX, dragY)) {
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override
@@ -238,10 +210,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
             runtime = null;
         }
         super.removed();
-    }
-
-    @Override
-    protected void renderLabels(GuiGraphicsExtractor g, int mouseX, int mouseY) {
     }
 
     protected void renderCustomMenuBackground(GuiGraphicsExtractor g, float partialTick, int mouseX, int mouseY) {
@@ -319,15 +287,6 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
         boolean drawBottomEdge = false;
         frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
         return HostRenderSupport.elementsAtPixel(gui, frame, x, y);
-    }
-
-    private boolean shouldSuppressTooltips() {
-        FramePainter frame = gui.frame();
-        boolean hasBelowBand = true;
-        boolean drawBottomEdge = false;
-        frame.setLayout(leftPos, topPos, imageWidth, imageHeight, drawBottomEdge, hasBelowBand);
-        List<ElementPlacement> placements = HostRenderSupport.collectElementPlacements(gui, frame, frame.currentSlotArea());
-        return HostRenderSupport.shouldSuppressTooltips(placements);
     }
 
     private class MenuInitContext implements ElementPainter.InitContext {

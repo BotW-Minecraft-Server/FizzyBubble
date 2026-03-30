@@ -14,12 +14,9 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
-@OnlyIn(Dist.CLIENT)
 public abstract class FizzyAbstractButton extends AbstractButton {
     protected static final int TEXT_MARGIN = 2;
     private static final WidgetSprites SPRITES = new WidgetSprites(

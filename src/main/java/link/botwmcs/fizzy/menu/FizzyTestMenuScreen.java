@@ -12,8 +12,8 @@ import link.botwmcs.fizzy.ui.host.FizzyMenuScreenHost;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.world.entity.player.Inventory;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class FizzyTestMenuScreen extends FizzyMenuScreenHost<FizzyTestMenu> {
     private static final int BAR_WIDTH = 120;
@@ -34,8 +34,8 @@ public final class FizzyTestMenuScreen extends FizzyMenuScreenHost<FizzyTestMenu
                 Component.literal("Sync"),
                 btn -> {
                     Minecraft mc = Minecraft.getInstance();
-                    if (mc.player != null) {
-                        PacketDistributor.sendToServer(new FizzyMenuPingC2SPayload(mc.player.containerMenu.containerId));
+                    if (mc.player != null && mc.getConnection() != null) {
+                        mc.getConnection().send(new ServerboundCustomPayloadPacket(new FizzyMenuPingC2SPayload(mc.player.containerMenu.containerId)));
                     }
                 },
                 Component.literal("Close"),
@@ -101,6 +101,9 @@ public final class FizzyTestMenuScreen extends FizzyMenuScreenHost<FizzyTestMenu
     }
 
     private void requestServerSync() {
-        PacketDistributor.sendToServer(new FizzyMenuPingC2SPayload(this.menu.containerId));
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getConnection() != null) {
+            mc.getConnection().send(new ServerboundCustomPayloadPacket(new FizzyMenuPingC2SPayload(this.menu.containerId)));
+        }
     }
 }

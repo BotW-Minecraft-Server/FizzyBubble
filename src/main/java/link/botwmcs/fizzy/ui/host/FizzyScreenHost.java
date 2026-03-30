@@ -15,11 +15,11 @@ import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
@@ -53,8 +53,8 @@ public class FizzyScreenHost extends Screen {
     }
 
     @Override
-    public void resize(Minecraft mc, int w, int h) {
-        super.resize(mc, w, h);
+    public void resize(int w, int h) {
+        super.resize(w, h);
         recalcCenter();
         this.clearWidgets();
         this.managedWidgets.clear();
@@ -98,7 +98,11 @@ public class FizzyScreenHost extends Screen {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor g, int mx, int my, float dt) {
+    public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float dt) {
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float dt) {
         if (runtime != null) {
             runtime.frameTick();
         }
@@ -155,33 +159,30 @@ public class FizzyScreenHost extends Screen {
                 FizzyTooltipElement.popGlobalSuppression();
             }
         }
-        if (suppressTooltips) {
-            clearTooltipForNextRenderPass();
-        }
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (HostRenderSupport.dispatchOverlayMouseClicked(this.managedWidgets, mouseX, mouseY, button)) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (HostRenderSupport.dispatchOverlayMouseClicked(this.managedWidgets, event, doubleClick)) {
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (HostRenderSupport.dispatchOverlayMouseReleased(this.managedWidgets, mouseX, mouseY, button)) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (HostRenderSupport.dispatchOverlayMouseReleased(this.managedWidgets, event)) {
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (HostRenderSupport.dispatchOverlayMouseDragged(this.managedWidgets, mouseX, mouseY, button, dragX, dragY)) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (HostRenderSupport.dispatchOverlayMouseDragged(this.managedWidgets, event, dragX, dragY)) {
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override

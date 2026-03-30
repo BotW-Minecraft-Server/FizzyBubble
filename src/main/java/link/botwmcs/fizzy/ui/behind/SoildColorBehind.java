@@ -1,6 +1,5 @@
 package link.botwmcs.fizzy.ui.behind;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -19,12 +18,7 @@ public class SoildColorBehind implements BehindPainter {
         int sw = mc.getWindow().getGuiScaledWidth();
         int sh = mc.getWindow().getGuiScaledHeight();
 
-        RenderSystem.disableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-
         g.fill(0, 0, sw, sh, color);
-
     }
 
     @Override

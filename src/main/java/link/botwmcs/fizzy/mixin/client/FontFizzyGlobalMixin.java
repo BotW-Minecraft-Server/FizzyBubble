@@ -5,24 +5,25 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
-import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Font.class)
 public abstract class FontFizzyGlobalMixin {
     @Shadow
-    public abstract int drawInBatch(
+    public abstract void drawInBatch(
             FormattedCharSequence text,
             float x,
             float y,
             int color,
             boolean dropShadow,
-            Matrix4f matrix,
+            Matrix4fc matrix,
             MultiBufferSource buffer,
             Font.DisplayMode displayMode,
             int backgroundColor,
@@ -63,7 +64,7 @@ public abstract class FontFizzyGlobalMixin {
     }
 
     @Inject(
-            method = "drawInBatch(Ljava/lang/String;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;IIZ)I",
+            method = "drawInBatch(Ljava/lang/String;FFIZLorg/joml/Matrix4fc;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)V",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -73,17 +74,17 @@ public abstract class FontFizzyGlobalMixin {
             float y,
             int color,
             boolean dropShadow,
-            Matrix4f matrix,
+            Matrix4fc matrix,
             MultiBufferSource buffer,
             Font.DisplayMode displayMode,
             int backgroundColor,
             int packedLightCoords,
-            boolean bidirectional,
-            CallbackInfoReturnable<Integer> cir
+            CallbackInfo ci
     ) {
         FormattedCharSequence formatted = FizzyComponentService.formatVisualOrder(text);
         if (formatted != null) {
-            cir.setReturnValue(this.drawInBatch(formatted, x, y, color, dropShadow, matrix, buffer, displayMode, backgroundColor, packedLightCoords));
+            this.drawInBatch(formatted, x, y, color, dropShadow, matrix, buffer, displayMode, backgroundColor, packedLightCoords);
+            ci.cancel();
         }
     }
 }

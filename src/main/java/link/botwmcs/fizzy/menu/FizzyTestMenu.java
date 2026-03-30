@@ -51,7 +51,7 @@ public class FizzyTestMenu extends AbstractContainerMenu {
         addPlayerInventorySlots(playerInventory);
         addPlayerHotbarSlots(playerInventory);
 
-        if (!playerInventory.player.level().isClientSide) {
+        if (!playerInventory.player.level().isClientSide()) {
             this.data.set(DATA_PROGRESS, 0);
             this.data.set(DATA_MAX_PROGRESS, 100);
         }

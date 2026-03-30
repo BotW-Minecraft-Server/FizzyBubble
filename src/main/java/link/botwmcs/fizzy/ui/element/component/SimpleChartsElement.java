@@ -7,6 +7,7 @@ import link.botwmcs.fizzy.client.util.Gwen;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -156,8 +157,8 @@ public final class SimpleChartsElement implements ElementPainter {
         }
     }
 
-    private boolean forwardMouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) {
+    private boolean forwardMouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (event.button() != 0) {
             return false;
         }
 
@@ -167,24 +168,24 @@ public final class SimpleChartsElement implements ElementPainter {
             if (!widget.visible || !widget.active) {
                 continue;
             }
-            if (!isInsideWidgetCell(widget, mouseX, mouseY)) {
+            if (!isInsideWidgetCell(widget, event.x(), event.y())) {
                 continue;
             }
-            if (widget.mouseClicked(mouseX, mouseY, button)) {
+            if (widget.mouseClicked(event, doubleClick)) {
                 this.pressedChild = widget;
                 return true;
             }
         }
-        return isInsideAnyCell(mouseX, mouseY);
+        return isInsideAnyCell(event.x(), event.y());
     }
 
-    private boolean forwardMouseReleased(double mouseX, double mouseY, int button) {
-        if (button != 0) {
+    private boolean forwardMouseReleased(MouseButtonEvent event) {
+        if (event.button() != 0) {
             return false;
         }
 
         if (this.pressedChild != null) {
-            boolean handled = this.pressedChild.mouseReleased(mouseX, mouseY, button);
+            boolean handled = this.pressedChild.mouseReleased(event);
             this.pressedChild = null;
             return handled;
         }
@@ -194,24 +195,24 @@ public final class SimpleChartsElement implements ElementPainter {
             if (!widget.visible) {
                 continue;
             }
-            if (!isInsideWidgetCell(widget, mouseX, mouseY)) {
+            if (!isInsideWidgetCell(widget, event.x(), event.y())) {
                 continue;
             }
-            if (widget.mouseReleased(mouseX, mouseY, button)) {
+            if (widget.mouseReleased(event)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean forwardMouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (button != 0) {
+    private boolean forwardMouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() != 0) {
             return false;
         }
         if (this.pressedChild == null) {
             return false;
         }
-        return this.pressedChild.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return this.pressedChild.mouseDragged(event, dragX, dragY);
     }
 
     private boolean forwardMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
@@ -311,27 +312,27 @@ public final class SimpleChartsElement implements ElementPainter {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
             if (!this.active || !this.visible) {
                 return false;
             }
-            return forwardMouseClicked(mouseX, mouseY, button);
+            return forwardMouseClicked(event, doubleClick);
         }
 
         @Override
-        public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        public boolean mouseReleased(MouseButtonEvent event) {
             if (!this.visible) {
                 return false;
             }
-            return forwardMouseReleased(mouseX, mouseY, button);
+            return forwardMouseReleased(event);
         }
 
         @Override
-        public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
             if (!this.active || !this.visible) {
                 return false;
             }
-            return forwardMouseDragged(mouseX, mouseY, button, dragX, dragY);
+            return forwardMouseDragged(event, dragX, dragY);
         }
 
         @Override

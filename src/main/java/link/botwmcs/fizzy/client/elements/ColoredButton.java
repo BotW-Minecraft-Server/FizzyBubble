@@ -4,13 +4,10 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-@OnlyIn(Dist.CLIENT)
 public class ColoredButton extends ColoredAbstractButton {
     public static final int DEFAULT_WIDTH = 150;
     public static final int DEFAULT_HEIGHT = 20;
@@ -42,7 +39,6 @@ public class ColoredButton extends ColoredAbstractButton {
     // ===========================
     // Builder
     // ===========================
-    @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
         public final OnPress onPress;
@@ -106,7 +102,6 @@ public class ColoredButton extends ColoredAbstractButton {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
         /**
          * @param defaultMessage 供应父类默认旁白文本（通常是按钮文本 + 提示）
@@ -115,7 +110,6 @@ public class ColoredButton extends ColoredAbstractButton {
         MutableComponent createNarrationMessage(Supplier<MutableComponent> defaultMessage);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface OnPress {
         void onPress(ColoredButton button);
     }

@@ -11,26 +11,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BossHealthOverlay.class)
 public abstract class BossHealthOverlayMixin {
-    @Inject(method = "render", at = @At("HEAD"))
+    @Inject(method = "extractRenderState", at = @At("HEAD"))
     private void fizzy$beginFrame(GuiGraphicsExtractor gg, CallbackInfo ci) {
         BossbarRenderProbe.beginFrame();
     }
 
     @ModifyArg(
-            method = "render",
+            method = "extractRenderState",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;drawBar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/BossEvent;)V"
+                    target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;extractBar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/BossEvent;)V"
             ),
-            index = 2 // 第二个参数是 y
+            index = 2
     )
     private int fizzy$captureY(int y) {
         BossbarRenderProbe.onDrawBarAt(y);
-        return y; // 不改动原值
+        return y;
     }
 
-    // 帧结束：计算底边
-    @Inject(method = "render", at = @At("TAIL"))
+    @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void fizzy$endFrame(GuiGraphicsExtractor gg, CallbackInfo ci) {
         BossbarRenderProbe.endFrame();
     }

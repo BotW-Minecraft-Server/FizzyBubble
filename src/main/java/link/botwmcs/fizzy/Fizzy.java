@@ -78,7 +78,7 @@ public class Fizzy {
         });
 
         // Client payloads (s2c)
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             r.playToClient(HudOverlayPayload.TYPE, HudOverlayPayload.CODEC, (payload, ctx) -> {
                         switch (payload.action()) {
                                 case SHOW -> OverlayManager.create()

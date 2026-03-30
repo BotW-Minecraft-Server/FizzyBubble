@@ -1,12 +1,11 @@
 package link.botwmcs.fizzy.ui.behind;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import link.botwmcs.fizzy.Fizzy;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 
@@ -34,12 +33,6 @@ public class ImageBehind implements BehindPainter {
 
         ensureTextureSize(mc); // 首帧读取贴图尺寸；失败则给个兜底
 
-        RenderSystem.disableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-
         final int tw = texW > 0 ? texW : 256;
         final int th = texH > 0 ? texH : 256;
 
@@ -50,7 +43,7 @@ public class ImageBehind implements BehindPainter {
                 for (int x = 0; x < sw; x += tw) {
                     int drawW = Math.min(tw, sw - x);
                     // 采样贴图的左上区域 [0,0, drawW, drawH]，绘制到屏幕 (x,y)
-                    g.blit(behindTexture, x, y, 0.0f, 0.0f, drawW, drawH, tw, th);
+                    g.blit(RenderPipelines.GUI_TEXTURED, behindTexture, x, y, 0.0f, 0.0f, drawW, drawH, drawW, drawH, tw, th);
                 }
             }
             return;
@@ -63,7 +56,7 @@ public class ImageBehind implements BehindPainter {
         int dx = (sw - dw) / 2;
         int dy = (sh - dh) / 2;
 
-        g.blit(behindTexture, dx, dy, 0.0f, 0.0f, dw, dh, tw, th);
+        g.blit(RenderPipelines.GUI_TEXTURED, behindTexture, dx, dy, 0.0f, 0.0f, dw, dh, tw, th, tw, th);
 
     }
 

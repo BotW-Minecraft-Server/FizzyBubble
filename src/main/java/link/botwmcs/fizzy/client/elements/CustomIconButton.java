@@ -4,12 +4,9 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
-@OnlyIn(Dist.CLIENT)
 public class CustomIconButton extends CustomIconAbstractButton {
     public static final int DEFAULT_WIDTH = 16;
     public static final int DEFAULT_HEIGHT = 16;
@@ -37,12 +34,10 @@ public class CustomIconButton extends CustomIconAbstractButton {
         this.defaultButtonNarrationText(narrationElementOutput);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface OnPress {
         void onPress(CustomIconButton button);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
         private final OnPress onPress;
