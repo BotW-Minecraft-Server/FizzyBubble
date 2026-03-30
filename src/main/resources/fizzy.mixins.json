@@ -15,6 +15,7 @@
     "client.BossHealthOverlayAccessor",
     "client.BossHealthOverlayMixin",
     "client.CommandSuggestionsEmojiMixin",
+    "client.CommandSuggestionsEmojiRenderMixin",
     "client.ComponentRenderUtilsFizzyGlobalMixin",
     "client.FontFizzyGlobalMixin",
     "client.FontSetInlineImageGlyphInfoMixin",
