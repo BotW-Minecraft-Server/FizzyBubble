@@ -62,7 +62,7 @@ public class Fizzy {
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
-        ImageServices.initImageClient();
+//        ImageServices.initImageClient();
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -110,7 +110,7 @@ public class Fizzy {
 
     @SubscribeEvent
     private void shutdown(GameShuttingDownEvent event) {
-        ImageServices.shutdown();
+//        ImageServices.shutdown();
     }
 
     @SubscribeEvent
