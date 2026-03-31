@@ -19,6 +19,17 @@ tasks.named('wrapper', Wrapper).configure {
 version = mod_version
 group = mod_group_id
 
+def publishRepoUrlProvider = providers.gradleProperty("publishRepoUrl")
+        .orElse(providers.environmentVariable("MAVEN_REPOSITORY_URL"))
+def publishRepoUsernameProvider = providers.gradleProperty("publishRepoUsername")
+        .orElse(providers.environmentVariable("MAVEN_REPOSITORY_USERNAME"))
+def publishRepoPasswordProvider = providers.gradleProperty("publishRepoPassword")
+        .orElse(providers.environmentVariable("MAVEN_REPOSITORY_PASSWORD"))
+def publishArtifactIdProvider = providers.gradleProperty("publishArtifactId")
+        .orElse(mod_id)
+def publishVersionProvider = providers.gradleProperty("publishVersion")
+        .orElse("${mod_version}-${minecraft_version}")
+
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
     flatDir{
@@ -188,11 +199,27 @@ publishing {
     publications {
         register('mavenJava', MavenPublication) {
             from components.java
+            artifactId = publishArtifactIdProvider.get()
+            version = publishVersionProvider.get()
         }
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/repo"
+            name = "localBuildRepo"
+            url = project.layout.projectDirectory.dir("repo").asFile.toURI()
+        }
+        if (publishRepoUrlProvider.present) {
+            maven {
+                name = "botwmcs"
+                url = uri(publishRepoUrlProvider.get())
+                credentials {
+                    username = publishRepoUsernameProvider.orNull
+                    password = publishRepoPasswordProvider.orNull
+                }
+                authentication {
+                    basic(org.gradle.authentication.http.BasicAuthentication)
+                }
+            }
         }
     }
 }
