@@ -1,21 +1,7 @@
 {
-  "fizzy.gui.titlescreen.play_button": "开始游戏",
-  "fizzy.gui.titlescreen.like_button.tooltip": "喜欢这张照片？ 点击投票！",
-  "fizzy.gui.titlescreen.like_button.upload.success": "成功上传照片",
-  "fizzy.gui.titlescreen.like_button.upload.success.notice": "现在所有人都可以在主页看到你的照片",
-  "fizzy.gui.titlescreen.like_button.upload.failure": "无法上传照片",
-  "fizzy.gui.titlescreen.like_button.upload.failure.not_local": "这不是一张本地照片",
-  "fizzy.gui.titlescreen.like_button.upload.failure.already_uploaded": "你已经为这张照片投过票了",
-  "fizzy.gui.titlescreen.like_button.upload.failure.error_loading_file": "上传照片时读取文件出错",
-  "fizzy.gui.titlescreen.like_button.tooltip.upload": "上传这张照片！",
-  "fizzy.gui.titlescreen.like_button.tooltip.already_uploaded": "你已经为这张照片投过票了",
-  "fizzy.gui.playselector.title": "游戏选择",
-  "fizzy.gui.playselector.singleplayer": "单人游戏",
-  "fizzy.gui.playselector.multiplayer": "进入服务器",
-  "fizzy.gui.serverselector.addr1": "地址一",
-  "fizzy.gui.serverselector.addr1.region": "区域：北京（直连）",
-  "fizzy.gui.serverselector.addr2": "地址二",
-  "fizzy.gui.serverselector/addr2/region": "区域：南部",
-  "fizzy.gui.serverselector.addr3": "地址三",
-  "fizzy.gui.serverselector/addr3/region": "区域：北部"
+  "fizzy.configuration.title": "Fizzy 配置",
+  "fizzy.configuration.enableFizzyComponent": "启用 Fizzy 组件处理器",
+  "fizzy.configuration.enableFizzyComponent.tooltip": "为所有客户端文本渲染启用 Fizzy 全局文本样式化管线\\n支持 '&' 样式和占位符解析（图片/按钮 API）",
+  "fizzy.configuration.enableEmojiSuggestions": "启用 Emoji 占位符建议",
+  "fizzy.configuration.enableEmojiSuggestions.tooltip": "使用原版建议界面启用聊天中的 ':' emoji 占位符建议（仅客户端）"
 }

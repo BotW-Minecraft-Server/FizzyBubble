@@ -1,11 +1,14 @@
 package link.botwmcs.fizzy.ui.frame;
 
 import link.botwmcs.fizzy.Fizzy;
-import net.minecraft.client.Minecraft;
+import link.botwmcs.fizzy.ui.element.component.FizzyComponentElement;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 public class MotiveFrame implements FramePainter {
     private static final FrameMetrics DEFAULT_METRICS = MotiveFrameMetrics.ofDefault256x256();
@@ -19,7 +22,7 @@ public class MotiveFrame implements FramePainter {
     private final Identifier tex;
     private final FrameMetrics m;
     private final int panelWidthPx;
-    private final Component title;
+    private final FizzyComponentElement titleElement;
     private final boolean dark;
     private Layout layout;
 
@@ -31,19 +34,55 @@ public class MotiveFrame implements FramePainter {
         this(title, false);
     }
 
+    public MotiveFrame(FizzyComponentElement titleElement) {
+        this(titleElement, false);
+    }
+
     public MotiveFrame(Component title, boolean dark) {
         this(DEFAULT_PANEL_TEXTURE, DEFAULT_METRICS, DEFAULT_METRICS.panelW(), title, dark);
+    }
+
+    public MotiveFrame(FizzyComponentElement titleElement, boolean dark) {
+        this(DEFAULT_PANEL_TEXTURE, DEFAULT_METRICS, DEFAULT_METRICS.panelW(), titleElement, dark);
+    }
+
+    public MotiveFrame(Component title, Consumer<FizzyComponentElement.Builder> titleCustomizer) {
+        this(
+                DEFAULT_PANEL_TEXTURE,
+                DEFAULT_METRICS,
+                DEFAULT_METRICS.panelW(),
+                FrameTitleSupport.defaultTitle(title, false, titleCustomizer),
+                false
+        );
+    }
+
+    public MotiveFrame(Component title, boolean dark, Consumer<FizzyComponentElement.Builder> titleCustomizer) {
+        this(
+                DEFAULT_PANEL_TEXTURE,
+                DEFAULT_METRICS,
+                DEFAULT_METRICS.panelW(),
+                FrameTitleSupport.defaultTitle(title, dark, titleCustomizer),
+                dark
+        );
     }
 
     public MotiveFrame(Identifier tex, FrameMetrics metrics, Component title) {
         this(tex, metrics, metrics.panelW(), title, false);
     }
 
+    public MotiveFrame(Identifier tex, FrameMetrics metrics, FizzyComponentElement titleElement) {
+        this(tex, metrics, metrics.panelW(), titleElement, false);
+    }
+
     public MotiveFrame(Identifier tex, FrameMetrics metrics, int panelWidthPx, Component title, boolean dark) {
+        this(tex, metrics, panelWidthPx, FrameTitleSupport.defaultTitle(title, dark), dark);
+    }
+
+    public MotiveFrame(Identifier tex, FrameMetrics metrics, int panelWidthPx, FizzyComponentElement titleElement, boolean dark) {
         this.tex = tex;
         this.m = metrics;
         this.panelWidthPx = panelWidthPx;
-        this.title = title;
+        this.titleElement = Objects.requireNonNull(titleElement, "titleElement");
         this.dark = dark;
     }
 
@@ -70,12 +109,7 @@ public class MotiveFrame implements FramePainter {
             blit(g, left, y, 0, texH - BOTTOM_CAP_HEIGHT, drawW, BOTTOM_CAP_HEIGHT, texW, texH);
         }
 
-        Minecraft mc = Minecraft.getInstance();
-        int titleWidth = mc.font.width(this.title);
-        int titleX = left + drawW / 2 - titleWidth / 2;
-        int titleY = top + m.titleStartH();
-        int titleColor = this.dark ? 0xE6E6E6 : 0xFFFFFF;
-        g.text(mc.font, this.title, titleX, titleY, titleColor, true);
+        FrameTitleSupport.render(g, m, left, top, drawW, this.titleElement);
     }
 
     private void blit(GuiGraphicsExtractor g, int x, int y, int u, int v, int w, int h, int texW, int texH) {
@@ -113,6 +147,10 @@ public class MotiveFrame implements FramePainter {
 
     public int panelWidthPx() {
         return panelWidthPx;
+    }
+
+    public FizzyComponentElement titleElement() {
+        return titleElement;
     }
 
     @Override

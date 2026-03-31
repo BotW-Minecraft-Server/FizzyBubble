@@ -148,6 +148,22 @@ public final class FizzyComponentElement implements AnimatableElement {
         return Component.literal(sb.toString());
     }
 
+    public int measureHeightPx(Font font, int widthPx) {
+        Objects.requireNonNull(font, "font");
+        if (widthPx <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil(ensureLayout(font, widthPx).totalHeightPx());
+    }
+
+    public int measureWidthPx(Font font, int widthPx) {
+        Objects.requireNonNull(font, "font");
+        if (widthPx <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil(ensureLayout(font, widthPx).maxWidthPx());
+    }
+
     private LineLayout ensureLayout(Font font, int widthPx) {
         if (!wrap && !autoEllipsis) {
             if (cachedLayout == null) {

@@ -153,7 +153,12 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
             FizzyTooltipElement.pushGlobalSuppression();
         }
         try {
-            queue.renderMatching(phase -> phase.ordinal() <= UiRenderPhase.WIDGET.ordinal());
+            queue.renderMatching(phase -> phase.ordinal() <= UiRenderPhase.FRAME.ordinal());
+            renderCustomMenuBackground(g, partialTick, mouseX, mouseY);
+            queue.renderMatching(phase ->
+                    phase.ordinal() > UiRenderPhase.FRAME.ordinal()
+                            && phase.ordinal() <= UiRenderPhase.WIDGET.ordinal()
+            );
             super.extractContents(g, mouseX, mouseY, partialTick);
             queue.renderMatching(phase -> phase == UiRenderPhase.TOOLTIP || phase == UiRenderPhase.OVERLAY);
             super.extractCarriedItem(g, mouseX, mouseY);
@@ -170,6 +175,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor g, int x, int y) {
+        renderCustomMenuForeground(g, x, y);
     }
 
     @Override
