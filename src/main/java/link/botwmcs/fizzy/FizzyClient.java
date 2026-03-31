@@ -3,8 +3,6 @@ package link.botwmcs.fizzy;
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.formatting.emoji.builtin.IconEmojiPack;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
-import link.botwmcs.fizzy.menu.FizzyMenus;
-import link.botwmcs.fizzy.menu.FizzyTestMenuScreen;
 import link.botwmcs.fizzy.proxy.api.HostRenderStage;
 import link.botwmcs.fizzy.proxy.runtime.ScreenProxyRuntime;
 import link.botwmcs.fizzy.util.EnvDetector;
@@ -15,7 +13,6 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -43,11 +40,6 @@ public class FizzyClient {
         if (EnvDetector.isLTSX()) {
             Fizzy.LOGGER.info("LTS-X detected, enabling compatibility mode.");
         }
-    }
-
-    @SubscribeEvent
-    static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
-        event.register(FizzyMenus.FIZZY_TEST_MENU.get(), FizzyTestMenuScreen::new);
     }
 
     @SubscribeEvent

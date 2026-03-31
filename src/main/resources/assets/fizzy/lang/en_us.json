@@ -1,21 +1,7 @@
 {
-  "fizzy.gui.titlescreen.play_button": "Play",
-  "fizzy.gui.titlescreen.like_button.tooltip": "Like this picture? Click to vote!",
-  "fizzy.gui.titlescreen.like_button.upload.success": "Success uploaded this picture.",
-  "fizzy.gui.titlescreen.like_button.upload.success.notice": "Everybody could see your picture on their title screen.",
-  "fizzy.gui.titlescreen.like_button.upload.failure": "Failed to upload this picture.",
-  "fizzy.gui.titlescreen.like_button.upload.failure.not_local": "This is not a local picture.",
-  "fizzy.gui.titlescreen.like_button.upload.failure.already_uploaded": "You are already voted for this picture.",
-  "fizzy.gui.titlescreen.like_button.upload.failure.error_loading_file": "Error when reading the picture file.",
-  "fizzy.gui.titlescreen.like_button.tooltip.upload": "Upload and vote for this picture!",
-  "fizzy.gui.titlescreen.like_button.tooltip.already_uploaded": "You have already voted for this picture.",
-  "fizzy.gui.playselector.title": "Play",
-  "fizzy.gui.playselector.singleplayer": "Singleplayer",
-  "fizzy.gui.playselector.multiplayer": "LTSX Server",
-  "fizzy.gui.serverselector.addr1": "Address 1",
-  "fizzy.gui.serverselector.addr1.region": "Region：Beijing (direct)",
-  "fizzy.gui.serverselector.addr2": "Address 2",
-  "fizzy.gui.serverselector/addr2/region": "Region: South",
-  "fizzy.gui.serverselector.addr3": "Address 3",
-  "fizzy.gui.serverselector/addr3/region": "Region: North"
+  "fizzy.configuration.title": "Fizzy Configuration",
+  "fizzy.configuration.enableFizzyComponent": "Enable Fizzy Component Processor",
+  "fizzy.configuration.enableFizzyComponent.tooltip": "Enable Fizzy global text stylization pipeline for all client-side text rendering\nSupports '&' styles and placeholder resolution (image/button API)",
+  "fizzy.configuration.enableEmojiSuggestions": "Enable Emoji Placeholder Suggestions",
+  "fizzy.configuration.enableEmojiSuggestions.tooltip": "Enable chat ':' emoji suggestions using vanilla suggestion UI (client-side only)"
 }
