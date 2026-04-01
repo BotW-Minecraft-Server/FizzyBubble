@@ -3,11 +3,17 @@ package link.botwmcs.fizzy;
 import link.botwmcs.fizzy.client.bossbar.AnnounceMessageManager;
 import link.botwmcs.fizzy.client.formatting.emoji.builtin.IconEmojiPack;
 import link.botwmcs.fizzy.client.overlay.OverlayManager;
+import link.botwmcs.fizzy.client.overlay.content.SimpleTextPage;
+import link.botwmcs.fizzy.network.FizzyNetworking;
+import link.botwmcs.fizzy.network.s2c.AnnouncePayload;
+import link.botwmcs.fizzy.network.s2c.HudOverlayPayload;
 import link.botwmcs.fizzy.proxy.api.HostRenderStage;
 import link.botwmcs.fizzy.proxy.runtime.ScreenProxyRuntime;
 import link.botwmcs.fizzy.util.EnvDetector;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -17,22 +23,27 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-// This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = Fizzy.MODID, dist = Dist.CLIENT)
-// You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
 @EventBusSubscriber(modid = Fizzy.MODID, value = Dist.CLIENT)
 public class FizzyClient {
-    public FizzyClient(ModContainer container) {
-        // Allows NeoForge to create a config screen for this mod's configs.
-        // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
-        // Do not forget to add translations for your config options to the en_us.json file.
+    public FizzyClient(IEventBus modEventBus, ModContainer container) {
+        modEventBus.addListener(this::registerPayloads);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+    }
+
+    private void registerPayloads(RegisterPayloadHandlersEvent event) {
+        FizzyNetworking.registerClientboundPayloads(
+                event.registrar(Fizzy.MODID).optional(),
+                FizzyClient::handleHudOverlay,
+                FizzyClient::handleAnnounce
+        );
     }
 
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
-        // Some client setup code
         Fizzy.LOGGER.info("HELLO FROM CLIENT SETUP");
         Fizzy.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         AnnounceMessageManager.ensureRegistered();
@@ -142,5 +153,21 @@ public class FizzyClient {
     @SubscribeEvent
     static void onScreenClosing(ScreenEvent.Closing event) {
         ScreenProxyRuntime.instance().onScreenClosing(event.getScreen());
+    }
+
+    private static void handleHudOverlay(HudOverlayPayload payload, IPayloadContext context) {
+        switch (payload.action()) {
+            case SHOW -> OverlayManager.create()
+                    .setTitle(Component.literal(payload.title()))
+                    .setSlidingText(Component.literal(payload.scrollingText()))
+                    .setContent(new SimpleTextPage(Component.literal(payload.text())))
+                    .setScale(1.0F)
+                    .show();
+            case HIDE -> OverlayManager.hideAll();
+        }
+    }
+
+    private static void handleAnnounce(AnnouncePayload payload, IPayloadContext context) {
+        AnnounceMessageManager.show(Component.literal(payload.context()), payload.ticks());
     }
 }
