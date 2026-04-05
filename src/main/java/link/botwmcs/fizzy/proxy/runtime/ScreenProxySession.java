@@ -22,6 +22,7 @@ import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
 import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
+import link.botwmcs.fizzy.ui.pad.PadResolutionSupport;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
@@ -385,7 +386,7 @@ public final class ScreenProxySession implements AutoCloseable {
         List<ElementPlacement> out = new ArrayList<>();
         int order = 0;
         for (PadSpec pad : kernel.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            PadSpec.PadBounds bounds = PadResolutionSupport.resolvePadBounds(pad, frame, slotArea);
             for (ElementPainter element : pad.elements()) {
                 out.add(new ElementPlacement(
                         element,

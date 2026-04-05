@@ -7,6 +7,7 @@ import link.botwmcs.fizzy.ui.element.component.FizzyTooltipElement;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderLayer;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
+import link.botwmcs.fizzy.ui.pad.PadResolutionSupport;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -29,7 +30,7 @@ public final class HostRenderSupport {
         int order = 0;
 
         for (PadSpec pad : gui.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            PadSpec.PadBounds bounds = PadResolutionSupport.resolvePadBounds(pad, frame, slotArea);
             for (ElementPainter element : pad.elements()) {
                 out.add(new ElementPlacement(
                         element,
@@ -69,7 +70,7 @@ public final class HostRenderSupport {
     ) {
         List<ElementPainter> out = new ArrayList<>();
         for (PadSpec pad : gui.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            PadSpec.PadBounds bounds = PadResolutionSupport.resolvePadBounds(pad, frame, slotArea);
             if (intersects(bounds.left(), bounds.top(), bounds.width(), bounds.height(), x, y, w, h)) {
                 out.addAll(pad.elements());
             }
