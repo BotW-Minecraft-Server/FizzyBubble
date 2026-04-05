@@ -16,6 +16,7 @@ import link.botwmcs.fizzy.ui.kernel.render.UiRenderPhase;
 import link.botwmcs.fizzy.ui.kernel.render.UiRenderTaskQueue;
 import link.botwmcs.fizzy.ui.kernel.runtime.UiRuntime;
 import link.botwmcs.fizzy.ui.pad.PadSpec;
+import link.botwmcs.fizzy.ui.pad.PadResolutionSupport;
 import link.botwmcs.fizzy.ui.split.SplitPainter;
 import link.botwmcs.fizzy.ui.split.SplitSpec;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -83,7 +84,7 @@ public class FizzyMenuScreenHost<T extends AbstractContainerMenu> extends Abstra
 
         MenuInitContext context = new MenuInitContext();
         for (PadSpec pad : gui.pads()) {
-            PadSpec.PadBounds bounds = pad.resolve(frame, slotArea);
+            PadSpec.PadBounds bounds = PadResolutionSupport.resolvePadBounds(pad, frame, slotArea);
             for (ElementPainter element : pad.elements()) {
                 context.runWithOwner(element, () ->
                         element.init(context, bounds.left(), bounds.top(), bounds.width(), bounds.height())

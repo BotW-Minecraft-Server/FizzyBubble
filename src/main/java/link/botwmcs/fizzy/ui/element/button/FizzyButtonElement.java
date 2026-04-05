@@ -310,7 +310,7 @@ public final class FizzyButtonElement implements ElementPainter {
         int contentWidth = contentRight - contentLeft;
 
         boolean hasIcon = this.iconTexture != null;
-        boolean hasText = this.customTextElement != null || this.textComponent != null;
+        boolean hasText = hasRenderableText();
         if (!hasIcon && !hasText) {
             return;
         }
@@ -325,7 +325,10 @@ public final class FizzyButtonElement implements ElementPainter {
 
         int textLeft;
         int iconLeft;
-        if (this.contentLayout == ContentLayout.ICON_LEFT_TEXT_RIGHT) {
+        if (hasIcon && !hasText) {
+            iconLeft = contentLeft + (contentWidth - iconBoxWidth) / 2;
+            textLeft = contentLeft;
+        } else if (this.contentLayout == ContentLayout.ICON_LEFT_TEXT_RIGHT) {
             iconLeft = contentLeft;
             textLeft = hasIcon ? contentLeft + iconBoxWidth + gap : contentLeft;
         } else {
@@ -382,6 +385,13 @@ public final class FizzyButtonElement implements ElementPainter {
         int maxOffset = Math.max(0, safeHeight - drawHeight);
         offset = Math.max(0, Math.min(offset, maxOffset));
         return new DrawArea(top + offset, drawHeight);
+    }
+
+    private boolean hasRenderableText() {
+        if (this.customTextElement != null) {
+            return true;
+        }
+        return this.textComponent != null && !this.textComponent.getString().isEmpty();
     }
 
     private FizzyComponentElement resolveTextElement(int textWidthPx) {

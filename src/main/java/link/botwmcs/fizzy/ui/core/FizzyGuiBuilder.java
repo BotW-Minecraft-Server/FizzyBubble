@@ -5,6 +5,7 @@ import link.botwmcs.fizzy.ui.background.BgType;
 import link.botwmcs.fizzy.ui.background.FizzyBg;
 import link.botwmcs.fizzy.ui.behind.BehindPainter;
 import link.botwmcs.fizzy.ui.element.ElementPainter;
+import link.botwmcs.fizzy.ui.frame.EasyFrame;
 import link.botwmcs.fizzy.ui.frame.FramePainter;
 import link.botwmcs.fizzy.ui.pad.*;
 import link.botwmcs.fizzy.ui.split.*;
@@ -112,6 +113,14 @@ public final class FizzyGuiBuilder {
                 splitSpecs,
                 effectiveSplitPainter != null ? effectiveSplitPainter.metrics() : null
         );
+
+        if (frame instanceof EasyFrame) {
+            for (BasePadBuilder<?> pad : pads) {
+                if (!(pad instanceof PixelPadBuilder)) {
+                    throw new IllegalStateException("EasyFrame only supports padByPx (PixelPadBuilder).");
+                }
+            }
+        }
 
         // Pads
         List<PadSpec> padSpecs = new ArrayList<>(pads.size());
